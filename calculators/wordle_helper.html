@@ -42,19 +42,19 @@
 .wordle-wrap { max-width: 720px; margin: 0 auto; }
 .wordle-intro { color:#5c6270; font-size:0.95rem; line-height:1.55; margin-bottom:22px; }
 .board { display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
-.board-row, .current-row { display:flex; gap:6px; flex-wrap:wrap; }
+.board-row, .current-row { display:flex; gap:6px; flex-wrap:nowrap; }
 .tile {
-  width:52px; height:52px;
+  flex:1 1 0; max-width:60px; aspect-ratio:1/1; width:auto; height:auto;
   display:flex; align-items:center; justify-content:center;
-  font-size:1.6rem; font-weight:700; text-transform:uppercase;
+  font-size:clamp(1rem, 6vw, 1.6rem); font-weight:700; text-transform:uppercase;
   border:2px solid #d3d6da; border-radius:4px;
   background:#fff; color:#1a2740;
   user-select:none;
 }
 .tile-input {
-  width:52px; height:52px;
+  flex:1 1 0; max-width:60px; aspect-ratio:1/1; width:auto; height:auto;
   border:2px solid #878a8c; border-radius:4px;
-  font-size:1.6rem; font-weight:700; text-align:center; text-transform:uppercase;
+  font-size:clamp(1rem, 6vw, 1.6rem); font-weight:700; text-align:center; text-transform:uppercase;
   color:#1a2740; padding:0; box-sizing:border-box;
   cursor:pointer;
 }
