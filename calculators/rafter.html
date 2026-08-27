@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rafter Calculator | WTC Montana Construction</title>
+<meta name="description" content="Calculate rafter lengths and cut angles for your next roofing job.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/rafter.html">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">
+      <img class="logo" src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/index.html">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html" class="current">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Rafter Calculator</h1>
+    <p>Calculate rafter lengths and cut angles for your next roofing job.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+<style>
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.layout-table {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+}
+
+.layout-table th,
+.layout-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.layout-table th {
+    background: #f5f5f5;
+}
+
+.measurement-input {
+    margin-bottom: 20px;
+}
+
+.measurement-input select {
+    margin-right: 6px;
+    margin-top: 6px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px 18px;
+    cursor: pointer;
+}
+
+#rafterSvgWrapper {
+    width: 100%;
+    overflow: auto;
+    border: 1px solid #ccc;
+    margin-top: 30px;
+    background: #fafafa;
+}
+
+#rafterSvg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.print-btn {
+    margin-top: 16px;
+    margin-right: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    background: #1a2740;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.print-btn:hover {
+    background: #253551;
+}
+
+.print-note {
+    font-size: 0.85rem;
+    color: #8a1f18;
+    margin-top: 10px;
+}
+
+.svg-line {
+    stroke: black;
+    stroke-width: 2;
+    fill: none;
+}
+
+.svg-text {
+    font-size: 12px;
+    font-family: Arial;
+}
+
+.result-empty {
+    border: 1px solid #ddd;
+    padding: 14px;
+    margin-top: 20px;
+}
+
+.calc-warning {
+    border: 1px solid #d9a441;
+    background: #fff6e5;
+    color: #6b4a05;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-top: 16px;
+    font-size: 0.92rem;
+}
+
+.stock-hint {
+    color: #5c6270;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.stock-custom-order {
+    color: #b3261e;
+    font-weight: 700;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+/* Rafter cut-sheet diagram */
+.svg-rafter-fill {
+    fill: #e4c48c;
+    stroke: #3a2a14;
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+.svg-cut-line {
+    stroke: #b3261e;
+    stroke-width: 2.5;
+    stroke-dasharray: 6 4;
+    fill: none;
+}
+.svg-context-fill {
+    fill: #cfd6de;
+    stroke: #6b7480;
+    stroke-width: 1.5;
+}
+.svg-dim-line {
+    stroke: #253551;
+    stroke-width: 1;
+    fill: none;
+}
+.svg-dim-tick {
+    stroke: #253551;
+    stroke-width: 1;
+}
+.svg-dim-text {
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    fill: #253551;
+    font-weight: 700;
+}
+.svg-cut-text {
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    fill: #8a1f18;
+    font-weight: 700;
+}
+.svg-note-text {
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    fill: #444;
+    font-style: italic;
+}
+.svg-title-text {
+    font-size: 15px;
+    font-family: Arial, sans-serif;
+    fill: #1a2740;
+    font-weight: 700;
+}
+
+</style>
+
+<!--
+  Rafter Calculator
+  ==================
+  Computes common-rafter framing dimensions for a gable roof from
+  building width, ridge thickness, pitch, and wall/soffit measurements.
+
+  Terms used below:
+    run          - horizontal distance from wall centerline to ridge
+                   (half the building width, minus half the ridge board).
+    rise         - vertical climb over that run, from the pitch.
+    common rafter - the rafter from the ridge to the outside wall, found
+                   with the Pythagorean theorem from run/rise.
+    tail         - the rafter's overhang past the wall, covering the soffit.
+    birdsmouth   - the notch cut into the rafter where it sits on the wall
+                   plate; its seat depth equals the wall thickness.
+    heel height  - the remaining rafter depth above the birdsmouth cut,
+                   which determines how much of the fascia is visible.
+    plumb cut    - the vertical cut angle at the ridge end of the rafter.
+-->
+
+<div id="rafterCalculator">
+
+    <h2>Rafter Calculator</h2>
+
+    <p>
+        Calculates common rafter geometry,
+        tail length, birdsmouth layout,
+        roof angle, and material count.
+    </p>
+
+
+
+    <label>Building Width</label>
+    <div id="buildingWidthInputs"></div>
+
+
+
+    <label>Building Length</label>
+    <div id="buildingLengthInputs"></div>
+
+
+
+    <label>Ridge Thickness</label>
+    <div id="ridgeInputs"></div>
+
+
+
+    <label>Roof Pitch</label>
+
+    <div class="measurement-input">
+
+        <select id="pitchRise">
+
+            <option value="3">3/12</option>
+            <option value="4">4/12</option>
+            <option value="5">5/12</option>
+            <option value="6" selected>6/12</option>
+            <option value="7">7/12</option>
+            <option value="8">8/12</option>
+            <option value="9">9/12</option>
+            <option value="10">10/12</option>
+            <option value="12">12/12</option>
+
+        </select>
+
+    </div>
+
+
+
+    <label>Rafter Depth</label>
+
+    <div class="measurement-input">
+
+        <select id="rafterDepth">
+
+            <option value="5.5">2x6 (5.5")</option>
+            <option value="7.25">2x8 (7.25")</option>
+            <option value="9.25">2x10 (9.25")</option>
+            <option value="11.25">2x12 (11.25")</option>
+
+        </select>
+
+    </div>
+
+
+
+    <label>Wall Thickness</label>
+    <div id="wallInputs"></div>
+
+
+
+    <label>Soffit Overhang</label>
+    <div id="soffitInputs"></div>
+
+
+
+    <label>Rafter Spacing</label>
+
+    <div class="measurement-input">
+
+        <select id="ocSpacing">
+
+            <option value="16">16" OC</option>
+            <option value="24">24" OC</option>
+
+        </select>
+
+    </div>
+
+
+
+    <button onclick="calculateRafters()">
+        Calculate Rafters
+    </button>
+
+
+
+    <div id="result"></div>
+
+
+
+    <div id="rafterSvgWrapper">
+
+        <svg
+            id="rafterSvg"
+            viewBox="0 0 1600 900"
+        ></svg>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+// Builds a feet / inches / sixteenths trio of <select> spinners and
+// returns them as an HTML string, keyed off the given id prefix
+// (e.g. "buildingWidth" -> #buildingWidthFeet, #buildingWidthInches, ...).
+function getImperialSpinners(id) {
+
+    const fractions = [
+        "0",
+        "1/16",
+        "1/8",
+        "3/16",
+        "1/4",
+        "5/16",
+        "3/8",
+        "7/16",
+        "1/2",
+        "9/16",
+        "5/8",
+        "11/16",
+        "3/4",
+        "13/16",
+        "7/8",
+        "15/16"
+    ];
+
+    let feetOptions = "";
+
+    for (let i = 0; i <= 40; i++) {
+
+        feetOptions += `
+            <option value="${i}">
+                ${i} ft
+            </option>
+        `;
+    }
+
+    let inchOptions = "";
+
+    for (let i = 0; i <= 11; i++) {
+
+        inchOptions += `
+            <option value="${i}">
+                ${i} in
+            </option>
+        `;
+    }
+
+    let fractionOptions = "";
+
+    for (const fraction of fractions) {
+
+        fractionOptions += `
+            <option value="${fraction}">
+                ${fraction}
+            </option>
+        `;
+    }
+
+    return `
+
+        <div class="measurement-input">
+
+            <select id="${id}Feet">
+                ${feetOptions}
+            </select>
+
+            <select id="${id}Inches">
+                ${inchOptions}
+            </select>
+
+            <select id="${id}Fraction">
+                ${fractionOptions}
+            </select>
+
+        </div>
+    `;
+}
+
+
+
+[
+    "buildingWidth",
+    "buildingLength",
+    "ridge",
+    "wall",
+    "soffit"
+].forEach(id => {
+
+    document.getElementById(
+        `${id}Inputs`
+    ).innerHTML =
+        getImperialSpinners(id);
+
+});
+
+
+
+// Converts a feet / inches / fraction spinner trio into one
+// decimal-inches number, e.g. (1, 3, "1/2") -> 15.5.
+function addImperial(ft, inch, frac) {
+
+    let fracToDec = 0;
+
+    if (frac !== "0") {
+
+        const [n, d] =
+            frac.split("/").map(Number);
+
+        fracToDec = n / d;
+    }
+
+    return (ft * 12) + inch + fracToDec;
+}
+
+
+
+// Converts decimal inches back into a "whole fraction/32ths" display
+// string, e.g. 15.5 -> `15 1/2"`. Rounds to the nearest 1/32" and
+// reduces the fraction (e.g. 16/32 -> 1/2) via gcd.
+function formatInches(decimalInches) {
+
+    const whole =
+        Math.floor(decimalInches);
+
+    const fraction =
+        decimalInches - whole;
+
+    const denominator = 32;
+
+    let numerator =
+        Math.round(fraction * denominator);
+
+    if (numerator === denominator) {
+
+        return `${whole + 1}"`;
+    }
+
+    function gcd(a, b) {
+
+        return b
+            ? gcd(b, a % b)
+            : a;
+    }
+
+    const divisor =
+        gcd(numerator, denominator);
+
+    const simplifiedNum =
+        numerator / divisor;
+
+    const simplifiedDen =
+        denominator / divisor;
+
+    if (numerator === 0) {
+
+        return `${whole}"`;
+    }
+
+    return `${whole} ${simplifiedNum}/${simplifiedDen}"`;
+}
+
+
+
+// Rafter stock at most yards comes in 2' increments -- 8, 10, 12, 14, 16',
+// and sometimes 20' -- so turn a needed length in inches into "the board
+// you'd actually ask for": divide down to feet and round UP to the next
+// even foot (never round down, or the board comes up short), with an 8'
+// floor since that's the shortest length yards typically stock.
+function lumberYardLength(neededInches) {
+
+    const neededFeet =
+        neededInches / 12;
+
+    const roundedFeet =
+        Math.ceil(neededFeet / 2) * 2;
+
+    return Math.max(8, roundedFeet);
+}
+
+
+
+// Builds the little "(16' board)" shopping hint that follows the Total
+// Stock Length value -- in red, with a custom-order note, once the length
+// runs past what a yard normally keeps in stock (20').
+function stockLengthHint(neededInches) {
+
+    const buyFeet =
+        lumberYardLength(neededInches);
+
+    if (buyFeet > 20) {
+
+        return `<span class="stock-custom-order">(${buyFeet}' board &mdash; over standard stock, custom order)</span>`;
+    }
+
+    return `<span class="stock-hint">(${buyFeet}' board)</span>`;
+}
+
+
+
+function calculateRafters() {
+
+
+
+    const buildingWidth =
+        addImperial(
+            parseFloat(document.getElementById('buildingWidthFeet').value),
+            parseFloat(document.getElementById('buildingWidthInches').value),
+            document.getElementById('buildingWidthFraction').value
+        );
+
+
+
+    const buildingLength =
+        addImperial(
+            parseFloat(document.getElementById('buildingLengthFeet').value),
+            parseFloat(document.getElementById('buildingLengthInches').value),
+            document.getElementById('buildingLengthFraction').value
+        );
+
+
+
+    const ridgeThickness =
+        addImperial(
+            parseFloat(document.getElementById('ridgeFeet').value),
+            parseFloat(document.getElementById('ridgeInches').value),
+            document.getElementById('ridgeFraction').value
+        );
+
+
+
+    const wallThickness =
+        addImperial(
+            parseFloat(document.getElementById('wallFeet').value),
+            parseFloat(document.getElementById('wallInches').value),
+            document.getElementById('wallFraction').value
+        );
+
+
+
+    const soffit =
+        addImperial(
+            parseFloat(document.getElementById('soffitFeet').value),
+            parseFloat(document.getElementById('soffitInches').value),
+            document.getElementById('soffitFraction').value
+        );
+
+
+
+    const pitch =
+        parseFloat(
+            document.getElementById("pitchRise").value
+        );
+
+
+
+    const rafterDepth =
+        parseFloat(
+            document.getElementById("rafterDepth").value
+        );
+
+
+
+    const ocSpacing =
+        parseFloat(
+            document.getElementById("ocSpacing").value
+        );
+
+
+
+    // Horizontal run from the wall's centerline to the ridge: half the
+    // building width, minus half the ridge board (the ridge splits the run
+    // between the two roof planes).
+    const run =
+        (buildingWidth - ridgeThickness) / 2;
+
+
+
+    // Vertical rise over that run, from the pitch (rise per 12" of run).
+    const rise =
+        (run / 12) * pitch;
+
+
+
+    // Roof angle, from the pitch triangle: atan(rise/run) == atan(pitch/12).
+    const roofAngle =
+        Math.atan(
+            pitch / 12
+        ) * (180 / Math.PI);
+
+
+
+    // Common rafter length: hypotenuse of the run/rise triangle.
+    const commonLength =
+        Math.sqrt(
+            (run * run)
+            +
+            (rise * rise)
+        );
+
+
+
+    // The tail is its own smaller run/rise triangle, scaled to the
+    // soffit's horizontal projection instead of the full building run.
+    const overhangRun =
+        soffit;
+
+
+
+    const tailLength =
+        Math.sqrt(
+            (overhangRun * overhangRun)
+            +
+            (
+                ((overhangRun / 12) * pitch)
+                *
+                ((overhangRun / 12) * pitch)
+            )
+        );
+
+
+
+    // Stock length needed to cut one rafter: ridge to tail tip, measured
+    // "along the top" -- the same top-edge measuring line the Common and
+    // Tail rows below use.
+    const topEdgeLength =
+        commonLength + tailLength;
+
+    // The board you actually BUY has to be long enough to hold the LONG
+    // POINT of every plumb cut, not the short point -- otherwise a board
+    // cut exactly to the top-edge length above comes up short. The ridge
+    // plumb cut's long point already falls on the top edge (it's included
+    // in topEdgeLength above), but the tail plumb cut's long point is on
+    // the BOTTOM edge, which sticks out past the top-edge tail tip by
+    // depth * tan(roof angle) -- i.e. depth * (pitch/12). Add that so the
+    // "Total Stock Length" you buy to is long point to long point.
+    const totalLength =
+        topEdgeLength + (rafterDepth * (pitch / 12));
+
+
+
+    // The birdsmouth notch sits the rafter down onto the wall plate, so
+    // its seat (level) cut depth just needs to match the wall thickness.
+    const birdsmouthSeat =
+        wallThickness;
+
+
+
+    const roofAngleRad =
+        pitch === 0 ? 0 : Math.atan(pitch / 12);
+
+
+
+    // Rafter depth (from the lumber size dropdown) is measured PERPENDICULAR
+    // to the rafter's length. The vertical distance between the top and
+    // bottom edges of the board is larger than that by a factor of
+    // 1 / cos(roof angle) — two parallel lines sloped at angle θ and
+    // separated by a true perpendicular distance d are d/cos(θ) apart when
+    // measured straight up and down.
+    const verticalRafterDepth =
+        rafterDepth / Math.cos(roofAngleRad);
+
+
+
+    // Heel ("stand") height: how much rafter material is left standing
+    // above the birdsmouth's seat cut, measured vertically at the heel
+    // (plumb) cut. Sliding the seat cut horizontally inward by the wall
+    // thickness raises the seat by wallThickness * tan(roof angle), which
+    // comes out of the full vertical board depth.
+    const heelHeight =
+        verticalRafterDepth
+        -
+        (
+            wallThickness
+            *
+            (pitch / 12)
+        );
+
+
+
+    // If the wall is too thick for this rafter depth/pitch combo, the
+    // birdsmouth would eat the entire board — flag it instead of drawing
+    // a broken notch.
+    const heelHeightValid =
+        heelHeight > 0.5;
+
+    const heelHeightDraw =
+        heelHeightValid ? heelHeight : Math.min(0.5, verticalRafterDepth * 0.15);
+
+
+
+    // One extra pair covers the end of the building past the last
+    // full on-center spacing interval.
+    const rafterPairs =
+        Math.ceil(
+            buildingLength / ocSpacing
+        ) + 1;
+
+
+
+    const totalRafters =
+        rafterPairs * 2;
+
+
+
+    // Every plumb cut on the rafter (ridge, tail, and the birdsmouth's heel
+    // cut) is a true vertical line, so they all share this same angle —
+    // the complement of the roof angle from horizontal.
+    const plumbCut =
+        90 - roofAngle;
+
+
+
+    const warningHtml =
+        heelHeightValid
+        ? ""
+        : `
+            <div class="calc-warning">
+                &#9888; With this wall thickness, rafter depth, and pitch, the birdsmouth
+                notch would remove almost the entire board (heel height works out to
+                ${formatInches(heelHeight)}). Use a deeper rafter (2x10 or 2x12), a
+                thinner wall plate, or reduce the pitch — the diagram below shows the
+                notch at a minimum safe size so it still draws correctly.
+            </div>
+        `;
+
+
+
+    document.getElementById("result").innerHTML = `
+
+        <div id="printSource">
+
+        ${warningHtml}
+
+        <div class="table-wrapper">
+
+            <table class="layout-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Field</th>
+
+                        <th>Value</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td>Roof Pitch</td>
+                        <td>${pitch}/12</td>
+                    </tr>
+
+                    <tr>
+                        <td>Roof Angle</td>
+                        <td>${roofAngle.toFixed(2)}°</td>
+                    </tr>
+
+                    <tr>
+                        <td>Common Run</td>
+                        <td>${formatInches(run)}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Total Rise</td>
+                        <td>${formatInches(rise)}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Common Rafter Length</td>
+                        <td>${formatInches(commonLength)}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Tail Length</td>
+                        <td>${formatInches(tailLength)}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Total Stock Length</td>
+                        <td>${formatInches(totalLength)} ${stockLengthHint(totalLength)}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Birdsmouth Seat Cut (level)</td>
+                        <td>${formatInches(birdsmouthSeat)}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Heel / Stand Height</td>
+                        <td>${heelHeightValid ? formatInches(heelHeight) : "too small &#9888;"}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Plumb Cut (ridge, tail &amp; heel)</td>
+                        <td>${plumbCut.toFixed(2)}°</td>
+                    </tr>
+
+                    <tr>
+                        <td>Rafter Pairs</td>
+                        <td>${rafterPairs}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Total Rafters</td>
+                        <td>${totalRafters}</td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        </div>
+
+        <button type="button" class="print-btn" onclick="printRafterSheet()">&#128424; Print Cut Sheet</button>
+        <div id="printPopupNote"></div>
+    `;
+
+
+
+    renderRafterSvg({
+
+        run,
+        rise,
+        soffit,
+        wallThickness,
+        ridgeThickness,
+        rafterDepth,
+        verticalRafterDepth,
+        totalLength,
+        commonLength,
+        tailLength,
+        birdsmouthSeat,
+        heelHeight: heelHeightDraw,
+        heelHeightValid,
+        roofAngle,
+        roofAngleRad,
+        plumbCut,
+        pitch
+
+    });
+
+}
+
+
+
+// Opens a clean, single-page printable copy of just the results table and
+// the rafter diagram (none of the site header/nav/footer or the input
+// form) in a new tab, sized to fit one landscape page, and triggers the
+// browser's print dialog once it has loaded.
+function printRafterSheet() {
+
+    const tableArea = document.getElementById("printSource");
+    const svg = document.getElementById("rafterSvg");
+    const noteEl = document.getElementById("printPopupNote");
+
+    if (!tableArea || !svg) {
+        return;
+    }
+
+    const styleEl = document.querySelector("style");
+    const baseStyles = styleEl ? styleEl.textContent : "";
+
+    const printWin = window.open("", "_blank");
+
+    if (!printWin) {
+        if (noteEl) {
+            noteEl.innerHTML =
+                `<p class="print-note">Your browser blocked the print pop-up. ` +
+                `Please allow pop-ups for this page and try again.</p>`;
+        }
+        return;
+    }
+
+    printWin.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rafter Cut Sheet</title>
+<style>
+${baseStyles}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1a2740;
+}
+
+.print-page {
+    box-sizing: border-box;
+    width: 10.2in;
+    height: 7.5in;
+    margin: 0.15in auto 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.print-left-col {
+    flex: 0 0 3.4in;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding-right: 14px;
+    box-sizing: border-box;
+}
+
+.print-left-col h1 {
+    flex: 0 0 auto;
+    font-size: 15px;
+    line-height: 1.25;
+    margin: 0 0 10px 0;
+}
+
+#printSource {
+    flex: 0 0 auto;
+}
+
+.table-wrapper {
+    width: auto;
+    overflow: visible;
+    margin: 0;
+}
+
+.layout-table {
+    width: 100%;
+    min-width: 0;
+    font-size: 11px;
+}
+
+.layout-table th,
+.layout-table td {
+    padding: 4px 6px;
+}
+
+.calc-warning {
+    font-size: 0.75rem;
+    padding: 8px 10px;
+    margin: 0 0 8px 0;
+}
+
+.svg-area {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.svg-area svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+@media print {
+    body { margin: 0; }
+}
+
+@page {
+    size: landscape;
+    margin: 0.4in;
+}
+</style>
+</head>
+<body>
+<div class="print-page">
+<div class="print-left-col">
+<h1>Rafter Cut Sheet &mdash; WTC Montana Construction</h1>
+${tableArea.innerHTML}
+</div>
+<div class="svg-area">${svg.outerHTML}</div>
+</div>
+<script>
+window.onload = function () {
+    window.print();
+};
+<\/script>
+</body>
+</html>`);
+
+    printWin.document.close();
+
+}
+
+
+
+// Draws a scaled, dimensioned rafter cut-sheet: the full board profile
+// (top edge, bottom edge, tail plumb cut, ridge plumb cut, and the
+// birdsmouth notch cut into the bottom edge where it crosses the wall
+// plate), a schematic wall plate and ridge board for context, and
+// dimension callouts for every measurement a framer needs at the saw.
+//
+// All the geometry is worked out in a local math coordinate system first
+// (x = horizontal, y = vertical, both in inches, origin at the tail tip on
+// the rafter's TOP edge / measuring line) and only converted to SVG pixel
+// coordinates (y-down, scaled, offset into the viewBox) at the very end.
+function renderRafterSvg(data) {
+
+    const svg = document.getElementById("rafterSvg");
+    svg.innerHTML = "";
+
+    const theta = data.roofAngleRad;
+    const tanT = Math.tan(theta);
+    const cosT = Math.cos(theta);
+    const sinT = Math.sin(theta);
+
+    // Horizontal (math-coordinate) positions along the top edge, measured
+    // from the tail tip (x = 0).
+    const xWallOuter = data.soffit;                     // outside face of wall
+    const xWallInner = data.soffit + data.wallThickness; // inside face of wall
+    const xRidge = data.soffit + data.run;               // ridge plumb cut
+
+    const vDepth = data.verticalRafterDepth; // full board depth, measured vertically
+
+    // --- Key profile points (top edge is y = x * tanT; the bottom edge is
+    // the SAME line shifted straight down by vDepth, since the two edges
+    // are parallel boards-of-constant-depth, not offset perpendicular). ---
+    const tailTop = { x: 0, y: 0 };
+    const tailBottom = { x: 0, y: -vDepth };
+
+    const ridgeTop = { x: xRidge, y: xRidge * tanT };
+    const ridgeBottom = { x: xRidge, y: (xRidge * tanT) - vDepth };
+
+    const topEdgeAtWallOuter = xWallOuter * tanT;
+
+    // Point A: on the ORIGINAL (un-notched) bottom edge, at the wall's
+    // outside face — the bottom of the heel (plumb) cut.
+    const heelBottom = { x: xWallOuter, y: topEdgeAtWallOuter - vDepth };
+    // Point C: the notch's interior corner, where the heel (plumb) cut
+    // meets the seat (level) cut. "Stand height" is defined as the
+    // vertical drop from the rafter's TOP edge down to this corner, so
+    // anchor it from the top edge — not up from the original bottom edge.
+    const heelTop = { x: xWallOuter, y: topEdgeAtWallOuter - data.heelHeight };
+    // Point B: seat cut's far end, back on the ORIGINAL bottom edge, at
+    // the wall's inside face. This is what closes the triangular notch.
+    const seatOuter = { x: xWallInner, y: heelTop.y };
+
+    // Full rafter-with-birdsmouth outline, 7 vertices, in drawing order.
+    const profile = [
+        tailTop,
+        ridgeTop,
+        ridgeBottom,
+        seatOuter,
+        heelTop,
+        heelBottom,
+        tailBottom
+    ];
+
+    // --- Scale, sized to fit this rafter's run ------------------------------
+    const totalRunIn = xRidge;
+    const targetDrawWidth = 1100;
+    let scale = targetDrawWidth / Math.max(totalRunIn, 1);
+    scale = Math.min(Math.max(scale, 0.6), 14);
+
+    // --- In-plane length-dimension offsets ----------------------------------
+    // The Total/Common/Tail length dimensions are drawn PARALLEL to the
+    // sloped top edge (not horizontal — a horizontal line reads as a
+    // horizontal-distance dimension, which would be wrong and misleading).
+    // Each is offset perpendicular, away from the board, by a multiple of
+    // the board's own depth so the offsets scale sensibly with the rafter.
+    const tailOffsetIn = vDepth * 1.3;
+    const commonOffsetIn = vDepth * 2.0;
+    const totalOffsetIn = vDepth * 2.7;
+    const maxOffsetIn = totalOffsetIn;
+
+    const rightMargin = 270;
+    const bottomMargin = 210;
+    // Left/top margins are sized to fit the outermost offset dimension
+    // line (which swings up and to the left of the board) plus room for
+    // its label text.
+    const leftMargin = Math.ceil(190 + (maxOffsetIn * sinT * scale));
+    const topMargin = Math.ceil(60 + (maxOffsetIn * cosT * scale));
+
+    const wallPlateDepthIn = 3.5; // schematic wall-plate height — visual only
+    // Anchor point: the lowest math-coordinate y in the whole drawing —
+    // either the tail tip's bottom corner, or the wall plate's schematic
+    // bottom (which now hangs from the seat cut, point C).
+    const lowestMathY = Math.min(tailBottom.y, heelTop.y - wallPlateDepthIn);
+    const highestMathY = ridgeTop.y;
+    const totalRiseIn = highestMathY - lowestMathY;
+
+    const drawWidth = totalRunIn * scale;
+    const drawHeight = totalRiseIn * scale;
+
+    const viewW = Math.ceil(drawWidth + leftMargin + rightMargin);
+    const viewH = Math.ceil(drawHeight + topMargin + bottomMargin);
+
+    svg.setAttribute("viewBox", `0 0 ${viewW} ${viewH}`);
+    svg.removeAttribute("style");
+    const renderW = Math.max(900, Math.min(viewW, 1600));
+    svg.setAttribute("width", renderW);
+    svg.setAttribute("height", Math.round(renderW * (viewH / viewW)));
+
+    const originX = leftMargin;
+
+    function toPx(pt) {
+        return {
+            x: originX + (pt.x * scale),
+            y: (viewH - bottomMargin) - ((pt.y - lowestMathY) * scale)
+        };
+    }
+
+    // Perpendicular "away from the board" direction in math-space (up and
+    // to the left, since the board rises to the right): rotate the
+    // along-board direction (cosT, sinT) by +90°.
+    function perpOffset(pt, distIn) {
+        return { x: pt.x - (sinT * distIn), y: pt.y + (cosT * distIn) };
+    }
+
+    const svgNS = "http://www.w3.org/2000/svg";
+
+    function el(tag, attrs) {
+        const node = document.createElementNS(svgNS, tag);
+        for (const k in attrs) node.setAttribute(k, attrs[k]);
+        svg.appendChild(node);
+        return node;
+    }
+
+    function addText(x, y, text, cls, anchor) {
+        const t = el("text", { x, y, class: cls || "svg-text" });
+        if (anchor) t.setAttribute("text-anchor", anchor);
+        t.textContent = text;
+        return t;
+    }
+
+    // --- Title ------------------------------------------------------------
+    addText(originX, 18, "Rafter Cut Sheet — Side Profile", "svg-title-text");
+    addText(originX, 34, "(schematic — cut from the angles & lengths below, not by scaling this drawing)", "svg-note-text");
+
+    // --- Wall plate (schematic context, not a cut piece) --------------------
+    // Sits flush against the seat cut — the plate's top face IS the seat.
+    const wallOuterPx = toPx({ x: xWallOuter, y: heelTop.y });
+    const wallInnerPx = toPx({ x: xWallInner, y: heelTop.y });
+    const wallBottomPx = toPx({ x: xWallOuter, y: heelTop.y - wallPlateDepthIn });
+    el("rect", {
+        x: Math.min(wallOuterPx.x, wallInnerPx.x),
+        y: wallOuterPx.y,
+        width: Math.abs(wallInnerPx.x - wallOuterPx.x),
+        height: (wallBottomPx.y - wallOuterPx.y),
+        class: "svg-context-fill"
+    });
+    addText((wallOuterPx.x + wallInnerPx.x) / 2, wallBottomPx.y + 20, "wall plate", "svg-note-text", "middle");
+    addText((wallOuterPx.x + wallInnerPx.x) / 2, wallBottomPx.y + 34, "(schematic)", "svg-note-text", "middle");
+
+    // A light vertical guide showing the outside wall face running down
+    // through the drawing, for orientation.
+    el("line", {
+        x1: wallOuterPx.x, y1: toPx(tailTop).y - 20,
+        x2: wallOuterPx.x, y2: wallBottomPx.y + 40,
+        class: "svg-dim-line", "stroke-dasharray": "2 4"
+    });
+
+    // --- Ridge board (schematic context) ------------------------------------
+    const ridgeTopPx = toPx(ridgeTop);
+    const ridgeBottomPx = toPx(ridgeBottom);
+    const ridgeRise = data.ridgeThickness * scale * 0.6;
+    const ridgeBoardFarX = ridgeTopPx.x + (data.ridgeThickness * scale);
+    el("polygon", {
+        points: `${ridgeTopPx.x},${ridgeTopPx.y} ${ridgeBoardFarX},${ridgeTopPx.y - ridgeRise} ${ridgeBoardFarX},${ridgeBottomPx.y - ridgeRise} ${ridgeBottomPx.x},${ridgeBottomPx.y}`,
+        class: "svg-context-fill"
+    });
+    addText(ridgeTopPx.x + 6, ridgeTopPx.y - ridgeRise - 24, "ridge board", "svg-note-text");
+    addText(ridgeTopPx.x + 6, ridgeTopPx.y - ridgeRise - 10, "(schematic)", "svg-note-text");
+
+    // --- Main rafter polygon --------------------------------------------------
+    const profilePx = profile.map(toPx);
+    el("polygon", {
+        points: profilePx.map(p => `${p.x},${p.y}`).join(" "),
+        class: "svg-rafter-fill"
+    });
+
+    // --- The four cut lines, highlighted in red dashes --------------------------
+    const tailCutPx = [toPx(tailTop), toPx(tailBottom)];
+    const ridgeCutPx = [toPx(ridgeTop), toPx(ridgeBottom)];
+    const seatCutPx = [toPx(seatOuter), toPx(heelTop)];
+    const heelCutPx = [toPx(heelTop), toPx(heelBottom)];
+
+    [tailCutPx, ridgeCutPx, seatCutPx, heelCutPx].forEach(pts => {
+        el("line", { x1: pts[0].x, y1: pts[0].y, x2: pts[1].x, y2: pts[1].y, class: "svg-cut-line" });
+    });
+
+    const heelLabel = data.heelHeightValid ? formatInches(data.heelHeight) : "too small — see warning above";
+
+    // Ridge plumb cut — label + rafter-depth dimension both live here,
+    // on opposite sides of the cut line so they don't collide.
+    {
+        addText(ridgeCutPx[0].x + 12, ridgeCutPx[0].y + 16, `Ridge / plumb cut`, "svg-cut-text");
+        addText(ridgeCutPx[0].x + 12, ridgeCutPx[0].y + 32, `${data.plumbCut.toFixed(1)}° from level`, "svg-cut-text");
+
+        const p1 = ridgeCutPx[0], p2 = ridgeCutPx[1];
+        const lx = p1.x - 26;
+        el("line", { x1: lx, y1: p1.y, x2: lx, y2: p2.y, class: "svg-dim-line" });
+        el("line", { x1: lx, y1: p1.y, x2: p1.x, y2: p1.y, class: "svg-dim-line" });
+        el("line", { x1: lx, y1: p2.y, x2: p2.x, y2: p2.y, class: "svg-dim-line" });
+        addText(lx - 8, (p1.y + p2.y) / 2, `Rafter depth`, "svg-dim-text", "end");
+        addText(lx - 8, (p1.y + p2.y) / 2 + 16, `${formatInches(data.rafterDepth)}`, "svg-dim-text", "end");
+    }
+
+    // Tail plumb cut — label sits below/right of the cut, clear of the
+    // rafter-depth dimension which lives at the ridge end.
+    {
+        const p1 = tailCutPx[0], p2 = tailCutPx[1];
+        addText(p1.x + 10, p2.y - 6, `Tail / plumb cut`, "svg-cut-text");
+        addText(p1.x + 10, p2.y + 10, `${data.plumbCut.toFixed(1)}° from level`, "svg-cut-text");
+    }
+
+    // Birdsmouth: seat (level) cut label+dimension, stacked above the notch.
+    {
+        const p1 = seatCutPx[0], p2 = seatCutPx[1]; // seatOuter -> heelTop
+        const ly = p1.y - 30;
+        el("line", { x1: p1.x, y1: ly, x2: p2.x, y2: ly, class: "svg-dim-line" });
+        el("line", { x1: p1.x, y1: p1.y, x2: p1.x, y2: ly, class: "svg-dim-line" });
+        el("line", { x1: p2.x, y1: p2.y, x2: p2.x, y2: ly, class: "svg-dim-line" });
+        addText((p1.x + p2.x) / 2, ly - 20, `Seat cut (level)`, "svg-dim-text", "middle");
+        addText((p1.x + p2.x) / 2, ly - 6, `${formatInches(data.birdsmouthSeat)}`, "svg-dim-text", "middle");
+    }
+
+    // Birdsmouth: heel (plumb) cut RED line is already drawn above. Its
+    // dimension — "stand height" — is the vertical drop from the rafter's
+    // TOP edge (directly above the heel cut) down to the notch's interior
+    // corner, NOT the length of the heel cut itself. One combined label
+    // (cut name + measurement) sits near the TOP of that span, clear of
+    // the seat-cut callout which sits down at the corner.
+    {
+        const topAtHeel = toPx({ x: xWallOuter, y: topEdgeAtWallOuter });
+        const corner = toPx(heelTop);
+        const lx = corner.x - 42;
+        el("line", { x1: lx, y1: topAtHeel.y, x2: lx, y2: corner.y, class: "svg-dim-line" });
+        el("line", { x1: lx, y1: topAtHeel.y, x2: topAtHeel.x, y2: topAtHeel.y, class: "svg-dim-line" });
+        el("line", { x1: lx, y1: corner.y, x2: corner.x, y2: corner.y, class: "svg-dim-line" });
+        addText(lx - 8, topAtHeel.y + 14, `Heel cut (plumb):`, "svg-dim-text", "end");
+        addText(lx - 8, topAtHeel.y + 30, `stand height ${heelLabel}`, "svg-dim-text", "end");
+    }
+
+    // --- In-plane (aligned) length dimensions ---------------------------------
+    // Parallel to the sloped top edge, offset away from the board, with
+    // short extension lines dropped to the real endpoints — so these read
+    // as along-the-board lengths, never as horizontal distances.
+    const thetaDeg = theta * (180 / Math.PI);
+
+    function dimAligned(mathP1, mathP2, offsetIn, label) {
+        const o1 = toPx(perpOffset(mathP1, offsetIn));
+        const o2 = toPx(perpOffset(mathP2, offsetIn));
+        const e1 = toPx(mathP1);
+        const e2 = toPx(mathP2);
+        el("line", { x1: e1.x, y1: e1.y, x2: o1.x, y2: o1.y, class: "svg-dim-line", "stroke-dasharray": "2 3" });
+        el("line", { x1: e2.x, y1: e2.y, x2: o2.x, y2: o2.y, class: "svg-dim-line", "stroke-dasharray": "2 3" });
+        el("line", { x1: o1.x, y1: o1.y, x2: o2.x, y2: o2.y, class: "svg-dim-line" });
+
+        // Label text is rotated to run PARALLEL to the board (matching the
+        // dimension line it belongs to) instead of sitting horizontal —
+        // horizontal text on a diagonal, closely-spaced set of dimension
+        // lines overlaps almost immediately; angled text doesn't.
+        const midX = (o1.x + o2.x) / 2;
+        const midY = (o1.y + o2.y) / 2;
+        const nudge = 10; // small extra pixel gap above the dimension line
+        const tx = midX - (sinT * nudge);
+        const ty = midY - (cosT * nudge);
+        const t = el("text", { x: tx, y: ty, class: "svg-dim-text", "text-anchor": "middle" });
+        t.setAttribute("transform", `rotate(${-thetaDeg} ${tx} ${ty})`);
+        t.textContent = label;
+    }
+
+    const wallOuterTopEdge = { x: xWallOuter, y: topEdgeAtWallOuter };
+
+    // The "long point to long point" stock-length line needs to start
+    // past the tail tip -- the tail's plumb cut sticks out further on the
+    // BOTTOM edge than on the top, so a board cut to the top-edge length
+    // alone would come up short. Anchoring the dimension line directly on
+    // tailBottom draws it at a different angle than the other two (that
+    // point sits off the board's top-edge measuring line entirely), which
+    // is why it came out non-parallel. Instead, extend the top-edge line
+    // itself past tailTop by that same extra length, so all three
+    // dimension lines stay parallel to the board and to each other.
+    const stockExtra = data.rafterDepth * (data.pitch / 12);
+    const stockTailPoint = {
+        x: tailTop.x - (stockExtra * cosT),
+        y: tailTop.y - (stockExtra * sinT)
+    };
+    dimAligned(stockTailPoint, ridgeTop, totalOffsetIn, `Total stock length needed: ${formatInches(data.totalLength)}`);
+    dimAligned(wallOuterTopEdge, ridgeTop, commonOffsetIn, `Common rafter length ${formatInches(data.commonLength)}`);
+    dimAligned(tailTop, wallOuterTopEdge, tailOffsetIn, `Tail length ${formatInches(data.tailLength)}`);
+
+    // --- Rise / Run / Roof angle callout, tucked under the ridge board ----
+    addText(ridgeTopPx.x + 14, ridgeBottomPx.y + 30, `Roof angle ${data.roofAngle.toFixed(1)}°  (${data.pitch}/12 pitch)`, "svg-dim-text");
+    addText(ridgeTopPx.x + 14, ridgeBottomPx.y + 48, `Run ${formatInches(data.run)}   Rise ${formatInches(data.rise)}`, "svg-dim-text");
+}
+
+
+
+</script>
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../tools.html">&larr; Back to all tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="../contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="../services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="../services/new-build.html">New Build</a></li>
+        <li><a href="../services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="../services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="../services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="../portfolio.html">Portfolio</a></li>
+        <li><a href="../tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="../about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="../assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>

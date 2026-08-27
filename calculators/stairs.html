@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stair Calculator | WTC Montana Construction</title>
+<meta name="description" content="Calculate stair rise, run, and stringer layout.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/stairs.html">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">
+      <img class="logo" src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/index.html">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html" class="current">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Stair Calculator</h1>
+    <p>Calculate stair rise, run, and stringer layout.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+<style>
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.layout-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+}
+
+.layout-table th,
+.layout-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.layout-table th {
+    background: #f5f5f5;
+}
+
+.layout-table tbody tr {
+    cursor: pointer;
+}
+
+.layout-table tbody tr:hover {
+    background: #f5f2ea;
+}
+
+.layout-table tbody tr.active-row {
+    background: #fdf3e0;
+    font-weight: 700;
+}
+
+.measurement-input {
+    margin-bottom: 20px;
+}
+
+.measurement-input select {
+    margin-right: 6px;
+    margin-top: 6px;
+}
+
+.checkbox-row {
+    margin: 20px 0;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px 18px;
+    cursor: pointer;
+}
+
+.print-btn {
+    margin-top: 16px;
+    margin-right: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    background: #1a2740;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.print-btn:hover {
+    background: #253551;
+}
+
+.print-note {
+    font-size: 0.85rem;
+    color: #8a1f18;
+    margin-top: 10px;
+}
+
+.result-empty {
+    padding: 14px;
+    border: 1px solid #ddd;
+    margin-top: 12px;
+}
+
+.result-hint {
+    font-size: 0.9rem;
+    color: #5c6270;
+    margin-top: 8px;
+}
+
+#stairSvgWrapper {
+    width: 100%;
+    overflow: auto;
+    border: 1px solid #ccc;
+    margin-top: 30px;
+    background: #fafafa;
+}
+
+#stairSvg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Stair cut-sheet diagram -- same visual language as the Rafter Calculator */
+.svg-board-fill {
+    fill: #e4c48c;
+    stroke: #3a2a14;
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+.svg-context-fill {
+    fill: #cfd6de;
+    stroke: #6b7480;
+    stroke-width: 1.5;
+}
+.svg-dim-line {
+    stroke: #253551;
+    stroke-width: 1;
+    fill: none;
+}
+.svg-dim-text {
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    fill: #253551;
+    font-weight: 700;
+}
+.svg-note-text {
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    fill: #444;
+    font-style: italic;
+}
+.svg-title-text {
+    font-size: 15px;
+    font-family: Arial, sans-serif;
+    fill: #1a2740;
+    font-weight: 700;
+}
+
+</style>
+
+<!--
+  Stair Calculator
+  =================
+  Solves for stair layouts (riser count, rise per step, tread depth)
+  that fit a given floor-to-floor height, given rise/run comfort limits
+  and an optional maximum total horizontal run.
+
+  Terms used below:
+    total rise   - vertical distance from the bottom finished floor to
+                   the top finished floor that the stair must climb.
+    riser        - the vertical face of one step; "rise" is its height.
+    tread        - the horizontal surface of one step; "run" is its depth.
+                   A stair with N risers has N-1 treads (the top riser
+                   lands on the upper floor itself).
+    stringer     - the diagonal board the treads/risers are cut into;
+                   its length is the hypotenuse of total rise/run.
+-->
+
+<div id="stairCalculator">
+
+    <h2>Stair Calculator</h2>
+
+    <p>
+        Calculates stair layouts, rise/run,
+        stringer length, stair angle,
+        and total required stair run.
+    </p>
+
+
+
+    <label>
+        Bottom Finish Floor Thickness
+    </label>
+
+    <div id="bottomFinishInputs"></div>
+
+
+
+    <label>
+        Top Finish Floor Thickness
+    </label>
+
+    <div id="topFinishInputs"></div>
+
+
+
+    <label>
+        Tread Stock Thickness
+    </label>
+
+    <div id="treadThicknessInputs"></div>
+
+
+
+    <label>
+        Subfloor Height Difference
+    </label>
+
+    <div id="totalRiseInputs"></div>
+
+
+
+    <div class="checkbox-row">
+
+        <label>
+
+            <input
+                type="checkbox"
+                id="limitRunCheckbox"
+            >
+
+            Limit Total Horizontal Run
+
+        </label>
+
+    </div>
+
+
+
+    <div id="runConstraintContainer"
+         style="display:none;">
+
+        <label>
+            Maximum Horizontal Run
+        </label>
+
+        <div id="totalRunInputs"></div>
+
+    </div>
+
+
+
+    <label>
+        Minimum Rise
+    </label>
+
+    <div id="minRiseInputs"></div>
+
+
+
+    <label>
+        Maximum Rise
+    </label>
+
+    <div id="maxRiseInputs"></div>
+
+
+
+    <label>
+        Preferred Tread Depth
+    </label>
+
+    <div id="preferredRunInputs"></div>
+
+
+
+    <label>
+        Tread Tolerance (+/-)
+    </label>
+
+    <div id="runToleranceInputs"></div>
+
+
+
+    <label>
+        Stringer Stock
+    </label>
+
+    <div class="measurement-input">
+        <select id="stringerStock">
+            <optgroup label="Dimensional Lumber">
+                <option value="9.25">2x10 (9.25")</option>
+                <option value="11.25" selected>2x12 (11.25")</option>
+            </optgroup>
+            <optgroup label="LVL">
+                <option value="11.875">11 7/8" LVL</option>
+                <option value="14">14" LVL</option>
+                <option value="16">16" LVL</option>
+                <option value="18">18" LVL</option>
+            </optgroup>
+        </select>
+    </div>
+
+
+
+    <button onclick="calculateStairs()">
+        Calculate Stairs
+    </button>
+
+
+
+    <div id="result"></div>
+
+    <div id="stairSvgWrapper">
+
+        <svg
+            id="stairSvg"
+            viewBox="0 0 1400 700"
+        ></svg>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+function getImperialSpinners(id) {
+
+    const fractions = [
+        "0",
+        "1/16",
+        "1/8",
+        "3/16",
+        "1/4",
+        "5/16",
+        "3/8",
+        "7/16",
+        "1/2",
+        "9/16",
+        "5/8",
+        "11/16",
+        "3/4",
+        "13/16",
+        "7/8",
+        "15/16"
+    ];
+
+    let feetOptions = "";
+
+    for (let i = 0; i <= 30; i++) {
+
+        feetOptions += `
+            <option value="${i}">
+                ${i} ft
+            </option>
+        `;
+    }
+
+    let inchOptions = "";
+
+    for (let i = 0; i <= 11; i++) {
+
+        inchOptions += `
+            <option value="${i}">
+                ${i} in
+            </option>
+        `;
+    }
+
+    let fractionOptions = "";
+
+    for (const fraction of fractions) {
+
+        fractionOptions += `
+            <option value="${fraction}">
+                ${fraction}
+            </option>
+        `;
+    }
+
+    return `
+
+        <div class="measurement-input">
+
+            <select id="${id}Feet">
+                ${feetOptions}
+            </select>
+
+            <select id="${id}Inches">
+                ${inchOptions}
+            </select>
+
+            <select id="${id}Fraction">
+                ${fractionOptions}
+            </select>
+
+        </div>
+    `;
+}
+
+
+
+[
+    "bottomFinish",
+    "topFinish",
+    "treadThickness",
+    "totalRise",
+    "totalRun",
+    "minRise",
+    "maxRise",
+    "preferredRun",
+    "runTolerance"
+].forEach(id => {
+
+    const target =
+        document.getElementById(
+            `${id}Inputs`
+        );
+
+    if (target) {
+
+        target.innerHTML =
+            getImperialSpinners(id);
+    }
+});
+
+
+
+document
+    .getElementById("limitRunCheckbox")
+    .addEventListener(
+        "change",
+        function () {
+
+            document
+                .getElementById(
+                    "runConstraintContainer"
+                )
+                .style.display =
+                    this.checked
+                        ? "block"
+                        : "none";
+        }
+    );
+
+
+
+// Converts a feet / inches / fraction spinner trio into one
+// decimal-inches number, e.g. (1, 3, "1/2") -> 15.5.
+function addImperial(ft, inch, frac) {
+
+    let fracToDec = 0;
+
+    if (frac !== "0") {
+
+        const [n, d] =
+            frac.split("/").map(Number);
+
+        fracToDec = n / d;
+    }
+
+    return (ft * 12) + inch + fracToDec;
+}
+
+
+
+// Converts decimal inches back into a "whole fraction/32ths" display
+// string, e.g. 15.5 -> `15 1/2"`. Rounds to the nearest 1/32" and
+// reduces the fraction (e.g. 16/32 -> 1/2) via gcd.
+function formatInches(decimalInches) {
+
+    const whole =
+        Math.floor(decimalInches);
+
+    const fraction =
+        decimalInches - whole;
+
+    const denominator = 32;
+
+    let numerator =
+        Math.round(fraction * denominator);
+
+    if (numerator === denominator) {
+
+        return `${whole + 1}"`;
+    }
+
+    function gcd(a, b) {
+
+        return b
+            ? gcd(b, a % b)
+            : a;
+    }
+
+    const divisor =
+        gcd(numerator, denominator);
+
+    const simplifiedNum =
+        numerator / divisor;
+
+    const simplifiedDen =
+        denominator / divisor;
+
+    if (numerator === 0) {
+
+        return `${whole}"`;
+    }
+
+    return `${whole} ${simplifiedNum}/${simplifiedDen}"`;
+}
+
+
+
+// Tries every riser count from 2-25; for each, the rise per step is
+// fixed (totalRise / risers), so only counts landing within
+// [minRise, maxRise] are kept. For each surviving riser count, sweeps
+// tread depth across [preferredRun - tolerance, preferredRun + tolerance]
+// in 1/32" steps and keeps every depth that satisfies the optional total
+// horizontal run limit. Results are then sorted so tread depths closest
+// to the preferred run come first, and only the best 8 are returned.
+function solveStairs({
+
+    totalRise,
+    preferredRun,
+    runTolerance,
+    minRise,
+    maxRise,
+    maxTotalRun,
+    limitTotalRun
+
+}) {
+
+    const results = [];
+
+
+
+    const minRun =
+        preferredRun - runTolerance;
+
+    const maxRun =
+        preferredRun + runTolerance;
+
+
+
+    for (
+        let risers = 2;
+        risers <= 25;
+        risers++
+    ) {
+
+        const rise =
+            totalRise / risers;
+
+
+
+        if (
+            rise < minRise
+            ||
+            rise > maxRise
+        ) {
+            continue;
+        }
+
+
+
+        // N risers means N-1 treads: the last riser lands on the
+        // upper floor, which doesn't need its own tread.
+        const treads =
+            risers - 1;
+
+
+
+        for (
+            let run = minRun;
+            run <= maxRun;
+            run += 1/32
+        ) {
+
+            const totalRun =
+                treads * run;
+
+
+
+            if (
+                limitTotalRun
+                &&
+                totalRun > maxTotalRun
+            ) {
+                continue;
+            }
+
+
+
+            // Stringer length: hypotenuse of the overall rise/run triangle.
+            const stringerLength =
+                Math.sqrt(
+                    (totalRise * totalRise)
+                    +
+                    (totalRun * totalRun)
+                );
+
+
+
+            const stairAngle =
+                Math.atan(
+                    totalRise / totalRun
+                ) * (180 / Math.PI);
+
+
+
+            results.push({
+
+                risers,
+                treads,
+                rise,
+                run,
+                totalRise,
+                totalRun,
+                stringerLength,
+                stairAngle
+
+            });
+        }
+    }
+
+
+
+    // Prefer tread depths closest to what the user asked for.
+    results.sort((a, b) => {
+
+        return (
+            Math.abs(a.run - preferredRun)
+            -
+            Math.abs(b.run - preferredRun)
+        );
+    });
+
+
+
+    return results.slice(0, 8);
+}
+
+
+
+function renderTable(results) {
+
+    if (!results.length) {
+
+        return `
+            <div class="result-empty">
+                No valid stair layouts found. Try widening the tread
+                tolerance, loosening the min/max rise, or turning off
+                the horizontal run limit.
+            </div>
+        `;
+    }
+
+
+
+    return `
+
+        <div class="table-wrapper">
+
+            <table class="layout-table" id="stairResultsTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Option</th>
+
+                        <th>Risers</th>
+
+                        <th>Treads</th>
+
+                        <th>Rise</th>
+
+                        <th>Tread Depth</th>
+
+                        <th>Total Run</th>
+
+                        <th>Stringer Length</th>
+
+                        <th>Angle</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${results.map((option, index) => `
+
+                        <tr data-option-index="${index}"
+                            class="${index === 0 ? "active-row" : ""}"
+                            onclick='selectStairOption(${index})'>
+
+                            <td>
+                                Option ${index + 1}
+                            </td>
+
+                            <td>
+                                ${option.risers}
+                            </td>
+
+                            <td>
+                                ${option.treads}
+                            </td>
+
+                            <td>
+                                ${formatInches(option.rise)}
+                            </td>
+
+                            <td>
+                                ${formatInches(option.run)}
+                            </td>
+
+                            <td>
+                                ${formatInches(option.totalRun)}
+                            </td>
+
+                            <td>
+                                ${formatInches(option.stringerLength)}
+                            </td>
+
+                            <td>
+                                ${option.stairAngle.toFixed(1)}°
+                            </td>
+
+                        </tr>
+
+                    `).join("")}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <p class="result-hint">Click any row to see that option's cut-sheet diagram below.</p>
+    `;
+}
+
+
+
+// Results from the most recent calculation, kept around so a table-row
+// click can re-render the diagram without recomputing everything.
+let lastStairResults = [];
+
+
+
+// Highlights the clicked row and redraws the diagram for that option.
+function selectStairOption(index) {
+
+    lastStairResults[index] &&
+        renderStairSvg(lastStairResults[index]);
+
+    const rows =
+        document.querySelectorAll("#stairResultsTable tbody tr");
+
+    rows.forEach((row, i) => {
+
+        row.classList.toggle(
+            "active-row",
+            i === index
+        );
+    });
+}
+
+
+
+function calculateStairs() {
+
+
+
+    const bottomFinish =
+        addImperial(
+            parseFloat(document.getElementById('bottomFinishFeet').value),
+            parseFloat(document.getElementById('bottomFinishInches').value),
+            document.getElementById('bottomFinishFraction').value
+        );
+
+
+
+    const topFinish =
+        addImperial(
+            parseFloat(document.getElementById('topFinishFeet').value),
+            parseFloat(document.getElementById('topFinishInches').value),
+            document.getElementById('topFinishFraction').value
+        );
+
+
+
+    const treadThickness =
+        addImperial(
+            parseFloat(document.getElementById('treadThicknessFeet').value),
+            parseFloat(document.getElementById('treadThicknessInches').value),
+            document.getElementById('treadThicknessFraction').value
+        );
+
+
+
+    const subfloorRise =
+        addImperial(
+            parseFloat(document.getElementById('totalRiseFeet').value),
+            parseFloat(document.getElementById('totalRiseInches').value),
+            document.getElementById('totalRiseFraction').value
+        );
+
+
+
+    const preferredRun =
+        addImperial(
+            parseFloat(document.getElementById('preferredRunFeet').value),
+            parseFloat(document.getElementById('preferredRunInches').value),
+            document.getElementById('preferredRunFraction').value
+        );
+
+
+
+    const runTolerance =
+        addImperial(
+            parseFloat(document.getElementById('runToleranceFeet').value),
+            parseFloat(document.getElementById('runToleranceInches').value),
+            document.getElementById('runToleranceFraction').value
+        );
+
+
+
+    const minRise =
+        addImperial(
+            parseFloat(document.getElementById('minRiseFeet').value),
+            parseFloat(document.getElementById('minRiseInches').value),
+            document.getElementById('minRiseFraction').value
+        );
+
+
+
+    const maxRise =
+        addImperial(
+            parseFloat(document.getElementById('maxRiseFeet').value),
+            parseFloat(document.getElementById('maxRiseInches').value),
+            document.getElementById('maxRiseFraction').value
+        );
+
+
+
+    const limitTotalRun =
+        document.getElementById(
+            "limitRunCheckbox"
+        ).checked;
+
+
+
+    let maxTotalRun = Infinity;
+
+
+
+    if (limitTotalRun) {
+
+        maxTotalRun =
+            addImperial(
+                parseFloat(document.getElementById('totalRunFeet').value),
+                parseFloat(document.getElementById('totalRunInches').value),
+                document.getElementById('totalRunFraction').value
+            );
+    }
+
+
+
+    // The stair actually climbs from the top of the bottom finished
+    // floor to the top of the upper finished floor, not raw subfloor to
+    // subfloor: add the upper floor's finish thickness (raises the top),
+    // subtract the lower floor's finish thickness (raises the bottom,
+    // shortening the climb), and add tread stock thickness since the
+    // first tread's walking surface sits above the bottom finish floor.
+    const totalRise =
+        subfloorRise
+        +
+        topFinish
+        -
+        bottomFinish
+        +
+        treadThickness;
+
+
+
+    const results =
+        solveStairs({
+
+            totalRise,
+            preferredRun,
+            runTolerance,
+            minRise,
+            maxRise,
+            maxTotalRun,
+            limitTotalRun
+
+        });
+
+    lastStairResults = results;
+
+
+
+    document.getElementById("result").innerHTML = `
+
+        <div class="layout-section">
+
+            <h3>
+                Stair Layout Options
+            </h3>
+
+            <p>
+
+                Calculates rise, tread depth,
+                total required stair run,
+                stringer length, and stair angle.
+
+            </p>
+
+            ${renderTable(results)}
+
+            ${results.length ? `<button type="button" class="print-btn" onclick="printStairSheet()">&#128424; Print Cut Sheet</button>` : ""}
+            <div id="printPopupNote"></div>
+
+        </div>
+    `;
+
+
+
+    if (results.length) {
+
+        renderStairSvg(results[0]);
+
+    } else {
+
+        document.getElementById("stairSvg").innerHTML = "";
+    }
+}
+
+
+
+// Opens a clean, single-page printable copy of just the results table
+// and the currently-selected stair diagram (none of the site header/
+// nav/footer or the input form) in a new tab, sized to fit one
+// landscape page, and triggers the browser's print dialog once it has
+// loaded. Mirrors the Rafter Calculator's print button.
+function printStairSheet() {
+
+    const tableArea = document.querySelector("#result .table-wrapper");
+    const svg = document.getElementById("stairSvg");
+    const noteEl = document.getElementById("printPopupNote");
+
+    if (!tableArea || !svg || !svg.childNodes.length) {
+        return;
+    }
+
+    const styleEl = document.querySelector("style");
+    const baseStyles = styleEl ? styleEl.textContent : "";
+
+    const printWin = window.open("", "_blank");
+
+    if (!printWin) {
+        if (noteEl) {
+            noteEl.innerHTML =
+                `<p class="print-note">Your browser blocked the print pop-up. ` +
+                `Please allow pop-ups for this page and try again.</p>`;
+        }
+        return;
+    }
+
+    printWin.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stair Cut Sheet</title>
+<style>
+${baseStyles}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1a2740;
+}
+
+.print-page {
+    box-sizing: border-box;
+    width: 10.2in;
+    height: 7.5in;
+    margin: 0.15in auto 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.print-left-col {
+    flex: 0 0 3.6in;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding-right: 14px;
+    box-sizing: border-box;
+}
+
+.print-left-col h1 {
+    flex: 0 0 auto;
+    font-size: 15px;
+    line-height: 1.25;
+    margin: 0 0 10px 0;
+}
+
+.table-wrapper {
+    width: auto;
+    overflow: visible;
+    margin: 0;
+}
+
+.layout-table {
+    width: 100%;
+    min-width: 0;
+    font-size: 10.5px;
+}
+
+.layout-table th,
+.layout-table td {
+    padding: 4px 5px;
+}
+
+.svg-area {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.svg-area svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+@media print {
+    body { margin: 0; }
+}
+
+@page {
+    size: landscape;
+    margin: 0.4in;
+}
+</style>
+</head>
+<body>
+<div class="print-page">
+<div class="print-left-col">
+<h1>Stair Cut Sheet &mdash; WTC Montana Construction</h1>
+${tableArea.outerHTML}
+</div>
+<div class="svg-area">${svg.outerHTML}</div>
+</div>
+<script>
+window.onload = function () {
+    window.print();
+};
+<\/script>
+</body>
+</html>`);
+
+    printWin.document.close();
+
+}
+
+
+
+// Draws a dimensioned stair cut-sheet: the full stringer profile (the
+// tread/riser "staircase" top edge, plus a schematic carriage/bottom
+// edge parallel to the overall stringer line so the board reads as
+// real stock instead of a bare outline), schematic floor context top
+// and bottom, and dimension callouts for total rise, total run,
+// stringer length, stair angle, and one representative step's rise
+// and tread depth.
+//
+// All the geometry is worked out in a local math coordinate system
+// first (x = horizontal, y = vertical, both in inches, origin at the
+// bottom-front corner of the first riser) and only converted to SVG
+// pixel coordinates (y-down, scaled, offset into the viewBox) at the
+// very end -- same approach as the Rafter Calculator's diagram.
+function renderStairSvg(data) {
+
+    const svg = document.getElementById("stairSvg");
+    svg.innerHTML = "";
+
+    const N = data.risers;
+    const treads = data.treads;
+    const rise = data.rise;
+    const run = data.run;
+    const totalRun = data.totalRun;
+    const totalRise = data.totalRise !== undefined ? data.totalRise : rise * N;
+
+    const stringerStockIn =
+        parseFloat(document.getElementById("stringerStock").value) || 11.25;
+
+    // Overall stringer angle -- corner (bottom-front) to corner
+    // (top-back landing) -- the same angle the "Stringer Length" and
+    // "Angle" table columns are computed from.
+    const theta = Math.atan2(totalRise, totalRun);
+    const thetaDeg = theta * (180 / Math.PI);
+    const cosT = Math.cos(theta);
+    const sinT = Math.sin(theta);
+
+    // --- Step profile (top edge: tread tops + riser faces) ------------------
+    // N risers, N-1 treads: every riser is followed by a tread EXCEPT the
+    // last one, which lands directly on the upper floor.
+    const topPoints = [{ x: 0, y: 0 }];
+    {
+        let cx = 0, cy = 0;
+        for (let i = 0; i < N; i++) {
+            cy += rise;
+            topPoints.push({ x: cx, y: cy });
+            if (i < treads) {
+                cx += run;
+                topPoints.push({ x: cx, y: cy });
+            }
+        }
+    }
+    const cornerBottom = { x: 0, y: 0 };
+    const cornerTop = { x: totalRun, y: totalRise };
+
+    // Perpendicular "into the board" direction (down and to the right,
+    // since the treads/risers are notched UP out of the top of the
+    // board): rotate the along-stringer direction (cosT, sinT) by -90°.
+    function perpDown(pt, distIn) {
+        return { x: pt.x + (sinT * distIn), y: pt.y - (cosT * distIn) };
+    }
+
+    // Perpendicular "away from the board, into open space" direction
+    // (up and to the left) -- used to float dimension lines/labels off
+    // to the side, same convention as the Rafter Calculator.
+    function perpOffset(pt, distIn) {
+        return { x: pt.x - (sinT * distIn), y: pt.y + (cosT * distIn) };
+    }
+
+    // Schematic carriage/bottom edge: parallel to the overall corner-to-
+    // corner stringer line, offset by the chosen stock thickness. This
+    // is illustrative, not an engineered minimum-material calculation --
+    // always verify actual remaining stringer material against your
+    // local code.
+    const bottomStart = perpDown(cornerBottom, stringerStockIn);
+    const bottomEnd = perpDown(cornerTop, stringerStockIn);
+
+    const boardOutline = [...topPoints, bottomEnd, bottomStart];
+
+    // --- Scale, sized to fit this stair's run --------------------------------
+    const targetDrawWidth = 950;
+    let scale = targetDrawWidth / Math.max(totalRun, 1);
+    scale = Math.min(Math.max(scale, 3), 24);
+
+    // --- Stringer Length dimension offset (floats above the diagonal) -------
+    const stringerOffsetIn = stringerStockIn * 1.9;
+
+    const rightMargin = 250;
+    const bottomMargin = 190;
+    const leftMargin = Math.ceil(190 + (stringerOffsetIn * sinT * scale));
+    const topMargin = Math.ceil(90 + (stringerOffsetIn * cosT * scale));
+
+    const allPts = [...boardOutline];
+    const minX = Math.min(...allPts.map(p => p.x));
+    const maxX = Math.max(...allPts.map(p => p.x));
+    const minY = Math.min(...allPts.map(p => p.y));
+    const maxY = Math.max(...allPts.map(p => p.y));
+
+    const drawWidth = (maxX - minX) * scale;
+    const drawHeight = (maxY - minY) * scale;
+
+    const viewW = Math.ceil(drawWidth + leftMargin + rightMargin);
+    const viewH = Math.ceil(drawHeight + topMargin + bottomMargin);
+
+    svg.setAttribute("viewBox", `0 0 ${viewW} ${viewH}`);
+    svg.removeAttribute("style");
+    const renderW = Math.max(800, Math.min(viewW, 1500));
+    svg.setAttribute("width", renderW);
+    svg.setAttribute("height", Math.round(renderW * (viewH / viewW)));
+
+    function toPx(pt) {
+        return {
+            x: leftMargin + ((pt.x - minX) * scale),
+            y: (viewH - bottomMargin) - ((pt.y - minY) * scale)
+        };
+    }
+
+    const svgNS = "http://www.w3.org/2000/svg";
+
+    function el(tag, attrs) {
+        const node = document.createElementNS(svgNS, tag);
+        for (const k in attrs) node.setAttribute(k, attrs[k]);
+        svg.appendChild(node);
+        return node;
+    }
+
+    function addText(x, y, text, cls, anchor) {
+        const t = el("text", { x, y, class: cls || "svg-note-text" });
+        if (anchor) t.setAttribute("text-anchor", anchor);
+        t.textContent = text;
+        return t;
+    }
+
+    // --- Title ----------------------------------------------------------------
+    addText(leftMargin, 18, "Stair Cut Sheet — Side Profile", "svg-title-text");
+    addText(leftMargin, 34, "(schematic — cut from the angles & lengths below, not by scaling this drawing)", "svg-note-text");
+
+    // --- Bottom floor (schematic context) --------------------------------------
+    // Drawn as a level (non-rotated) box sitting under the board's lowest
+    // point, extending only to the LEFT of the first riser (x <= 0) so it
+    // never slides in underneath the first tread's dimension callout at
+    // steep stair angles (a real bug found in QA: at steep angles the old
+    // perpDown-rotated box shifted right, into the tread-depth label).
+    const floorDepthIn = 3.5;
+    const floorWidthIn = Math.max(run * 0.9, 10);
+    const floorLevelY = bottomStart.y;
+    const floorStartPx = toPx({ x: 0, y: floorLevelY });
+    const floorFarPx = toPx({ x: -floorWidthIn, y: floorLevelY });
+    const floorBottomPx = toPx({ x: -floorWidthIn, y: floorLevelY - floorDepthIn });
+    el("rect", {
+        x: Math.min(floorStartPx.x, floorFarPx.x),
+        y: Math.min(floorStartPx.y, floorBottomPx.y),
+        width: Math.abs(floorStartPx.x - floorFarPx.x),
+        height: Math.abs(floorBottomPx.y - floorStartPx.y),
+        class: "svg-context-fill"
+    });
+    addText(Math.min(floorStartPx.x, floorFarPx.x), floorBottomPx.y + 18, "bottom floor", "svg-note-text");
+    addText(Math.min(floorStartPx.x, floorFarPx.x), floorBottomPx.y + 32, "(schematic)", "svg-note-text");
+
+    // --- Top floor / landing (schematic context) --------------------------------
+    const landingFarPt = { x: totalRun + Math.max(run * 0.9, 10), y: totalRise };
+    const topFloorNearPx = toPx(cornerTop);
+    const topFloorFarPx = toPx(landingFarPt);
+    const topFloorTopPx = toPx({ x: totalRun, y: totalRise + floorDepthIn });
+    el("rect", {
+        x: Math.min(topFloorNearPx.x, topFloorFarPx.x),
+        y: Math.min(topFloorTopPx.y, topFloorNearPx.y),
+        width: Math.abs(topFloorFarPx.x - topFloorNearPx.x),
+        height: Math.abs(topFloorNearPx.y - topFloorTopPx.y),
+        class: "svg-context-fill"
+    });
+    addText(topFloorNearPx.x + 6, topFloorTopPx.y - 8, "top floor / landing", "svg-note-text");
+    addText(topFloorNearPx.x + 6, topFloorTopPx.y + 6, "(schematic)", "svg-note-text");
+
+    // --- Main stringer polygon --------------------------------------------------
+    const boardOutlinePx = boardOutline.map(toPx);
+    el("polygon", {
+        points: boardOutlinePx.map(p => `${p.x},${p.y}`).join(" "),
+        class: "svg-board-fill"
+    });
+
+    // --- Stringer stock label, along the carriage (bottom) edge -----------------
+    {
+        const midMath = {
+            x: (cornerBottom.x + cornerTop.x) / 2,
+            y: (cornerBottom.y + cornerTop.y) / 2
+        };
+        const labelPt = toPx(perpDown(midMath, stringerStockIn * 0.5));
+        const t = el("text", { x: labelPt.x, y: labelPt.y, class: "svg-dim-text", "text-anchor": "middle" });
+        t.setAttribute("transform", `rotate(${-thetaDeg} ${labelPt.x} ${labelPt.y})`);
+        t.textContent = `Stringer stock ${formatInches(stringerStockIn)}`;
+    }
+
+    // --- Total Rise (vertical dimension, far left) -------------------------------
+    {
+        const lx = leftMargin - 130;
+        const bottomPx = toPx(cornerBottom);
+        const topPx = toPx(cornerTop);
+        el("line", { x1: lx, y1: bottomPx.y, x2: lx, y2: topPx.y, class: "svg-dim-line" });
+        el("line", { x1: lx, y1: bottomPx.y, x2: bottomPx.x, y2: bottomPx.y, class: "svg-dim-line", "stroke-dasharray": "2 4" });
+        el("line", { x1: lx, y1: topPx.y, x2: topPx.x, y2: topPx.y, class: "svg-dim-line", "stroke-dasharray": "2 4" });
+        const ty = (bottomPx.y + topPx.y) / 2;
+        const t = el("text", { x: lx - 8, y: ty, class: "svg-dim-text", "text-anchor": "middle" });
+        t.setAttribute("transform", `rotate(-90 ${lx - 8} ${ty})`);
+        t.textContent = `Total Rise ${formatInches(totalRise)}`;
+    }
+
+    // --- Total Run (horizontal dimension, along the bottom) -----------------------
+    {
+        const ly = viewH - bottomMargin + 90;
+        const bottomPx = toPx(cornerBottom);
+        const topPx = toPx(cornerTop);
+        el("line", { x1: bottomPx.x, y1: ly, x2: topPx.x, y2: ly, class: "svg-dim-line" });
+        el("line", { x1: bottomPx.x, y1: bottomPx.y, x2: bottomPx.x, y2: ly, class: "svg-dim-line", "stroke-dasharray": "2 4" });
+        el("line", { x1: topPx.x, y1: topPx.y, x2: topPx.x, y2: ly, class: "svg-dim-line", "stroke-dasharray": "2 4" });
+        addText((bottomPx.x + topPx.x) / 2, ly + 20, `Total Run ${formatInches(totalRun)}`, "svg-dim-text", "middle");
+    }
+
+    // --- Stringer Length (aligned diagonal dimension, floats above the board) -----
+    {
+        const o1 = toPx(perpOffset(cornerBottom, stringerOffsetIn));
+        const o2 = toPx(perpOffset(cornerTop, stringerOffsetIn));
+        const e1 = toPx(cornerBottom);
+        const e2 = toPx(cornerTop);
+        el("line", { x1: e1.x, y1: e1.y, x2: o1.x, y2: o1.y, class: "svg-dim-line", "stroke-dasharray": "2 3" });
+        el("line", { x1: e2.x, y1: e2.y, x2: o2.x, y2: o2.y, class: "svg-dim-line", "stroke-dasharray": "2 3" });
+        el("line", { x1: o1.x, y1: o1.y, x2: o2.x, y2: o2.y, class: "svg-dim-line" });
+        const midX = (o1.x + o2.x) / 2;
+        const midY = (o1.y + o2.y) / 2;
+        const nudge = 10;
+        const tx = midX - (sinT * nudge);
+        const ty = midY - (cosT * nudge);
+        const t = el("text", { x: tx, y: ty, class: "svg-dim-text", "text-anchor": "middle" });
+        t.setAttribute("transform", `rotate(${-thetaDeg} ${tx} ${ty})`);
+        t.textContent = `Stringer length ${formatInches(data.stringerLength)}`;
+    }
+
+    // --- Per-step Rise, called out on the first riser ------------------------------
+    {
+        const p1 = toPx({ x: 0, y: 0 });
+        const p2 = toPx({ x: 0, y: rise });
+        const lx = Math.min(p1.x, floorStartPx.x) - 46;
+        el("line", { x1: lx, y1: p1.y, x2: lx, y2: p2.y, class: "svg-dim-line" });
+        el("line", { x1: lx, y1: p1.y, x2: p1.x, y2: p1.y, class: "svg-dim-line" });
+        el("line", { x1: lx, y1: p2.y, x2: p2.x, y2: p2.y, class: "svg-dim-line" });
+        addText(lx - 8, (p1.y + p2.y) / 2, "Rise (per step)", "svg-dim-text", "end");
+        addText(lx - 8, (p1.y + p2.y) / 2 + 16, formatInches(rise), "svg-dim-text", "end");
+    }
+
+    // --- Per-step tread depth, called out on the first tread -----------------------
+    // Floats UP into the open stairwell interior above the first tread,
+    // rather than down toward the floor. Below was tried first, but at
+    // steep stair angles the board's solid material (and the floor
+    // context box) both sit very close beneath the tread -- there's
+    // little to no clear room down there. The space directly above a
+    // tread (up to the next riser) is always open in this profile view,
+    // at any angle, so that's a safe place for the callout to live.
+    if (treads > 0) {
+        const p1 = toPx({ x: 0, y: rise });
+        const p2 = toPx({ x: run, y: rise });
+        const ly = Math.min(p1.y, p2.y) - 46;
+        el("line", { x1: p1.x, y1: ly, x2: p2.x, y2: ly, class: "svg-dim-line" });
+        el("line", { x1: p1.x, y1: p1.y, x2: p1.x, y2: ly, class: "svg-dim-line" });
+        el("line", { x1: p2.x, y1: p2.y, x2: p2.x, y2: ly, class: "svg-dim-line" });
+        addText((p1.x + p2.x) / 2, ly - 22, "Tread depth (per step)", "svg-dim-text", "middle");
+        addText((p1.x + p2.x) / 2, ly - 6, formatInches(run), "svg-dim-text", "middle");
+    }
+
+    // --- Angle / step-count callout, tucked under the top landing -----------------
+    const topPx = toPx(cornerTop);
+    addText(topPx.x - 190, topFloorTopPx.y + 60, `Stair angle ${data.stairAngle.toFixed(1)}°`, "svg-dim-text");
+    addText(topPx.x - 190, topFloorTopPx.y + 78, `${N} risers, ${treads} treads`, "svg-dim-text");
+
+    // --- Nosing note ------------------------------------------------------------
+    addText(leftMargin, viewH - 14, "Tread nosing not drawn to scale — typical overhang is 3/4\" to 1 1/4\" past the riser face.", "svg-note-text");
+}
+
+</script>
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../tools.html">&larr; Back to all tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="../contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="../services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="../services/new-build.html">New Build</a></li>
+        <li><a href="../services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="../services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="../services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="../portfolio.html">Portfolio</a></li>
+        <li><a href="../tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="../about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="../assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>

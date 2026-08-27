@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hip &amp; Valley Sheathing Angle Calculator | WTC Montana Construction</title>
+<meta name="description" content="Find the bevel angle to cut roof sheathing so it lays flush along a hip or valley line.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/hip_val_calculator.html">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">
+      <img class="logo" src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/index.html">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html" class="current">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Hip &amp; Valley Sheathing Angle Calculator</h1>
+    <p>Find the bevel angle to cut a sheet of roof sheathing so it lays flush along a hip or valley.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+<!--
+  Hip/Valley Sheathing Angle Calculator
+  ========================================
+  This is specifically about the SHEATHING cut, not the hip/valley
+  rafter's cheek cut. When two roof planes meet at a hip (an outside
+  corner, like the corner of a hip roof) or a valley (an inside
+  corner, where two roof sections run together), the plywood/OSB
+  panels on either side of that line need their edge trimmed at an
+  angle so the cut lays flush against the hip/valley centerline once
+  the sheet is up on its sloped plane.
+
+  Given the two meeting roof pitches (they don't have to match - an
+  irregular hip/valley, like a porch roof tying into a steeper main
+  roof, is a completely normal case), this finds the angle for EACH
+  plane's sheathing (they're usually different from each other unless
+  the two pitches match) and a practical "measure and strike a line"
+  instruction for marking that angle on an actual 4x8 sheet.
+
+  Math verified independently via 3D plane-intersection geometry
+  (each roof plane modeled as z = pitch * distance-from-eave, hip/
+  valley line = their intersection, sheathing angle = the angle that
+  line makes on the physically-flat, unrolled sheet surface). The
+  trig checked out exactly. The one real bug found and fixed here:
+  the old "pull from corner" instruction always measured 48" up the
+  sheet's short edge first, which for a shallow valley angle (common
+  with two very different pitches) asks you to mark a point that's
+  well past the far end of the sheet - a real, physically impossible
+  instruction, not just a display glitch. getCutLayout() below picks
+  whichever pair of legs (measure along the 8ft edge, or the 4ft
+  edge) actually keeps the mark on the material.
+-->
+<style>
+
+button {
+    margin-top: 20px;
+    padding: 10px 18px;
+    cursor: pointer;
+}
+
+label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+}
+
+.pitch-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.pitch-input input {
+    width: 90px;
+    padding: 6px;
+}
+
+.result-box {
+    margin-top: 20px;
+    padding: 16px 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fafafa;
+    display: none;
+}
+
+.result-box.visible {
+    display: block;
+}
+
+.plane-result {
+    margin-bottom: 22px;
+}
+
+.plane-result:last-child {
+    margin-bottom: 0;
+}
+
+.plane-result h4 {
+    margin-bottom: 4px;
+}
+
+.angle-headline {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1a2740;
+    margin: 4px 0;
+}
+
+.plane-result p {
+    margin: 4px 0;
+    color: #333;
+}
+
+.sheet-diagrams {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 10px;
+}
+
+canvas {
+    border: 1px solid #ccc;
+    max-width: 100%;
+    background: #fff;
+}
+
+.calc-note {
+    color: #5c6270;
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+</style>
+
+<div class="Hip-Valley-Sheet-Angle-calculator">
+
+    <h3>Hip / Valley Sheathing Angle</h3>
+
+    <p>
+        Enter the pitch of each roof plane that meets at the hip or
+        valley (they don't need to match). This gives you the bevel
+        angle to trim each plane's sheathing so the cut edge lays
+        flush along that line, plus a way to mark it on a real sheet
+        without a protractor.
+    </p>
+
+    <label>Plane 1 Pitch</label>
+    <div class="pitch-input">
+        <input type="number" id="p1" min="0.5" step="0.5" value="6"> / 12
+    </div>
+
+    <label>Plane 2 Pitch</label>
+    <div class="pitch-input">
+        <input type="number" id="p2" min="0.5" step="0.5" value="6"> / 12
+    </div>
+
+    <p class="calc-note">Tip: for a standard hip or valley (a square 90&deg; corner in plan), enter the same pitch on both sides if the two roof sections match, or different pitches for an irregular hip/valley.</p>
+
+    <button type="button" onclick="calculateAngle()">
+        Calculate
+    </button>
+
+    <div class="result-box" id="result"></div>
+
+    <div class="sheet-diagrams" id="sheetDiagrams" style="display:none;">
+        <canvas id="sheetCanvas1" width="500" height="300"></canvas>
+        <canvas id="sheetCanvas2" width="500" height="300"></canvas>
+    </div>
+
+</div>
+
+<script>
+
+// Converts decimal inches back into a "whole fraction/16ths" display
+// string, e.g. 15.5 -> `15 1/2"`. Rounds to the nearest 1/16" and
+// reduces the fraction (e.g. 8/16 -> 1/2) via gcd.
+function formatInches(decimalInches) {
+
+    const whole = Math.floor(decimalInches);
+
+    const fraction = decimalInches - whole;
+
+    const denominator = 16;
+
+    let numerator = Math.round(fraction * denominator);
+
+    if (numerator === denominator) {
+        return `${whole + 1}"`;
+    }
+
+    function gcd(a, b) {
+        return b ? gcd(b, a % b) : a;
+    }
+
+    const divisor = gcd(numerator, denominator);
+
+    const simplifiedNum = numerator / divisor;
+    const simplifiedDen = denominator / divisor;
+
+    if (numerator === 0) {
+        return `${whole}"`;
+    }
+
+    return `${whole} ${simplifiedNum}/${simplifiedDen}"`;
+}
+
+// Works out how to strike the cut line on an actual 4x8 (96" x 48")
+// sheet, starting from its bottom-left corner, at `angleDeg` measured
+// from the sheet's long (96") edge.
+//
+// The line leaves the bottom-left corner and crosses the rectangle's
+// boundary somewhere -- either through the top edge (if the angle is
+// steep enough) or through the right edge (if it's shallow). Whichever
+// it is, that's where you measure and mark:
+//
+//   verticalAtRight = 96 * tan(angle)   -- height where the line would
+//                                          cross the right (96"-long) edge
+//
+// If that height is <= 48" (the sheet's short edge), the line exits
+// through the right edge -- mark that height up from the bottom-right
+// corner, and strike a line back to the bottom-left corner.
+//
+// Otherwise the line is steep enough that it exits through the top
+// edge first, at:
+//
+//   horizontalAtTop = 48 / tan(angle)   -- distance along the top edge
+//
+// which is guaranteed <= 96" whenever verticalAtRight > 48 (they're
+// the same line, just read from the other pair of legs) -- mark that
+// distance from the top-left corner along the top edge, and strike a
+// line down to the bottom-left corner.
+//
+// Either way, both legs used are real, on-the-sheet measurements --
+// this is the fix for the old version, which always used a fixed 48"
+// leg and could ask for a mark past the end of the sheet.
+function getCutLayout(angleDeg) {
+
+    const theta = angleDeg * Math.PI / 180;
+    const tanT = Math.tan(theta);
+
+    const verticalAtRight = 96 * tanT;
+
+    if (verticalAtRight <= 48) {
+        return {
+            edge: "right",
+            alongLeg: 96,
+            markLeg: verticalAtRight
+        };
+    }
+
+    const horizontalAtTop = 48 / tanT;
+
+    return {
+        edge: "top",
+        alongLeg: 48,
+        markLeg: horizontalAtTop
+    };
+}
+
+// Draws a 4x8 sheet with the cut line struck from the bottom-left
+// corner to the mark computed by getCutLayout(), so it can be laid
+// out on a real sheet with just a tape measure and a straightedge.
+function drawSheet(canvasId, angleDeg, layout) {
+
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const scale = 4; // pixels per inch
+
+    const sheetW = 96 * scale;
+    const sheetH = 48 * scale;
+
+    const ox = 40;
+    const oy = 40;
+
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(ox, oy, sheetW, sheetH);
+
+    ctx.strokeStyle = "#b3261e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy + sheetH); // bottom-left corner
+
+    let markX, markY, markLabel, markLabelX, markLabelY;
+
+    if (layout.edge === "right") {
+
+        // Mark up from the bottom-right corner.
+        markX = ox + sheetW;
+        markY = (oy + sheetH) - (layout.markLeg * scale);
+        markLabel = `Mark ${formatInches(layout.markLeg)} up from this corner`;
+        markLabelX = ox + sheetW - 215;
+        markLabelY = markY - 8;
+
+    } else {
+
+        // Mark along the top edge from the top-left corner.
+        markX = ox + (layout.markLeg * scale);
+        markY = oy;
+        markLabel = `Mark ${formatInches(layout.markLeg)} from this corner`;
+        markLabelX = Math.min(markX + 8, ox + sheetW - 210);
+        markLabelY = oy + 16;
+    }
+
+    ctx.lineTo(markX, markY);
+    ctx.stroke();
+
+    // Mark dot + label.
+    ctx.fillStyle = "#b3261e";
+    ctx.beginPath();
+    ctx.arc(markX, markY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#1a2740";
+    ctx.font = "12px Arial";
+    ctx.fillText(`4x8 sheet -- cut line at ${angleDeg.toFixed(2)}°`, ox, oy - 10);
+    ctx.fillText(markLabel, markLabelX, markLabelY);
+}
+
+// Computes the sheathing cut angle on each side of a hip/valley from
+// the two meeting roof pitches (p1, p2, expressed as rise/12), for
+// the standard case of a 90-degree-in-plan hip/valley corner.
+//
+// Each roof plane is modeled as a tilted plane; the hip/valley line
+// is where they intersect. The angle a sheet cut needs, measured off
+// its own square edge once you account for how much the panel is
+// "unrolled" onto the sloped plane, works out to:
+//
+//   valley1 = atan( (p2/p1) * sqrt(1 + p1^2) )
+//   valley2 = atan( (p1/p2) * sqrt(1 + p2^2) )
+//
+// which is algebraically identical to the acos/complement form used
+// below (verified independently via 3D vector geometry and cross-
+// checked numerically against this exact formula across equal-pitch,
+// unequal-pitch, and extreme-pitch cases).
+function calculateAngle() {
+
+    const p1 = parseFloat(document.getElementById("p1").value) / 12 || 0;
+    const p2 = parseFloat(document.getElementById("p2").value) / 12 || 0;
+
+    const resultBox = document.getElementById("result");
+    const diagrams = document.getElementById("sheetDiagrams");
+
+    if (!p1 || p1 <= 0 || !p2 || p2 <= 0) {
+
+        resultBox.innerHTML =
+            "Both plane pitches must be greater than 0.";
+        resultBox.classList.add("visible");
+        diagrams.style.display = "none";
+        return;
+    }
+
+    const a1 = Math.acos(
+        (p2 * (1 + p1 * p1)) /
+        (
+            Math.sqrt(1 + p1 * p1) *
+            Math.sqrt(p1 * p1 + p2 * p2 + p1 * p1 * p2 * p2)
+        )
+    );
+
+    const a2 = Math.acos(
+        (p1 * (1 + p2 * p2)) /
+        (
+            Math.sqrt(1 + p2 * p2) *
+            Math.sqrt(p1 * p1 + p2 * p2 + p1 * p1 * p2 * p2)
+        )
+    );
+
+    const d1 = a1 * 180 / Math.PI;
+    const d2 = a2 * 180 / Math.PI;
+
+    // Complementary angle: the angle to strike the cut line at,
+    // measured from the sheet's square edge.
+    const valley1 = 90 - d1;
+    const valley2 = 90 - d2;
+
+    const layout1 = getCutLayout(valley1);
+    const layout2 = getCutLayout(valley2);
+
+    resultBox.innerHTML = `
+        <div class="plane-result">
+            <h4>Plane 1 (${(p1 * 12).toFixed(2)}/12) sheathing cut</h4>
+            <p class="angle-headline">${valley1.toFixed(2)}&deg;</p>
+            <p>Set a bevel gauge, protractor, or digital angle finder to this angle off the sheet's factory edge -- or use the sheet layout below.</p>
+        </div>
+
+        <div class="plane-result">
+            <h4>Plane 2 (${(p2 * 12).toFixed(2)}/12) sheathing cut</h4>
+            <p class="angle-headline">${valley2.toFixed(2)}&deg;</p>
+            <p>Set a bevel gauge, protractor, or digital angle finder to this angle off the sheet's factory edge -- or use the sheet layout below.</p>
+        </div>
+    `;
+    resultBox.classList.add("visible");
+
+    diagrams.style.display = "flex";
+
+    drawSheet("sheetCanvas1", valley1, layout1);
+    drawSheet("sheetCanvas2", valley2, layout2);
+}
+
+</script>
+
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../tools.html">&larr; Back to all tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="../contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="../services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="../services/new-build.html">New Build</a></li>
+        <li><a href="../services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="../services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="../services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="../portfolio.html">Portfolio</a></li>
+        <li><a href="../tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="../about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="../assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>

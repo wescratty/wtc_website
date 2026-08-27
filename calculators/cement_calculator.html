@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concrete Calculator | WTC Montana Construction</title>
+<meta name="description" content="Estimate concrete volume needed for slabs, footings, and Sonotube round piers.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/cement_calculator.html">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">
+      <img class="logo" src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/index.html">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html" class="current">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Concrete Calculator</h1>
+    <p>Estimate concrete volume for slabs, footings, and round Sonotube-form piers.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+<style>
+
+button {
+    margin-top: 20px;
+    padding: 10px 18px;
+    cursor: pointer;
+}
+
+.calc-section label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+}
+
+.calc-section input[type="number"],
+.calc-section select {
+    display: block;
+    margin-top: 6px;
+    padding: 6px;
+    width: 180px;
+    box-sizing: border-box;
+}
+
+.calc-section {
+    margin-bottom: 34px;
+}
+
+.calc-section + .calc-section {
+    padding-top: 30px;
+    border-top: 1px solid #ddd;
+}
+
+.calc-section h3 {
+    margin-bottom: 4px;
+}
+
+.calc-section .section-note {
+    color: #5c6270;
+    font-size: 0.92rem;
+    margin-top: 0;
+    margin-bottom: 18px;
+}
+
+.result-box {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fafafa;
+    display: none;
+}
+
+.result-box.visible {
+    display: block;
+}
+
+.result-headline {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a2740;
+    margin: 0 0 6px 0;
+}
+
+.result-detail {
+    margin: 2px 0;
+    color: #333;
+}
+
+.result-hint {
+    margin-top: 10px;
+    font-size: 0.88rem;
+    color: #5c6270;
+}
+
+</style>
+
+<!--
+  Concrete Calculator
+  =====================
+  Two independent estimators sharing one page:
+
+  1) Slabs & Flatwork -- converts a slab's length, width, and thickness
+     into cubic yards of concrete needed (unchanged from the original
+     version of this tool).
+
+  2) Round Piers & Footings (Sonotube Forms) -- converts a round form's
+     diameter and pour height/depth into cubic yards, added because
+     Sonotube-formed piers (deck footings, fence posts, etc.) are a
+     common estimate this tool didn't previously cover. Also estimates
+     bagged-concrete counts (60 lb / 80 lb bags), since round piers are
+     more often hand-mixed from bags than trucked in as redi-mix.
+-->
+
+<div class="calc-section" id="slabCalculator">
+
+    <h3>Slabs &amp; Flatwork</h3>
+    <p class="section-note">Footings, patios, driveways, and other flat pours.</p>
+
+    <label>Length (feet)</label>
+    <input type="number" id="length" min="0" step="any">
+
+    <label>Width (feet)</label>
+    <input type="number" id="width" min="0" step="any">
+
+    <label>Thickness (inches)</label>
+    <input type="number" id="thickness" min="0" step="any">
+
+    <button type="button" onclick="calculateConcrete()">
+        Calculate
+    </button>
+
+    <div class="result-box" id="slabResult">
+        <p class="result-headline" id="slabResultHeadline"></p>
+    </div>
+
+</div>
+
+<div class="calc-section" id="sonotubeCalculator">
+
+    <h3>Round Piers &amp; Footings (Sonotube Forms)</h3>
+    <p class="section-note">Deck footings, posts, and other round-form pours.</p>
+
+    <label>Tube Diameter</label>
+    <select id="tubeDiameter">
+        <option value="6">6"</option>
+        <option value="8">8"</option>
+        <option value="10" selected>10"</option>
+        <option value="12">12"</option>
+        <option value="14">14"</option>
+        <option value="16">16"</option>
+        <option value="18">18"</option>
+        <option value="20">20"</option>
+        <option value="24">24"</option>
+        <option value="30">30"</option>
+        <option value="36">36"</option>
+    </select>
+
+    <label>Height / Depth (feet)</label>
+    <input type="number" id="tubeHeight" min="0" step="any" value="4">
+
+    <label>Number of Tubes</label>
+    <input type="number" id="tubeQty" min="1" step="1" value="1">
+
+    <button type="button" onclick="calculateSonotubes()">
+        Calculate
+    </button>
+
+    <div class="result-box" id="tubeResult">
+        <p class="result-headline" id="tubeResultHeadline"></p>
+        <p class="result-detail" id="tubeResultDetail"></p>
+        <p class="result-detail" id="tubeResultBags"></p>
+        <p class="result-hint">Tip: order 5&ndash;10% extra to cover spillage, form irregularities, and rounding &mdash; especially on small pours like these.</p>
+    </div>
+
+</div>
+
+<script>
+
+function calculateConcrete() {
+
+    const length =
+        parseFloat(document.getElementById('length').value) || 0;
+
+    const width =
+        parseFloat(document.getElementById('width').value) || 0;
+
+    const thickness =
+        parseFloat(document.getElementById('thickness').value) || 0;
+
+    // Volume in cubic feet is length * width * (thickness in feet), and
+    // a cubic yard is 27 cubic feet, so dividing by (12 * 27 = 324)
+    // converts length(ft) * width(ft) * thickness(in) straight to yards.
+    const yards =
+        (length * width * thickness) / 324;
+
+    document.getElementById('slabResultHeadline').textContent =
+        yards.toFixed(2) + ' cubic yards required';
+
+    document.getElementById('slabResult').classList.add('visible');
+}
+
+// Standard bagged-concrete yields, as printed on the bag (consistent
+// across the major brands): a 60 lb bag yields about 0.45 cubic feet
+// of mixed concrete, an 80 lb bag about 0.6 cubic feet.
+const BAG_YIELD_CUFT = {
+    60: 0.45,
+    80: 0.6
+};
+
+function calculateSonotubes() {
+
+    const diameterIn =
+        parseFloat(document.getElementById('tubeDiameter').value) || 0;
+
+    const heightFt =
+        parseFloat(document.getElementById('tubeHeight').value) || 0;
+
+    const qty =
+        parseInt(document.getElementById('tubeQty').value, 10) || 1;
+
+    const radiusFt = (diameterIn / 12) / 2;
+
+    // Volume of one cylinder: pi * r^2 * height, in cubic feet.
+    const cuftPerTube =
+        Math.PI * radiusFt * radiusFt * heightFt;
+
+    const totalCuft = cuftPerTube * qty;
+    const totalYards = totalCuft / 27;
+
+    const bags60 = Math.ceil(totalCuft / BAG_YIELD_CUFT[60]);
+    const bags80 = Math.ceil(totalCuft / BAG_YIELD_CUFT[80]);
+
+    document.getElementById('tubeResultHeadline').textContent =
+        totalYards.toFixed(2) + ' cubic yards required';
+
+    document.getElementById('tubeResultDetail').textContent =
+        `(${totalCuft.toFixed(2)} cubic feet, for ${qty} tube${qty === 1 ? '' : 's'} at ${diameterIn}" diameter x ${heightFt}' deep)`;
+
+    document.getElementById('tubeResultBags').textContent =
+        `About ${bags60} bags of 60 lb mix, or ${bags80} bags of 80 lb mix, if hand-mixing instead of ordering redi-mix.`;
+
+    document.getElementById('tubeResult').classList.add('visible');
+}
+
+</script>
+
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../tools.html">&larr; Back to all tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="../contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="../services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="../services/new-build.html">New Build</a></li>
+        <li><a href="../services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="../services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="../services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="../portfolio.html">Portfolio</a></li>
+        <li><a href="../tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="../about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="../assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>

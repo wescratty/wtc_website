@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spacing Calculator | WTC Montana Construction</title>
+<meta name="description" content="Board and baluster spacing for decking, stair balusters, rafter tails, and T&amp;G ceilings -- pick the layout that matches your job.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/spacing_calculator.html">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">
+      <img class="logo" src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/index.html">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html" class="current">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Spacing Calculator</h1>
+    <p>Board and baluster spacing, done the way each job actually gets laid out.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+<!--
+  Spacing Calculator -- rebuilt as a use-case picker
+  =====================================================
+  The previous version of this tool had one generic input form (board
+  width / area width / desired gap / max gap) and dumped five layout
+  strategies at once, all computed from those same four numbers. That
+  didn't hold up: decking with a flex overhang, decking ripped tight
+  against a wall, code-max baluster spacing, decorative rafter tails
+  landing on a real on-center layout, and a T&G ceiling are genuinely
+  different problems with different inputs and different things that
+  matter (a baluster layout cares about a code-max gap; an overhang
+  layout doesn't solve for a gap at all, it solves for how much you'll
+  trim off after the fact; rafter tails aren't a "fill the space"
+  problem, they're "land on these stations").
+
+  So: six scenario panels, each with its own inputs/explanation/solver,
+  picked from a card grid up top. A "Compare all six" toggle shows every
+  panel at once (stacked, each independently fillable) for anyone who
+  wants to see several approaches side by side rather than commit to one
+  up front.
+-->
+<style>
+
+button {
+    padding: 10px 18px;
+    cursor: pointer;
+}
+
+label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+}
+
+.measurement-input {
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.measurement-input select {
+    margin-right: 6px;
+}
+
+.field-note {
+    color: #5c6270;
+    font-size: 0.88rem;
+    margin: 4px 0 0 0;
+}
+
+/* Scenario picker grid */
+.scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.scenario-card {
+    text-align: left;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px 18px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.scenario-card:hover {
+    border-color: var(--gold, #b9863f);
+}
+
+.scenario-card.active {
+    border-color: var(--gold, #b9863f);
+    background: #fff8ec;
+}
+
+.scenario-card h4 {
+    margin: 0 0 6px 0;
+    color: #1a2740;
+}
+
+.scenario-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.compare-toggle {
+    margin-top: 18px;
+    font-size: 0.92rem;
+    color: #1a2740;
+}
+
+.compare-toggle label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    margin-top: 0;
+    cursor: pointer;
+}
+
+/* Scenario panels */
+.scenario-panel {
+    display: none;
+    margin-top: 34px;
+    padding-top: 30px;
+    border-top: 2px solid #ddd;
+}
+
+.scenario-panel.visible {
+    display: block;
+}
+
+.scenario-intro {
+    background: #fff8ec;
+    border: 1px solid #e8d5ab;
+    border-left: 4px solid var(--gold, #b9863f);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 0.92rem;
+    color: #5a4321;
+}
+
+.scenario-intro strong {
+    color: #1a2740;
+}
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 16px;
+}
+
+.layout-table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: collapse;
+}
+
+.layout-table th,
+.layout-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.layout-table th {
+    background: #f5f5f5;
+}
+
+.layout-table tbody tr.recommended {
+    background: #fdf3e0;
+    font-weight: 700;
+}
+
+.result-empty {
+    padding: 14px;
+    border: 1px solid #ddd;
+    margin-top: 16px;
+    border-radius: 6px;
+}
+
+.result-warning {
+    padding: 12px 16px;
+    margin-top: 16px;
+    border: 1px solid #d9a441;
+    background: #fff6e5;
+    color: #6b4a05;
+    border-radius: 6px;
+    font-size: 0.92rem;
+}
+
+.result-note {
+    margin-top: 10px;
+    font-size: 0.88rem;
+    color: #5c6270;
+}
+
+.print-btn {
+    margin-top: 18px;
+    margin-right: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    background: #1a2740;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.print-btn:hover {
+    background: #253551;
+}
+
+</style>
+
+<div id="calculator">
+
+    <h2>Spacing Calculator</h2>
+
+    <p>
+        There isn't one "board spacing" problem -- decking, balusters,
+        rafter tails, and ceiling boards all get laid out differently,
+        and the thing that matters (a code-max gap, an overhang you'll
+        trim later, a rip you don't want too thin) changes with the job.
+        Pick the one below that matches what you're doing. Not sure?
+        Use "Compare all six" and fill in a couple to see how they differ.
+    </p>
+
+    <div class="scenario-grid" id="scenarioGrid">
+
+        <button type="button" class="scenario-card" data-scenario="s1" onclick="selectScenario('s1')">
+            <h4>Decking &mdash; Even Reveal</h4>
+            <p>Both edges are free (fascia trim covers the ends). Solve for a consistent gap between boards, equal at both ends.</p>
+        </button>
+
+        <button type="button" class="scenario-card" data-scenario="s2" onclick="selectScenario('s2')">
+            <h4>Decking &mdash; Overhang &amp; Trim</h4>
+            <p>Start flush against the house, run boards long past the outer rim, and snap one chalk line to trim them all at once.</p>
+        </button>
+
+        <button type="button" class="scenario-card" data-scenario="s3" onclick="selectScenario('s3')">
+            <h4>Decking &mdash; Minimum Starter Rip</h4>
+            <p>Butts against a wall on one side. Keeps that starter board from getting ripped down to a thin, weak sliver.</p>
+        </button>
+
+        <button type="button" class="scenario-card" data-scenario="s4" onclick="selectScenario('s4')">
+            <h4>Stair / Deck Balusters</h4>
+            <p>Packs in the most balusters possible while keeping every gap under your code's maximum spacing.</p>
+        </button>
+
+        <button type="button" class="scenario-card" data-scenario="s5" onclick="selectScenario('s5')">
+            <h4>Decorative Rafter Tails</h4>
+            <p>Places decorative tails at real on-center stations so they read as structural, not just evenly smeared across the fascia.</p>
+        </button>
+
+        <button type="button" class="scenario-card" data-scenario="s6" onclick="selectScenario('s6')">
+            <h4>Tongue &amp; Groove Ceiling</h4>
+            <p>Zero-gap board layout, with a check on how thin that last board against the wall ends up.</p>
+        </button>
+
+    </div>
+
+    <div class="compare-toggle">
+        <label>
+            <input type="checkbox" id="compareAllToggle" onchange="toggleCompareAll()">
+            Compare all six side by side instead
+        </label>
+    </div>
+
+    <!-- ================= Scenario 1: Decking, Even Reveal ================= -->
+    <div class="scenario-panel" id="panel-s1">
+
+        <h3>Decking &mdash; Even Reveal</h3>
+
+        <div class="scenario-intro">
+            <strong>Use this when:</strong> both edges of the deck field are free (a picture-frame border, fascia
+            board, or open edge will cover whatever the end gap comes out to). This solves for one consistent
+            gap that repeats between every board AND at both ends -- the most common decking layout.
+        </div>
+
+        <label>Board Width</label>
+        <div id="s1BoardWidthInputs"></div>
+        <p class="field-note">Actual width, not nominal -- a 5/4x6 or 2x6 board is usually 5 1/2" actual.</p>
+
+        <label>Total Width to Fill</label>
+        <div id="s1TotalWidthInputs"></div>
+
+        <label>Target Gap</label>
+        <div id="s1TargetGapInputs"></div>
+
+        <label>Acceptable Gap Range, up to</label>
+        <div id="s1MaxGapInputs"></div>
+        <p class="field-note">The calculator looks for a board count whose resulting gap lands between your target and this upper limit -- decking gaps are commonly 3/16" to 1/4".</p>
+
+        <button type="button" onclick="calcScenario1()">Calculate</button>
+
+        <div id="s1Result"></div>
+
+    </div>
+
+    <!-- ================= Scenario 2: Decking, Overhang & Trim ================= -->
+    <div class="scenario-panel" id="panel-s2">
+
+        <h3>Decking &mdash; Overhang &amp; Trim</h3>
+
+        <div class="scenario-intro">
+            <strong>Use this when:</strong> one edge is fixed (against the house/ledger) and the other is a free
+            outer edge (rim joist, fascia) you'll snap a line across and trim flush after the boards are down.
+            This does not solve for an exact-fit gap -- it tells you how many boards you need and how much
+            will hang past the edge to be trimmed off.
+        </div>
+
+        <label>Board Width</label>
+        <div id="s2BoardWidthInputs"></div>
+
+        <label>Gap Between Boards</label>
+        <div id="s2GapInputs"></div>
+        <p class="field-note">A fixed gap this time, not a range -- this method doesn't adjust the gap to fit.</p>
+
+        <label>Distance to Cover (house to outer edge)</label>
+        <div id="s2TotalWidthInputs"></div>
+
+        <label>Max Overhang You're OK Trimming Off</label>
+        <div id="s2MaxOverhangInputs"></div>
+
+        <button type="button" onclick="calcScenario2()">Calculate</button>
+
+        <div id="s2Result"></div>
+
+    </div>
+
+    <!-- ================= Scenario 3: Decking, Minimum Starter Rip ================= -->
+    <div class="scenario-panel" id="panel-s3">
+
+        <h3>Decking &mdash; Minimum Starter Rip</h3>
+
+        <div class="scenario-intro">
+            <strong>Use this when:</strong> one edge butts a wall and the layout needs a ripped starter board
+            against it. This finds a gap (within your range) that keeps that starter board at or above a
+            minimum width, instead of leaving you with an unusably thin, weak sliver against the wall.
+        </div>
+
+        <label>Full Board Width</label>
+        <div id="s3BoardWidthInputs"></div>
+
+        <label>Total Width to Fill</label>
+        <div id="s3TotalWidthInputs"></div>
+
+        <label>Target Gap</label>
+        <div id="s3TargetGapInputs"></div>
+
+        <label>Acceptable Gap Range, up to</label>
+        <div id="s3MaxGapInputs"></div>
+
+        <label>Minimum Acceptable Starter Rip Width</label>
+        <div id="s3MinRipInputs"></div>
+        <p class="field-note">Common rule of thumb: don't rip a board down to less than about 2".</p>
+
+        <button type="button" onclick="calcScenario3()">Calculate</button>
+
+        <div id="s3Result"></div>
+
+    </div>
+
+    <!-- ================= Scenario 4: Balusters ================= -->
+    <div class="scenario-panel" id="panel-s4">
+
+        <h3>Stair &amp; Deck Balusters &mdash; Code Max Gap</h3>
+
+        <div class="scenario-intro">
+            <strong>Use this when:</strong> you need to fit balusters (or slats) between two fixed posts/newels
+            while keeping every gap at or under a code-maximum spacing. Maximizes baluster count for the
+            tightest legal gap, and also shows a couple of slightly airier (but still legal) alternatives.
+        </div>
+
+        <label>Baluster Width</label>
+        <div id="s4BalusterWidthInputs"></div>
+
+        <label>Clear Opening Width (post to post)</label>
+        <div id="s4OpeningWidthInputs"></div>
+
+        <label>Code Maximum Gap</label>
+        <div id="s4MaxGapInputs"></div>
+        <p class="field-note">IRC guards are commonly a 4" sphere rule (max gap 4"); stair guards sometimes allow up to 4 3/8". Always confirm your local code.</p>
+
+        <button type="button" onclick="calcScenario4()">Calculate</button>
+
+        <div id="s4Result"></div>
+
+    </div>
+
+    <!-- ================= Scenario 5: Rafter Tails ================= -->
+    <div class="scenario-panel" id="panel-s5">
+
+        <h3>Decorative Rafter Tails &mdash; On Layout</h3>
+
+        <div class="scenario-intro">
+            <strong>Use this when:</strong> adding decorative (non-structural) rafter tails to a fascia and you
+            want them to land on real on-center stations -- like the actual rafter layout, or every other/third
+            station of it -- so they read as structural framing instead of evenly-smeared decoration. This isn't
+            a "fill the gap" problem: it lists the actual station marks, since a real on-center layout almost
+            never divides evenly into the wall length.
+        </div>
+
+        <label>Total Run (wall / fascia length)</label>
+        <div id="s5TotalRunInputs"></div>
+
+        <label>On-Center Spacing</label>
+        <div class="measurement-input">
+            <select id="s5OnCenter" onchange="toggleCustomOC()">
+                <option value="12">12" o.c.</option>
+                <option value="16" selected>16" o.c.</option>
+                <option value="19.2">19.2" o.c. (5 trusses per 8')</option>
+                <option value="24">24" o.c.</option>
+                <option value="custom">Custom&hellip;</option>
+            </select>
+        </div>
+        <div id="s5CustomOCInputs" style="display:none;">
+            <label>Custom Spacing</label>
+            <div id="s5CustomOCSpinner"></div>
+        </div>
+
+        <label>Show Every Nth Station</label>
+        <div class="measurement-input">
+            <input type="number" id="s5SkipN" min="1" step="1" value="1" style="width:80px;padding:6px;">
+        </div>
+        <p class="field-note">Leave at 1 to match the real rafter layout exactly, or use 2/3/etc. for a sparser decorative pattern (e.g. every other rafter).</p>
+
+        <button type="button" onclick="calcScenario5()">Calculate</button>
+
+        <div id="s5Result"></div>
+
+    </div>
+
+    <!-- ================= Scenario 6: T&G Ceiling ================= -->
+    <div class="scenario-panel" id="panel-s6">
+
+        <h3>Tongue &amp; Groove Ceiling Boards</h3>
+
+        <div class="scenario-intro">
+            <strong>Use this when:</strong> laying T&amp;G board with no visible gap by design. This packs boards
+            edge to edge and checks whether the final board against the wall comes out wide enough to be worth
+            installing, both as a single rip at one wall and split evenly at both walls.
+        </div>
+
+        <label>Board Actual Coverage Width</label>
+        <div id="s6BoardWidthInputs"></div>
+        <p class="field-note">Face-to-face reveal width, not the nominal size -- a "1x6" T&amp;G profile typically covers about 5 1/8" to 5 1/2" depending on the mill. Measure a sample board if you're not sure.</p>
+
+        <label>Ceiling Width</label>
+        <div id="s6CeilingWidthInputs"></div>
+
+        <label>Minimum Acceptable Rip Width</label>
+        <div id="s6MinRipInputs"></div>
+
+        <button type="button" onclick="calcScenario6()">Calculate</button>
+
+        <div id="s6Result"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+// ============================================================
+// Shared helpers (imperial spinners, decimal-inches conversion,
+// fraction formatting) -- same pattern used across every
+// calculator on this site.
+// ============================================================
+
+function getImperialSpinners(id) {
+
+    const fractions = [
+        "0", "1/16", "1/8", "3/16", "1/4", "5/16", "3/8", "7/16",
+        "1/2", "9/16", "5/8", "11/16", "3/4", "13/16", "7/8", "15/16"
+    ];
+
+    let feetOptions = "";
+    for (let i = 0; i <= 30; i++) {
+        feetOptions += `<option value="${i}">${i} ft</option>`;
+    }
+
+    let inchOptions = "";
+    for (let i = 0; i <= 11; i++) {
+        inchOptions += `<option value="${i}">${i} in</option>`;
+    }
+
+    let fractionOptions = "";
+    for (const fraction of fractions) {
+        fractionOptions += `<option value="${fraction}">${fraction}</option>`;
+    }
+
+    return `
+        <div class="measurement-input">
+            <select id="${id}Feet">${feetOptions}</select>
+            <select id="${id}Inches">${inchOptions}</select>
+            <select id="${id}Fraction">${fractionOptions}</select>
+        </div>
+    `;
+}
+
+function addImperial(ft, inch, frac) {
+    let fracToDec = 0;
+    if (frac !== "0") {
+        const [n, d] = frac.split("/").map(Number);
+        fracToDec = n / d;
+    }
+    return (ft * 12) + inch + fracToDec;
+}
+
+function readSpinner(id) {
+    return addImperial(
+        parseFloat(document.getElementById(id + "Feet").value) || 0,
+        parseFloat(document.getElementById(id + "Inches").value) || 0,
+        document.getElementById(id + "Fraction").value
+    );
+}
+
+function formatInches(decimalInches) {
+
+    if (decimalInches < 0) {
+        return "-" + formatInches(-decimalInches);
+    }
+
+    const whole = Math.floor(decimalInches);
+    const fraction = decimalInches - whole;
+    const denominator = 32;
+
+    let numerator = Math.round(fraction * denominator);
+
+    if (numerator === denominator) {
+        return `${whole + 1}"`;
+    }
+
+    function gcd(a, b) {
+        return b ? gcd(b, a % b) : a;
+    }
+
+    const divisor = gcd(numerator, denominator) || 1;
+    const simplifiedNum = numerator / divisor;
+    const simplifiedDen = denominator / divisor;
+
+    if (numerator === 0) {
+        return `${whole}"`;
+    }
+
+    return `${whole} ${simplifiedNum}/${simplifiedDen}"`;
+}
+
+// Build every spinner group up front.
+[
+    ["s1BoardWidth", "s1BoardWidthInputs"],
+    ["s1TotalWidth", "s1TotalWidthInputs"],
+    ["s1TargetGap", "s1TargetGapInputs"],
+    ["s1MaxGap", "s1MaxGapInputs"],
+
+    ["s2BoardWidth", "s2BoardWidthInputs"],
+    ["s2Gap", "s2GapInputs"],
+    ["s2TotalWidth", "s2TotalWidthInputs"],
+    ["s2MaxOverhang", "s2MaxOverhangInputs"],
+
+    ["s3BoardWidth", "s3BoardWidthInputs"],
+    ["s3TotalWidth", "s3TotalWidthInputs"],
+    ["s3TargetGap", "s3TargetGapInputs"],
+    ["s3MaxGap", "s3MaxGapInputs"],
+    ["s3MinRip", "s3MinRipInputs"],
+
+    ["s4BalusterWidth", "s4BalusterWidthInputs"],
+    ["s4OpeningWidth", "s4OpeningWidthInputs"],
+    ["s4MaxGap", "s4MaxGapInputs"],
+
+    ["s5TotalRun", "s5TotalRunInputs"],
+    ["s5CustomOC", "s5CustomOCSpinner"],
+
+    ["s6BoardWidth", "s6BoardWidthInputs"],
+    ["s6CeilingWidth", "s6CeilingWidthInputs"],
+    ["s6MinRip", "s6MinRipInputs"]
+
+].forEach(([id, targetId]) => {
+    document.getElementById(targetId).innerHTML = getImperialSpinners(id);
+});
+
+// Sensible non-zero defaults so a first-time Calculate click doesn't
+// just show "no solutions found" from every field reading zero.
+function setSpinner(id, ft, inch, frac) {
+    document.getElementById(id + "Feet").value = ft;
+    document.getElementById(id + "Inches").value = inch;
+    document.getElementById(id + "Fraction").value = frac;
+}
+
+setSpinner("s1BoardWidth", 0, 5, "1/2");
+setSpinner("s1TotalWidth", 12, 0, "0");
+setSpinner("s1TargetGap", 0, 0, "3/16");
+setSpinner("s1MaxGap", 0, 0, "5/16");
+
+setSpinner("s2BoardWidth", 0, 5, "1/2");
+setSpinner("s2Gap", 0, 0, "1/4");
+setSpinner("s2TotalWidth", 12, 0, "0");
+setSpinner("s2MaxOverhang", 0, 2, "0");
+
+setSpinner("s3BoardWidth", 0, 5, "1/2");
+setSpinner("s3TotalWidth", 12, 0, "0");
+setSpinner("s3TargetGap", 0, 0, "3/16");
+setSpinner("s3MaxGap", 0, 0, "5/16");
+setSpinner("s3MinRip", 0, 2, "0");
+
+setSpinner("s4BalusterWidth", 0, 1, "1/2");
+setSpinner("s4OpeningWidth", 3, 0, "0");
+setSpinner("s4MaxGap", 0, 4, "0");
+
+setSpinner("s5TotalRun", 24, 0, "0");
+setSpinner("s5CustomOC", 0, 16, "0");
+
+setSpinner("s6BoardWidth", 0, 5, "1/4");
+setSpinner("s6CeilingWidth", 12, 0, "0");
+setSpinner("s6MinRip", 0, 1, "1/2");
+
+function toggleCustomOC() {
+    const isCustom = document.getElementById("s5OnCenter").value === "custom";
+    document.getElementById("s5CustomOCInputs").style.display = isCustom ? "block" : "none";
+}
+
+// ============================================================
+// Scenario picker / compare-all toggle
+// ============================================================
+
+function selectScenario(id) {
+
+    document.querySelectorAll(".scenario-panel").forEach(panel => {
+        panel.classList.toggle("visible", panel.id === "panel-" + id);
+    });
+
+    document.querySelectorAll(".scenario-card").forEach(card => {
+        card.classList.toggle("active", card.dataset.scenario === id);
+    });
+
+    document.getElementById("compareAllToggle").checked = false;
+
+    const panel = document.getElementById("panel-" + id);
+    if (panel) {
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+function toggleCompareAll() {
+
+    const compareAll = document.getElementById("compareAllToggle").checked;
+
+    document.querySelectorAll(".scenario-panel").forEach(panel => {
+        panel.classList.toggle("visible", compareAll);
+    });
+
+    document.querySelectorAll(".scenario-card").forEach(card => {
+        card.classList.toggle("active", compareAll);
+    });
+}
+
+// ============================================================
+// Shared table renderer
+// ============================================================
+
+function renderResultTable(headers, rows, recommendedIndex) {
+
+    if (!rows.length) {
+        return `<div class="result-empty">No valid layouts found with these inputs -- try widening the gap range, lowering the minimum, or double-checking the total width.</div>`;
+    }
+
+    const rowsHtml = rows.map((cells, i) => `
+        <tr class="${i === recommendedIndex ? "recommended" : ""}">
+            ${cells.map(c => `<td>${c}</td>`).join("")}
+        </tr>
+    `).join("");
+
+    return `
+        <div class="table-wrapper">
+            <table class="layout-table">
+                <thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+// ============================================================
+// Scenario 1: Decking, Even Reveal
+// Equal gap at both ends AND between every board -- classic
+// "solve for the gap that fills the space exactly" layout.
+// ============================================================
+
+function solveEqualGap(total, bw, minGap, maxGap) {
+    const results = [];
+    for (let count = 1; count < 300; count++) {
+        const gap = (total - (count * bw)) / (count + 1);
+        if (gap >= minGap && gap <= maxGap) {
+            results.push({ count, gap });
+        }
+    }
+    return results;
+}
+
+function calcScenario1() {
+
+    const bw = readSpinner("s1BoardWidth");
+    const total = readSpinner("s1TotalWidth");
+    const targetGap = readSpinner("s1TargetGap");
+    const maxGap = readSpinner("s1MaxGap");
+
+    const resultEl = document.getElementById("s1Result");
+
+    if (bw <= 0 || total <= 0 || bw >= total) {
+        resultEl.innerHTML = `<div class="result-warning">Board width and total width must both be greater than zero, and the total width must be larger than one board.</div>`;
+        return;
+    }
+
+    const results = solveEqualGap(total, bw, targetGap, Math.max(maxGap, targetGap))
+        .sort((a, b) => Math.abs(a.gap - targetGap) - Math.abs(b.gap - targetGap))
+        .slice(0, 5);
+
+    const rows = results.map(r => [r.count, formatInches(r.gap)]);
+
+    resultEl.innerHTML = `
+        ${renderResultTable(["Boards", "Gap Between Boards (and at each end)"], rows, 0)}
+        ${results.length ? `<p class="result-note">Top row is closest to your target gap. Every option here fills the space exactly -- no rip boards needed.</p>` : ""}
+        ${results.length ? `<button type="button" class="print-btn" onclick="printScenario('s1', 'Decking -- Even Reveal')">&#128424; Print</button>` : ""}
+    `;
+}
+
+// ============================================================
+// Scenario 2: Decking, Overhang & Trim
+// Fixed gap, fixed starting edge -- solve board count so the far
+// end overhangs (never falls short), report the trim amount, and
+// offer a "widen the gap instead" zero-waste alternative.
+// ============================================================
+
+function calcScenario2() {
+
+    const bw = readSpinner("s2BoardWidth");
+    const gap = readSpinner("s2Gap");
+    const total = readSpinner("s2TotalWidth");
+    const maxOverhang = readSpinner("s2MaxOverhang");
+
+    const resultEl = document.getElementById("s2Result");
+
+    if (bw <= 0 || total <= 0 || bw >= total) {
+        resultEl.innerHTML = `<div class="result-warning">Board width and distance to cover must both be greater than zero, and the distance must be larger than one board.</div>`;
+        return;
+    }
+
+    const N = Math.ceil((total + gap) / (bw + gap));
+    const covered = (N * bw) + ((N - 1) * gap);
+    const overhang = covered - total;
+
+    let html = `
+        <div class="table-wrapper">
+            <table class="layout-table">
+                <thead><tr><th>Boards</th><th>Gap</th><th>Covers</th><th>Overhang to Trim</th></tr></thead>
+                <tbody>
+                    <tr class="recommended">
+                        <td>${N}</td>
+                        <td>${formatInches(gap)}</td>
+                        <td>${formatInches(covered)}</td>
+                        <td>${formatInches(overhang)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    if (overhang > maxOverhang) {
+        html += `<div class="result-warning">That's more overhang than you said you're comfortable trimming off. See the alternative below, or reconsider your max overhang.</div>`;
+    } else {
+        html += `<p class="result-note">Snap a line ${formatInches(overhang)} past the outer edge and trim all boards flush in one pass.</p>`;
+    }
+
+    // Zero-waste alternative: one fewer board, gap widened to land
+    // exactly on the far edge with no overhang at all.
+    const M = N - 1;
+    if (M >= 2) {
+        const gapNeeded = (total - (M * bw)) / (M - 1);
+        if (gapNeeded > 0) {
+            html += `
+                <div class="table-wrapper">
+                    <p class="result-note" style="margin-top:20px;"><strong>Alternative -- no overhang to trim:</strong></p>
+                    <table class="layout-table">
+                        <thead><tr><th>Boards</th><th>Widened Gap</th><th>Covers</th></tr></thead>
+                        <tbody>
+                            <tr><td>${M}</td><td>${formatInches(gapNeeded)}</td><td>${formatInches(total)}</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="result-note">Uses one fewer board by opening the gap slightly. Only worth it if a ${formatInches(gapNeeded)} gap still looks right to you.</p>
+                </div>
+            `;
+        }
+    }
+
+    html += `<button type="button" class="print-btn" onclick="printScenario('s2', 'Decking -- Overhang &amp; Trim')">&#128424; Print</button>`;
+
+    resultEl.innerHTML = html;
+}
+
+// ============================================================
+// Scenario 3: Decking, Minimum Starter Rip
+// One ripped starter board against the wall, full boards after
+// it, gap adjustable within a range to keep the starter rip from
+// coming out too thin.
+// ============================================================
+
+function solveMinRip(total, bw, minGap, maxGap, minRip) {
+    const results = [];
+    for (let fullCount = 1; fullCount < 300; fullCount++) {
+        for (let gap = minGap; gap <= maxGap + 1e-9; gap += 1 / 32) {
+            const rip = total - (fullCount * bw) - (fullCount * gap);
+            if (rip < 0 || rip > bw) {
+                continue;
+            }
+            if (rip === 0 || rip >= minRip) {
+                results.push({ fullCount, gap, rip });
+            }
+        }
+    }
+    return results;
+}
+
+function calcScenario3() {
+
+    const bw = readSpinner("s3BoardWidth");
+    const total = readSpinner("s3TotalWidth");
+    const targetGap = readSpinner("s3TargetGap");
+    const maxGap = readSpinner("s3MaxGap");
+    const minRip = readSpinner("s3MinRip");
+
+    const resultEl = document.getElementById("s3Result");
+
+    if (bw <= 0 || total <= 0 || bw >= total) {
+        resultEl.innerHTML = `<div class="result-warning">Board width and total width must both be greater than zero, and the total width must be larger than one board.</div>`;
+        return;
+    }
+
+    const results = solveMinRip(total, bw, targetGap, Math.max(maxGap, targetGap), minRip)
+        .sort((a, b) => Math.abs(a.gap - targetGap) - Math.abs(b.gap - targetGap))
+        .slice(0, 5);
+
+    const rows = results.map(r => [
+        r.rip > 0 ? (r.fullCount + 1) : r.fullCount,
+        formatInches(r.gap),
+        r.rip > 0 ? formatInches(r.rip) : "none (exact fit)"
+    ]);
+
+    resultEl.innerHTML = `
+        ${renderResultTable(["Total Boards", "Gap", "Starter Rip Width"], rows, 0)}
+        ${results.length ? `<p class="result-note">Top row is closest to your target gap. All full boards run field-width; only the board against the wall is ripped.</p>` : ""}
+        ${results.length ? `<button type="button" class="print-btn" onclick="printScenario('s3', 'Decking -- Minimum Starter Rip')">&#128424; Print</button>` : ""}
+    `;
+}
+
+// ============================================================
+// Scenario 4: Balusters, Code Max Gap
+// Maximize baluster count with equal gaps at both ends and
+// between balusters, staying at or under a code-max gap. Shows
+// the max-fill option plus two airier (still legal) alternatives.
+// ============================================================
+
+function solveBalusters(total, bw, maxGap) {
+    const results = [];
+    for (let count = 1; count < 300; count++) {
+        const gap = (total - (count * bw)) / (count + 1);
+        if (gap < 0) {
+            break;
+        }
+        if (gap <= maxGap) {
+            results.push({ count, gap });
+        }
+    }
+    return results;
+}
+
+function calcScenario4() {
+
+    const bw = readSpinner("s4BalusterWidth");
+    const total = readSpinner("s4OpeningWidth");
+    const maxGap = readSpinner("s4MaxGap");
+
+    const resultEl = document.getElementById("s4Result");
+
+    if (bw <= 0 || total <= 0 || maxGap <= 0 || bw >= total) {
+        resultEl.innerHTML = `<div class="result-warning">Baluster width, opening width, and max gap must all be greater than zero, and the opening must be larger than one baluster.</div>`;
+        return;
+    }
+
+    const results = solveBalusters(total, bw, maxGap);
+
+    if (!results.length) {
+        resultEl.innerHTML = `<div class="result-warning">No layout keeps every gap under ${formatInches(maxGap)} with this opening and baluster width -- you'll need a narrower baluster, or the opening is too wide for a single equal-gap run.</div>`;
+        return;
+    }
+
+    const options = results.slice(-3).reverse();
+
+    const rows = options.map(r => [r.count, formatInches(r.gap)]);
+
+    resultEl.innerHTML = `
+        ${renderResultTable(["Balusters", "Equal Gap (ends and between)"], rows, 0)}
+        <p class="result-note">Top row packs in the most balusters at the tightest legal gap. The rows below use fewer balusters for a slightly more open look, still under your code max of ${formatInches(maxGap)}.</p>
+        <button type="button" class="print-btn" onclick="printScenario('s4', 'Balusters -- Code Max Gap')">&#128424; Print</button>
+    `;
+}
+
+// ============================================================
+// Scenario 5: Decorative Rafter Tails, On Layout
+// Not a "fill the space" problem -- lists real on-center station
+// marks from a fixed starting edge, flags the leftover last bay.
+// ============================================================
+
+function calcScenario5() {
+
+    const total = readSpinner("s5TotalRun");
+    const ocSelect = document.getElementById("s5OnCenter").value;
+    const oc = ocSelect === "custom" ? readSpinner("s5CustomOC") : parseFloat(ocSelect);
+    const skipN = Math.max(1, parseInt(document.getElementById("s5SkipN").value, 10) || 1);
+
+    const resultEl = document.getElementById("s5Result");
+
+    if (total <= 0 || oc <= 0) {
+        resultEl.innerHTML = `<div class="result-warning">Total run and on-center spacing must both be greater than zero.</div>`;
+        return;
+    }
+
+    const allStations = [];
+    for (let pos = 0; pos <= total + 1e-9; pos += oc) {
+        allStations.push(Math.min(pos, total));
+    }
+
+    const shown = allStations.filter((_, i) => i % skipN === 0);
+
+    // Distance from the last real on-center station to the far wall --
+    // zero when the run divides evenly, otherwise the short leftover bay.
+    const lastBay = total - allStations[allStations.length - 1];
+    const dividesEvenly = lastBay < 1 / 32;
+
+    const rows = shown.map((pos, i) => [`#${i + 1}`, formatInches(pos)]);
+
+    resultEl.innerHTML = `
+        ${renderResultTable(["Station", "Distance From Start"], rows, -1)}
+        <p class="result-note">
+            ${allStations.length} real ${oc}" o.c. stations across this run (showing every ${skipN === 1 ? "station" : skipN + "th station"} above, ${shown.length} shown).
+            ${dividesEvenly
+                ? `This run divides evenly into full ${oc}" bays -- no short bay at the end.`
+                : `The last bay is short at ${formatInches(lastBay)} -- normal for any on-center layout that doesn't divide the run evenly. Decide up front whether that short bay gets its own tail or not.`}
+        </p>
+        <button type="button" class="print-btn" onclick="printScenario('s5', 'Decorative Rafter Tails -- On Layout')">&#128424; Print</button>
+    `;
+}
+
+// ============================================================
+// Scenario 6: T&G Ceiling
+// Zero-gap tight pack, checked against a minimum usable rip
+// width both as a single-edge rip and a split-both-ends rip.
+// ============================================================
+
+function calcScenario6() {
+
+    const bw = readSpinner("s6BoardWidth");
+    const total = readSpinner("s6CeilingWidth");
+    const minRip = readSpinner("s6MinRip");
+
+    const resultEl = document.getElementById("s6Result");
+
+    if (bw <= 0 || total <= 0 || bw >= total) {
+        resultEl.innerHTML = `<div class="result-warning">Board coverage width and ceiling width must both be greater than zero, and the ceiling must be wider than one board.</div>`;
+        return;
+    }
+
+    const count = Math.floor(total / bw);
+    const remainder = total - (count * bw);
+    const splitRip = remainder / 2;
+
+    const singleOk = remainder === 0 || remainder >= minRip;
+    const splitOk = remainder === 0 || splitRip >= minRip;
+
+    let html = `
+        <div class="table-wrapper">
+            <table class="layout-table">
+                <thead><tr><th>Layout</th><th>Full Boards</th><th>Rip Width</th><th></th></tr></thead>
+                <tbody>
+                    <tr class="${singleOk ? "recommended" : ""}">
+                        <td>Single rip, one wall</td>
+                        <td>${count}</td>
+                        <td>${remainder === 0 ? "none (exact fit)" : formatInches(remainder)}</td>
+                        <td>${singleOk ? "OK" : "too thin"}</td>
+                    </tr>
+                    <tr class="${splitOk && !singleOk ? "recommended" : ""}">
+                        <td>Split rip, both walls</td>
+                        <td>${remainder === 0 ? count : count - 1}</td>
+                        <td>${remainder === 0 ? "none (exact fit)" : formatInches(splitRip) + " each side"}</td>
+                        <td>${splitOk ? "OK" : "too thin"}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    if (!singleOk && !splitOk && remainder > 0) {
+        const altCount = count - 1;
+        const altRemainder = total - (altCount * bw);
+        html += `<div class="result-warning">Both options leave a rip under ${formatInches(minRip)}. Dropping to ${altCount} full boards leaves a ${formatInches(altRemainder)} board instead -- wider, but check it still looks right against the room.</div>`;
+    }
+
+    html += `<button type="button" class="print-btn" onclick="printScenario('s6', 'Tongue &amp; Groove Ceiling')">&#128424; Print</button>`;
+
+    resultEl.innerHTML = html;
+}
+
+// ============================================================
+// Print -- opens a clean single-page copy of one scenario's
+// inputs and result, same pattern as the Rafter/Stair Calculators.
+// ============================================================
+
+function printScenario(id, title) {
+
+    const panel = document.getElementById("panel-" + id);
+    const resultEl = document.getElementById(id + "Result");
+
+    if (!panel || !resultEl) {
+        return;
+    }
+
+    const styleEl = document.querySelector("style");
+    const baseStyles = styleEl ? styleEl.textContent : "";
+
+    const printWin = window.open("", "_blank");
+    if (!printWin) {
+        return;
+    }
+
+    printWin.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${title} -- WTC Montana Construction</title>
+<style>
+${baseStyles}
+html, body { margin: 0; padding: 20px; }
+body { font-family: Arial, Helvetica, sans-serif; color: #1a2740; }
+.print-btn { display: none; }
+@page { margin: 0.5in; }
+</style>
+</head>
+<body>
+<h1 style="font-size:18px;">${title} &mdash; WTC Montana Construction</h1>
+${resultEl.outerHTML}
+<script>
+window.onload = function () {
+    window.print();
+};
+<\/script>
+</body>
+</html>`);
+
+    printWin.document.close();
+}
+
+</script>
+
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../tools.html">&larr; Back to all tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="../contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="../services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="../services/new-build.html">New Build</a></li>
+        <li><a href="../services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="../services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="../services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="../portfolio.html">Portfolio</a></li>
+        <li><a href="../tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="../about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="../assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>

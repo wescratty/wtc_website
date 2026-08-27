@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roof Angle Calculator (Archived) | WTC Montana Construction</title>
+<meta name="description" content="Retired rough-estimate rafter/stock tool, kept for reference only.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/archive/roof2.html">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">WTC Montana Construction<small>Bitterroot Valley, MT</small></a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Roof Angle Calculator (Archived)</h1>
+    <p>Quickly work out roof pitch and angle.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+
+    <div class="tools-disclaimer">
+      <strong>This tool has been retired.</strong> It's no longer linked from the Tools page &mdash;
+      kept here for reference only. The <a href="../calculators/rafter.html">Rafter Calculator</a>
+      replaces it, with real birdsmouth-notch cut angles, a proper cut-sheet diagram, and a
+      lumber-yard-ready stock length. Use that one instead.
+    </div>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 20px auto;
+  }
+
+  .row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .card {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+
+  input {
+    width: 120px;
+    padding: 6px;
+    margin-top: 4px;
+  }
+
+  button {
+    margin-top: 12px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  .stock-bar {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stock {
+    padding: 6px 10px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .stock.hit {
+    background: #d6f5d6;
+    border-color: #2e8b57;
+  }
+
+  .stock.fail {
+    background: #ffe0e0;
+  }
+
+  svg {
+    width: 100%;
+    height: 420px;
+    border: 1px solid #ccc;
+    margin-top: 16px;
+  }
+</style>
+
+<!--
+  Rafter Stock-Fit Calculator
+  =============================
+  A simpler companion to rafter.html: given building width, pitch, and
+  soffit overhang, computes the common rafter length and the full
+  "envelope" length (rafter + soffit overhang combined), then checks
+  which standard lumber stock lengths (8'-24') it fits on. Optionally
+  trims the soffit down until the envelope fits a shorter, cheaper
+  stock length.
+
+  Unlike the other calculators here, inputs are plain decimal inputs
+  (feet, not feet/inches/fraction spinners) for a quicker rough estimate.
+
+  ARCHIVED 2026-08-27: superseded by ../calculators/rafter.html, which
+  covers this same "will it fit on a stock board" question with correct
+  birdsmouth geometry and long-point-to-long-point stock length. Left
+  here unlinked, for reference only.
+-->
+
+<div class="wrap">
+
+  <div class="card">
+    <h3>Rafter Calculator</h3>
+
+    <label>Building Width (ft)</label>
+    <input id="width" type="number" value="20">
+
+    <label>Pitch (rise per 12)</label>
+    <input id="pitch" type="number" value="6">
+
+    <label>Soffit (inches)</label>
+    <input id="soffit" type="number" value="24">
+
+    <label>Stand / Heel Height (inches)</label>
+    <input id="stand" type="number" value="0">
+
+    <label>
+      <input type="checkbox" id="optimize">
+      Optimize soffit for stock savings
+    </label>
+
+    <button onclick="run()">Calculate</button>
+  </div>
+
+  <div class="card" id="output"></div>
+
+  <svg id="svg"></svg>
+
+</div>
+
+<script>
+// Note: `widthFt` here is treated as the rafter's horizontal run
+// directly (not halved for a ridge like rafter.html does) - this
+// calculator is meant as a quick single-plane rafter/stock estimate.
+function computeGeometry(widthFt, pitch, soffitIn) {
+
+  const run = widthFt * 12;
+  const rise = (run / 12) * pitch;
+
+  // main rafter (top edge): hypotenuse of the run/rise triangle
+  const common = Math.sqrt(run * run + rise * rise);
+
+  // soffit projection: same triangle relationship, scaled to the
+  // soffit's horizontal overhang instead of the full run
+  const soffitRun = soffitIn;
+  const soffitRise = (soffitRun / 12) * pitch;
+  const soffit = Math.sqrt(soffitRun * soffitRun + soffitRise * soffitRise);
+
+  // envelope: the full board length needed to cut both the common
+  // rafter and its tail from one piece of stock (run+soffit combined,
+  // rather than common + soffit added as separate hypotenuses)
+  const envelope = Math.sqrt(
+    Math.pow(run + soffitRun, 2) +
+    Math.pow(rise + soffitRise, 2)
+  );
+
+  return { run, rise, common, soffit, envelope };
+}
+
+// Checks the envelope length against standard rafter stock lengths
+// (sold in even feet) and flags which ones are long enough to use.
+function stockOptions(envelope) {
+
+  const stock = [8,10,12,14,16,18,20,24];
+
+  return stock.map(s => ({
+    size: s,
+    fits: envelope <= s * 12
+  }));
+}
+
+function run() {
+
+  const width = +document.getElementById("width").value;
+  const pitch = +document.getElementById("pitch").value;
+  let soffit = +document.getElementById("soffit").value;
+  const optimize = document.getElementById("optimize").checked;
+
+  const geo = computeGeometry(width, pitch, soffit);
+
+  // Optional: if the envelope doesn't fit the shortest available stock,
+  // shrink the soffit overhang one inch at a time (recomputing geometry
+  // each step) until it does - trading overhang for a cheaper stock length.
+  if (optimize) {
+    const target = stockOptions(geo.envelope).find(s => s.fits);
+
+    if (target) {
+      while (geo.envelope > target.size * 12 && soffit > 0) {
+        soffit -= 1;
+        Object.assign(geo, computeGeometry(width, pitch, soffit));
+      }
+    }
+  }
+
+  const stocks = stockOptions(geo.envelope);
+
+  document.getElementById("output").innerHTML = `
+    <h4>Results</h4>
+
+    <p>Common Rafter: ${geo.common.toFixed(2)} in</p>
+    <p>Envelope Length: ${geo.envelope.toFixed(2)} in</p>
+
+    <div class="stock-bar">
+      ${stocks.map(s => `
+        <div class="stock ${s.fits ? "hit" : "fail"}">
+          ${s.size}'
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  drawSVG(geo);
+}
+
+// Draws a simple ridge-to-tail rafter line with plumb and soffit
+// reference lines, scaled by `scale` (pixels per inch) from a fixed
+// origin at the wall.
+function drawSVG(g) {
+
+  const svg = document.getElementById("svg");
+
+  const scale = 2;
+
+  const run = g.run * scale;
+  const rise = g.rise * scale;
+
+  svg.innerHTML = `
+    <line x1="50" y1="50" x2="${50+run}" y2="${50+rise}" stroke="black"/>
+    <text x="50" y="40">Ridge</text>
+
+    <line x1="50" y1="50" x2="50" y2="${50+rise}" stroke="blue" stroke-dasharray="4"/>
+    <text x="55" y="${50+rise/2}">Plumb</text>
+
+    <line x1="${50+run}" y1="${50+rise}" x2="${50+run+g.soffit}" y2="${50+rise + (g.soffit/12)*6}" stroke="green"/>
+    <text x="${50+run}" y="${50+rise+20}">Soffit</text>
+  `;
+}
+
+run();
+</script>
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../tools.html">&larr; Back to all tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div>
+      <h4>WTC Montana Construction</h4>
+      <p>Building in the Bitterroot Valley for over 30 years.</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul><li><a href="tel:+14063605446">(406) 360-5446</a></li></ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>

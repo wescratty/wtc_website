@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probability Calculator | WTC Montana Construction</title>
+<meta name="description" content="A just-for-fun decision tree tool for weighing outcomes by chance and how much you want them.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/decision_tree_calculator.html">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="../assets/logo/favicon-192.png">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">
+      <img class="logo" src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/index.html">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>🎲 Probability Calculator</h1>
+    <p>Just for fun &mdash; not a construction tool. Build a decision tree and weigh outcomes by chance &times; how much you want them.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Tree Calculator</title>
+<style>
+  :root{
+    --bg:#f6f7fb;
+    --card:#ffffff;
+    --card-border:#e2e5ec;
+    --text:#1f2430;
+    --text-muted:#6b7280;
+    --accent:#3b5bfd;
+    --accent-soft:#eef1ff;
+    --green:#1a9c6d;
+    --red:#d64545;
+    --line:#c7cbd6;
+    --radius:10px;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px 16px 60px;
+  }
+  .wrap{ max-width:1100px; margin:0 auto; }
+  h1{ font-size:1.4rem; margin:0 0 4px; }
+  .subtitle{ color:var(--text-muted); font-size:0.92rem; margin:0 0 18px; line-height:1.5; max-width:70ch; }
+
+  .toolbar{ display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  .btn{
+    border:1px solid var(--card-border);
+    background:var(--card);
+    color:var(--text);
+    border-radius:8px;
+    padding:6px 12px;
+    font-size:0.85rem;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+  }
+  .btn:hover{ background:#f0f1f6; }
+  .btn.split-btn{ border-color:var(--accent); color:var(--accent); }
+  .btn.split-btn:hover{ background:var(--accent-soft); }
+  .btn.remove-btn{ border-color:var(--red); color:var(--red); }
+  .btn.remove-btn:hover{ background:#fdecec; }
+  .btn.reset-btn{ margin-left:auto; }
+
+  .summary{
+    display:flex; gap:14px; flex-wrap:wrap;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:14px 18px;
+    margin-bottom:26px;
+  }
+  .summary-item{ min-width:180px; }
+  .summary-label{ font-size:0.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+  .summary-value{ font-size:1.5rem; font-weight:600; margin-top:2px; }
+  .summary-value.pos{ color:var(--green); }
+  .summary-value.neg{ color:var(--red); }
+  .summary-note{ font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
+
+  .tree-container{
+    overflow-x:auto;
+    padding:10px 10px 30px;
+  }
+
+  .zoom-panel{
+    position:fixed;
+    top:140px;
+    right:18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:10px 8px 12px;
+    box-shadow:0 2px 10px rgba(20,20,40,0.08);
+    z-index:20;
+  }
+  .zoom-value{
+    font-size:0.76rem;
+    font-weight:600;
+    color:var(--text-muted);
+    cursor:pointer;
+    user-select:none;
+  }
+  .zoom-slider-wrap{
+    width:36px;
+    height:120px;
+    position:relative;
+  }
+  .zoom-slider-wrap input[type=range]{
+    position:absolute;
+    width:120px;
+    height:20px;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    margin:0;
+  }
+  .zoom-fit-btn{ font-size:0.72rem; padding:4px 8px; }
+  @media (max-width: 720px){
+    .zoom-panel{ top:auto; bottom:16px; right:12px; }
+  }
+
+  /* classic CSS org-chart tree */
+  .tree ul{
+    padding-top:24px;
+    position:relative;
+    display:flex;
+    justify-content:center;
+    margin:0;
+  }
+  .tree li{
+    list-style-type:none;
+    position:relative;
+    padding:24px 10px 0 10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .tree li::before, .tree li::after{
+    content:'';
+    position:absolute;
+    top:0;
+    right:50%;
+    border-top:1px solid var(--line);
+    width:50%;
+    height:24px;
+  }
+  .tree li::after{
+    right:auto;
+    left:50%;
+    border-left:1px solid var(--line);
+  }
+  .tree li:only-child::after, .tree li:only-child::before{
+    display:none;
+  }
+  .tree li:only-child{ padding-top:0; }
+  .tree li:first-child::before, .tree li:last-child::after{
+    border:0 none;
+  }
+  .tree li:last-child::before{
+    border-right:1px solid var(--line);
+    border-radius:0 6px 0 0;
+  }
+  .tree li:first-child::after{
+    border-radius:6px 0 0 0;
+  }
+  .tree ul ul::before{
+    content:'';
+    position:absolute;
+    top:0;
+    left:50%;
+    border-left:1px solid var(--line);
+    width:0;
+    height:24px;
+  }
+  .tree > ul{ padding-top:0; }
+  .tree > ul::before{ display:none; }
+  .tree > ul > li{ padding-top:0; }
+  .tree > ul > li::before, .tree > ul > li::after{ display:none; }
+
+  .node-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:10px 12px;
+    width:190px;
+    box-shadow:0 1px 2px rgba(20,20,40,0.04);
+  }
+  .node-card.fork{ border-color:#cdd3ea; }
+
+  .label-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-size:0.95rem;
+    font-weight:600;
+    color:var(--text);
+    padding:2px 0 6px;
+    border-bottom:1px dashed transparent;
+  }
+  .label-input:focus{
+    outline:none;
+    border-bottom:1px dashed var(--accent);
+  }
+
+  .prob-row, .desire-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+    font-size:0.8rem;
+    color:var(--text-muted);
+    margin-top:4px;
+  }
+  .prob-row input, .desire-row input{
+    width:64px;
+    padding:3px 6px;
+    border:1px solid var(--card-border);
+    border-radius:6px;
+    font-size:0.85rem;
+    text-align:right;
+  }
+
+  .cum-prob{
+    font-size:0.75rem;
+    color:var(--text-muted);
+    margin-top:6px;
+  }
+  .ev-contribution{
+    font-size:0.85rem;
+    font-weight:600;
+    margin-top:4px;
+  }
+
+  .btn-row{ margin-top:8px; display:flex; }
+  .btn-row .btn{ width:100%; text-align:center; padding:5px 8px; font-size:0.8rem; }
+
+  footer{
+    max-width:70ch;
+    margin:30px auto 0;
+    font-size:0.78rem;
+    color:var(--text-muted);
+    line-height:1.5;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Decision Tree Calculator</h1>
+  <p class="subtitle">
+    Build out a branching tree of outcomes. Every fork's two branches are complements &mdash;
+    set the probability on one and the other is filled in as <code>1 &minus; a</code> automatically.
+    At the end of any branch, score how much you want that outcome ("Desire"), and the tool
+    multiplies it through by the odds of getting there to give you an expected value for the whole decision.
+  </p>
+
+  <div class="toolbar">
+    <button class="btn reset-btn" id="resetBtn">Reset tree</button>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="tree-container" id="treeContainer">
+    <div class="tree" id="tree"></div>
+  </div>
+
+  <div class="zoom-panel" id="zoomPanel" title="Zoom the tree">
+    <div class="zoom-value" id="zoomLabel" title="Double-click to reset to 100%">100%</div>
+    <div class="zoom-slider-wrap">
+      <input type="range" id="zoomSlider" min="30" max="150" step="5" value="100">
+    </div>
+    <button class="btn zoom-fit-btn" id="fitBtn" title="Shrink to fit the whole tree on screen">Fit</button>
+  </div>
+
+  <footer>
+    Desire is just a number you choose (try a simple scale like &minus;10 to +10, worst to best) &mdash;
+    it doesn't need real units. "EV" on each branch end is chance &times; desire; the total at the
+    top sums every branch end, so you can compare it against a different decision by editing the
+    root node or building a second tree.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  let idCounter = 1;
+  function makeNode(label, prob){
+    return { id: idCounter++, label: label, prob: prob, desire: 0, children: [] };
+  }
+
+  let root = makeNode("Apply for the job", null);
+
+  let nodeRefs = {}; // id -> { probInput, desireInput, cumEl, evEl }
+
+  function findParent(node, target){
+    for(const c of node.children){
+      if(c === target) return node;
+      const found = findParent(c, target);
+      if(found) return found;
+    }
+    return null;
+  }
+
+  function hasGrandchildren(node){
+    return node.children.some(c => c.children.length > 0);
+  }
+
+  function addSplit(node){
+    const a = makeNode("Yes / it happens", 0.5);
+    const b = makeNode("No / it doesn't", 0.5);
+    // carry the node's old Desire forward as a starting point on both new
+    // branch ends, instead of silently discarding it back to 0
+    a.desire = node.desire;
+    b.desire = node.desire;
+    node.children = [a, b];
+    fullRender();
+  }
+
+  function removeSplit(node){
+    if(hasGrandchildren(node)){
+      if(!confirm("This branch has further splits below it. Remove them all?")) return;
+    }
+    node.children = [];
+    node.desire = 0;
+    fullRender();
+  }
+
+  function onProbInput(node, value){
+    let v = parseFloat(value);
+    if(isNaN(v)) v = 0;
+    v = Math.max(0, Math.min(1, v));
+    node.prob = v;
+    const parent = findParent(root, node);
+    if(parent){
+      const sibling = parent.children.find(c => c !== node);
+      if(sibling){
+        sibling.prob = Math.round((1 - v) * 10000) / 10000;
+        const sibRef = nodeRefs[sibling.id];
+        if(sibRef && sibRef.probInput) sibRef.probInput.value = sibling.prob;
+      }
+    }
+    refreshDisplays();
+  }
+
+  function onDesireInput(node, value){
+    let v = parseFloat(value);
+    if(isNaN(v)) v = 0;
+    node.desire = v;
+    refreshDisplays();
+  }
+
+  function collectLeaves(node, cumProb, arr){
+    if(node.children.length === 0){
+      arr.push({ node: node, cumProb: cumProb, ev: cumProb * node.desire });
+    } else {
+      node.children.forEach(c => collectLeaves(c, cumProb * c.prob, arr));
+    }
+    return arr;
+  }
+
+  function refreshDisplays(){
+    // update cumulative-probability and EV text on every node, without rebuilding DOM
+    (function walk(node, cumProb){
+      const ref = nodeRefs[node.id];
+      if(ref && ref.cumEl){
+        ref.cumEl.textContent = "chance: " + (cumProb * 100).toFixed(1) + "%";
+      }
+      if(node.children.length === 0){
+        const ev = cumProb * node.desire;
+        if(ref && ref.evEl){
+          ref.evEl.textContent = "EV: " + ev.toFixed(2);
+          ref.evEl.classList.toggle("pos", ev > 0);
+          ref.evEl.classList.toggle("neg", ev < 0);
+          ref.evEl.style.color = ev > 0 ? "var(--green)" : (ev < 0 ? "var(--red)" : "var(--text)");
+        }
+      } else {
+        node.children.forEach(c => walk(c, cumProb * c.prob));
+      }
+    })(root, 1);
+
+    updateSummary();
+  }
+
+  function updateSummary(){
+    const leaves = collectLeaves(root, 1, []);
+    const totalEV = leaves.reduce((s, l) => s + l.ev, 0);
+    const totalProb = leaves.reduce((s, l) => s + l.cumProb, 0);
+    const summaryEl = document.getElementById("summary");
+    const evClass = totalEV > 0 ? "pos" : (totalEV < 0 ? "neg" : "");
+    summaryEl.innerHTML =
+      '<div class="summary-item">' +
+        '<div class="summary-label">Expected value</div>' +
+        '<div class="summary-value ' + evClass + '">' + totalEV.toFixed(2) + '</div>' +
+        '<div class="summary-note">sum of (chance &times; desire) across every branch end</div>' +
+      '</div>' +
+      '<div class="summary-item">' +
+        '<div class="summary-label">Branch ends</div>' +
+        '<div class="summary-value">' + leaves.length + '</div>' +
+        '<div class="summary-note">total probability across them: ' + (totalProb * 100).toFixed(1) + '%</div>' +
+      '</div>';
+  }
+
+  function renderNode(node, cumProb){
+    const li = document.createElement("li");
+    const card = document.createElement("div");
+    card.className = "node-card " + (node.children.length === 0 ? "leaf" : "fork");
+
+    const ref = {};
+    nodeRefs[node.id] = ref;
+
+    const labelInput = document.createElement("input");
+    labelInput.type = "text";
+    labelInput.className = "label-input";
+    labelInput.value = node.label;
+    labelInput.addEventListener("input", e => { node.label = e.target.value; });
+    card.appendChild(labelInput);
+
+    if(node.prob !== null){
+      const probRow = document.createElement("div");
+      probRow.className = "prob-row";
+      const probLabel = document.createElement("span");
+      probLabel.textContent = "P =";
+      const probInput = document.createElement("input");
+      probInput.type = "number";
+      probInput.min = "0";
+      probInput.max = "1";
+      probInput.step = "0.01";
+      probInput.value = node.prob;
+      probInput.addEventListener("input", e => onProbInput(node, e.target.value));
+      ref.probInput = probInput;
+      probRow.appendChild(probLabel);
+      probRow.appendChild(probInput);
+      card.appendChild(probRow);
+    }
+
+    const cumEl = document.createElement("div");
+    cumEl.className = "cum-prob";
+    cumEl.textContent = "chance: " + (cumProb * 100).toFixed(1) + "%";
+    ref.cumEl = cumEl;
+    card.appendChild(cumEl);
+
+    if(node.children.length === 0){
+      const desireRow = document.createElement("div");
+      desireRow.className = "desire-row";
+      const desireLabel = document.createElement("span");
+      desireLabel.textContent = "Desire";
+      const desireInput = document.createElement("input");
+      desireInput.type = "number";
+      desireInput.step = "1";
+      desireInput.value = node.desire;
+      desireInput.addEventListener("input", e => onDesireInput(node, e.target.value));
+      ref.desireInput = desireInput;
+      desireRow.appendChild(desireLabel);
+      desireRow.appendChild(desireInput);
+      card.appendChild(desireRow);
+
+      const evEl = document.createElement("div");
+      evEl.className = "ev-contribution";
+      const ev = cumProb * node.desire;
+      evEl.textContent = "EV: " + ev.toFixed(2);
+      evEl.style.color = ev > 0 ? "var(--green)" : (ev < 0 ? "var(--red)" : "var(--text)");
+      ref.evEl = evEl;
+      card.appendChild(evEl);
+
+      const btnRow = document.createElement("div");
+      btnRow.className = "btn-row";
+      const splitBtn = document.createElement("button");
+      splitBtn.className = "btn split-btn";
+      splitBtn.textContent = "+ Add split";
+      splitBtn.addEventListener("click", () => addSplit(node));
+      btnRow.appendChild(splitBtn);
+      card.appendChild(btnRow);
+    } else {
+      const btnRow = document.createElement("div");
+      btnRow.className = "btn-row";
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "btn remove-btn";
+      removeBtn.textContent = "− Remove split";
+      removeBtn.addEventListener("click", () => removeSplit(node));
+      btnRow.appendChild(removeBtn);
+      card.appendChild(btnRow);
+    }
+
+    li.appendChild(card);
+
+    if(node.children.length > 0){
+      const childUl = document.createElement("ul");
+      node.children.forEach(child => {
+        childUl.appendChild(renderNode(child, cumProb * child.prob));
+      });
+      li.appendChild(childUl);
+    }
+
+    return li;
+  }
+
+  function fullRender(){
+    nodeRefs = {};
+    const treeEl = document.getElementById("tree");
+    treeEl.innerHTML = "";
+    const rootUl = document.createElement("ul");
+    rootUl.appendChild(renderNode(root, 1));
+    treeEl.appendChild(rootUl);
+    updateSummary();
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if(!confirm("Start over with a blank tree?")) return;
+    idCounter = 1;
+    root = makeNode("Apply for the job", null);
+    fullRender();
+  });
+
+  // --- zoom controls ---
+  // Uses CSS `zoom` (not `transform`) because it participates in layout,
+  // so the scrollable area actually shrinks instead of leaving dead space.
+  const zoomSlider = document.getElementById("zoomSlider");
+  const zoomLabel = document.getElementById("zoomLabel");
+  const treeContainer = document.getElementById("treeContainer");
+
+  function applyZoom(pct){
+    pct = Math.max(30, Math.min(150, Math.round(pct)));
+    const treeEl = document.getElementById("tree");
+    treeEl.style.zoom = pct / 100;
+    zoomLabel.textContent = pct + "%";
+    zoomSlider.value = pct;
+  }
+
+  function fitZoomToScreen(){
+    const treeEl = document.getElementById("tree");
+    treeEl.style.zoom = 1;
+    const naturalWidth = treeEl.scrollWidth || treeEl.offsetWidth;
+    const availableWidth = treeContainer.clientWidth - 16;
+    if(naturalWidth <= 0 || availableWidth <= 0){ applyZoom(100); return; }
+    let pct = Math.floor((availableWidth / naturalWidth) * 100);
+    pct = Math.max(30, Math.min(100, pct));
+    applyZoom(pct);
+  }
+
+  zoomSlider.addEventListener("input", e => applyZoom(parseInt(e.target.value, 10)));
+  document.getElementById("fitBtn").addEventListener("click", fitZoomToScreen);
+  zoomLabel.addEventListener("dblclick", () => applyZoom(100));
+
+  fullRender();
+})();
+</script>
+</body>
+</html>
+
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../fun-tools.html">&larr; Back to fun tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="../contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="../services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="../services/new-build.html">New Build</a></li>
+        <li><a href="../services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="../services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="../services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="../portfolio.html">Portfolio</a></li>
+        <li><a href="../tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="../about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="../assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>

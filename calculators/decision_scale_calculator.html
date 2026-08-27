@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Scale Calculator | WTC Montana Construction</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="../assets/logo/favicon-192.png">
+<style>
+  .back-to-fun-tools{
+    display:block;
+    max-width:760px;
+    margin:0 auto;
+    padding:10px 16px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size:0.85rem;
+  }
+  .back-to-fun-tools a{ color:#3b5bfd; text-decoration:none; font-weight:600; }
+  .back-to-fun-tools a:hover{ text-decoration:underline; }
+  :root{
+    --bg:#f6f7fb;
+    --card:#ffffff;
+    --card-border:#e2e5ec;
+    --text:#1f2430;
+    --text-muted:#6b7280;
+    --accent:#3b5bfd;
+    --accent-soft:#eef1ff;
+    --left:#3b5bfd;
+    --left-soft:#eef1ff;
+    --right:#c2410c;
+    --right-soft:#fff1e8;
+    --green:#1a9c6d;
+    --red:#d64545;
+    --line:#c7cbd6;
+    --radius:10px;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px 16px 60px;
+  }
+  .wrap{ max-width:760px; margin:0 auto; }
+  h1{ font-size:1.4rem; margin:0 0 4px; }
+  .subtitle{ color:var(--text-muted); font-size:0.92rem; margin:0 0 18px; line-height:1.5; max-width:70ch; }
+
+  .toolbar{ display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  .btn{
+    border:1px solid var(--card-border);
+    background:var(--card);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 14px;
+    font-size:0.85rem;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+  }
+  .btn:hover{ background:#f0f1f6; }
+  .btn.add-btn{ border-color:var(--accent); color:var(--accent); }
+  .btn.add-btn:hover{ background:var(--accent-soft); }
+  .btn.remove-btn{ border-color:var(--red); color:var(--red); padding:6px 10px; font-size:0.78rem; }
+  .btn.remove-btn:hover{ background:#fdecec; }
+  .btn.reset-btn{ margin-left:auto; }
+
+  .title-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    margin-bottom:18px;
+  }
+  .title-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--text);
+    padding:2px 0 10px;
+    border-bottom:1px dashed transparent;
+  }
+  .title-input:focus{ outline:none; border-bottom:1px dashed var(--accent); }
+  .title-input::placeholder{ color:var(--text-muted); font-weight:600; }
+
+  .options-row{ display:flex; gap:14px; }
+  .option-field{ flex:1; min-width:0; }
+  .option-field label{
+    display:block;
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--text-muted);
+    margin-bottom:4px;
+  }
+  .option-field input{
+    width:100%;
+    border:1px solid var(--card-border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:1rem;
+    font-weight:600;
+  }
+  .option-field.left input{ color:var(--left); border-color:#c7d1fb; }
+  .option-field.right input{ color:var(--right); border-color:#f3c9ab; }
+  .option-field input::placeholder{ color:var(--text-muted); font-weight:500; }
+
+  /* --- balance scale --- */
+  .scale-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:10px 10px 6px;
+    margin-bottom:18px;
+  }
+  .scale-svg{ width:100%; height:auto; display:block; }
+  .pan-name{ font-size:13px; font-weight:700; }
+  .pan-name.left{ fill:var(--left); }
+  .pan-name.right{ fill:var(--right); }
+
+  .totals-row{ display:flex; gap:14px; margin-bottom:10px; }
+  .total-tile{
+    flex:1;
+    border-radius:10px;
+    padding:12px 14px;
+    text-align:center;
+  }
+  .total-tile.left{ background:var(--left-soft); }
+  .total-tile.right{ background:var(--right-soft); }
+  .total-label{ font-size:0.74rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+  .total-value{ font-size:1.5rem; font-weight:700; margin-top:2px; }
+  .total-tile.left .total-value{ color:var(--left); }
+  .total-tile.right .total-value{ color:var(--right); }
+  .verdict{
+    text-align:center;
+    font-size:0.88rem;
+    color:var(--text-muted);
+    margin-bottom:4px;
+  }
+
+  /* --- topics list --- */
+  .topics-heading{
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--text-muted);
+    margin:22px 0 8px;
+  }
+  .empty-hint{
+    color:var(--text-muted);
+    font-size:0.88rem;
+    background:var(--card);
+    border:1px dashed var(--card-border);
+    border-radius:var(--radius);
+    padding:18px;
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .topic-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    margin-bottom:10px;
+  }
+  .topic-top-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .topic-name-input{
+    flex:1;
+    min-width:0;
+    border:none;
+    background:transparent;
+    font-size:1rem;
+    font-weight:600;
+    color:var(--text);
+    padding:4px 2px 6px;
+    border-bottom:1px dashed transparent;
+  }
+  .topic-name-input:focus{ outline:none; border-bottom:1px dashed var(--accent); }
+  .topic-name-input::placeholder{ color:var(--text-muted); font-weight:400; }
+
+  .weight-field{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .weight-field label{ font-size:0.78rem; color:var(--text-muted); }
+  .weight-field input{
+    width:4.2em;
+    padding:6px 6px;
+    border:1px solid var(--card-border);
+    border-radius:6px;
+    font-size:1rem;
+    text-align:right;
+  }
+
+  .share-row{ display:flex; flex-direction:column; gap:4px; }
+  .share-slider{
+    width:100%;
+    accent-color: var(--accent);
+    height:28px;
+  }
+  .share-readout{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.8rem;
+  }
+  .share-readout .left-share{ color:var(--left); font-weight:600; }
+  .share-readout .right-share{ color:var(--right); font-weight:600; }
+
+  .topic-bottom-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:8px;
+  }
+
+  footer{
+    max-width:70ch;
+    margin:26px auto 0;
+    font-size:0.78rem;
+    color:var(--text-muted);
+    line-height:1.5;
+  }
+
+  @media (max-width: 560px){
+    body{ padding:16px 12px 60px; }
+    h1{ font-size:1.2rem; }
+    .subtitle{ font-size:0.86rem; }
+    .options-row{ gap:10px; }
+    .totals-row{ gap:10px; }
+    .total-value{ font-size:1.25rem; }
+    .topic-top-row{ flex-wrap:wrap; }
+    .topic-name-input{ flex-basis:100%; }
+  }
+</style>
+</head>
+<body>
+<p class="back-to-fun-tools">&larr; <a href="../fun-tools.html">Back to fun tools</a></p>
+<div class="wrap">
+  <h1>Decision Scale</h1>
+  <p class="subtitle">
+    Weigh a two-way choice like an old balance scale. Give each topic an importance
+    (positive if it's a plus, negative if it's a downside) and split it between your two
+    options — same complement trick as before: move one side and the other adjusts to match.
+    The pans keep a running total and the beam tips toward whichever option is winning.
+  </p>
+
+  <div class="toolbar">
+    <button class="btn reset-btn" id="resetBtn">Reset</button>
+  </div>
+
+  <div class="title-card">
+    <input type="text" id="titleInput" class="title-input" placeholder="e.g. Do I get a dog or a cat?">
+    <div class="options-row">
+      <div class="option-field left">
+        <label>Left option</label>
+        <input type="text" id="leftLabelInput" placeholder="e.g. Dog">
+      </div>
+      <div class="option-field right">
+        <label>Right option</label>
+        <input type="text" id="rightLabelInput" placeholder="e.g. Cat">
+      </div>
+    </div>
+  </div>
+
+  <div class="scale-card">
+    <svg class="scale-svg" id="scaleSvg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- stand -->
+      <rect x="185" y="95" width="10" height="95" rx="3" fill="#cbd0dd"></rect>
+      <rect x="150" y="184" width="100" height="10" rx="4" fill="#cbd0dd"></rect>
+      <!-- beam -->
+      <line id="beamLine" x1="70" y1="90" x2="330" y2="90" stroke="#8891a8" stroke-width="6" stroke-linecap="round"></line>
+      <circle cx="200" cy="90" r="7" fill="#8891a8"></circle>
+      <!-- left pan -->
+      <line id="leftString" x1="70" y1="90" x2="70" y2="132" stroke="#aab0c2" stroke-width="2"></line>
+      <ellipse id="leftPan" cx="70" cy="132" rx="46" ry="11" fill="#eef1ff" stroke="#3b5bfd" stroke-width="2"></ellipse>
+      <text id="leftPanName" class="pan-name left" x="70" y="128" text-anchor="middle">Left option</text>
+      <!-- right pan -->
+      <line id="rightString" x1="330" y1="90" x2="330" y2="132" stroke="#aab0c2" stroke-width="2"></line>
+      <ellipse id="rightPan" cx="330" cy="132" rx="46" ry="11" fill="#fff1e8" stroke="#c2410c" stroke-width="2"></ellipse>
+      <text id="rightPanName" class="pan-name right" x="330" y="128" text-anchor="middle">Right option</text>
+    </svg>
+
+    <div class="totals-row">
+      <div class="total-tile left">
+        <div class="total-label" id="leftTotalLabel">Left</div>
+        <div class="total-value" id="leftTotalValue">0.00</div>
+      </div>
+      <div class="total-tile right">
+        <div class="total-label" id="rightTotalLabel">Right</div>
+        <div class="total-value" id="rightTotalValue">0.00</div>
+      </div>
+    </div>
+    <div class="verdict" id="verdictText">Add a topic below to start weighing this.</div>
+  </div>
+
+  <div class="topics-heading">Topics</div>
+  <div id="emptyHint" class="empty-hint">No topics yet. Add one below — something like "cuddliness" or "maintenance".</div>
+  <div id="topicsList"></div>
+
+  <div class="toolbar">
+    <button class="btn add-btn" id="addTopicBtn">+ Add topic</button>
+  </div>
+
+  <footer>
+    Weight is how much a topic matters, roughly &minus;10 to 10 &mdash; positive for something you
+    want more of, negative for a downside (like maintenance). The slider says how much of that
+    topic's weight belongs to each side; drag it toward whichever option earns more of it. Each
+    pan's total is the sum of (weight &times; share) across every topic, and the beam tips based on
+    how far apart those totals are.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  let idCounter = 1;
+  let title = "";
+  let leftLabel = "";
+  let rightLabel = "";
+  let topics = []; // {id, name, weight, leftShare}
+
+  function makeTopic(name, weight, leftShare){
+    return { id: idCounter++, name: name, weight: weight, leftShare: leftShare };
+  }
+
+  const titleInput = document.getElementById("titleInput");
+  const leftLabelInput = document.getElementById("leftLabelInput");
+  const rightLabelInput = document.getElementById("rightLabelInput");
+  const topicsList = document.getElementById("topicsList");
+  const emptyHint = document.getElementById("emptyHint");
+
+  const leftPanName = document.getElementById("leftPanName");
+  const rightPanName = document.getElementById("rightPanName");
+  const leftTotalLabel = document.getElementById("leftTotalLabel");
+  const rightTotalLabel = document.getElementById("rightTotalLabel");
+  const leftTotalValue = document.getElementById("leftTotalValue");
+  const rightTotalValue = document.getElementById("rightTotalValue");
+  const verdictText = document.getElementById("verdictText");
+
+  const beamLine = document.getElementById("beamLine");
+  const leftString = document.getElementById("leftString");
+  const rightString = document.getElementById("rightString");
+  const leftPan = document.getElementById("leftPan");
+  const rightPan = document.getElementById("rightPan");
+
+  const PIVOT_X = 200, PIVOT_Y = 90, BEAM_HALF = 130, CHAIN_LEN = 42, MAX_TILT_DEG = 25;
+
+  let topicRefs = {}; // id -> { nameInput, weightInput, shareSlider, leftShareEl, rightShareEl }
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+  function displayLabel(label, fallback){
+    const t = (label || "").trim();
+    return t.length ? t : fallback;
+  }
+
+  function computeTotals(){
+    let left = 0, right = 0, maxPossible = 0;
+    topics.forEach(t => {
+      left += t.weight * t.leftShare;
+      right += t.weight * (1 - t.leftShare);
+      maxPossible += Math.abs(t.weight);
+    });
+    return { left, right, maxPossible };
+  }
+
+  function renderScale(){
+    const totals = computeTotals();
+    const fraction = totals.maxPossible > 0
+      ? clamp((totals.right - totals.left) / totals.maxPossible, -1, 1)
+      : 0;
+    const thetaDeg = fraction * MAX_TILT_DEG;
+    const thetaRad = thetaDeg * Math.PI / 180;
+    const cos = Math.cos(thetaRad), sin = Math.sin(thetaRad);
+
+    const leftEndX = PIVOT_X - BEAM_HALF * cos, leftEndY = PIVOT_Y - BEAM_HALF * sin;
+    const rightEndX = PIVOT_X + BEAM_HALF * cos, rightEndY = PIVOT_Y + BEAM_HALF * sin;
+
+    beamLine.setAttribute("x1", leftEndX); beamLine.setAttribute("y1", leftEndY);
+    beamLine.setAttribute("x2", rightEndX); beamLine.setAttribute("y2", rightEndY);
+
+    const leftPanY = leftEndY + CHAIN_LEN, rightPanY = rightEndY + CHAIN_LEN;
+
+    leftString.setAttribute("x1", leftEndX); leftString.setAttribute("y1", leftEndY);
+    leftString.setAttribute("x2", leftEndX); leftString.setAttribute("y2", leftPanY);
+    leftPan.setAttribute("cx", leftEndX); leftPan.setAttribute("cy", leftPanY);
+    leftPanName.setAttribute("x", leftEndX); leftPanName.setAttribute("y", leftEndY - 4);
+
+    rightString.setAttribute("x1", rightEndX); rightString.setAttribute("y1", rightEndY);
+    rightString.setAttribute("x2", rightEndX); rightString.setAttribute("y2", rightPanY);
+    rightPan.setAttribute("cx", rightEndX); rightPan.setAttribute("cy", rightPanY);
+    rightPanName.setAttribute("x", rightEndX); rightPanName.setAttribute("y", rightEndY - 4);
+
+    const leftName = displayLabel(leftLabel, "Left option");
+    const rightName = displayLabel(rightLabel, "Right option");
+    leftPanName.textContent = leftName;
+    rightPanName.textContent = rightName;
+    leftTotalLabel.textContent = leftName;
+    rightTotalLabel.textContent = rightName;
+    leftTotalValue.textContent = totals.left.toFixed(2);
+    rightTotalValue.textContent = totals.right.toFixed(2);
+
+    if(topics.length === 0){
+      verdictText.textContent = "Add a topic below to start weighing this.";
+    } else if(Math.abs(totals.left - totals.right) < 1e-9){
+      verdictText.textContent = "Perfectly balanced.";
+    } else if(totals.left > totals.right){
+      verdictText.textContent = leftName + " is ahead by " + (totals.left - totals.right).toFixed(2);
+    } else {
+      verdictText.textContent = rightName + " is ahead by " + (totals.right - totals.left).toFixed(2);
+    }
+  }
+
+  function renderTopicRow(topic){
+    const row = document.createElement("div");
+    row.className = "topic-card";
+
+    const ref = {};
+    topicRefs[topic.id] = ref;
+
+    const topRow = document.createElement("div");
+    topRow.className = "topic-top-row";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "topic-name-input";
+    nameInput.placeholder = "e.g. Cuddliness";
+    nameInput.value = topic.name;
+    nameInput.addEventListener("input", e => { topic.name = e.target.value; });
+    ref.nameInput = nameInput;
+
+    const weightField = document.createElement("div");
+    weightField.className = "weight-field";
+    const weightLabel = document.createElement("label");
+    weightLabel.textContent = "Weight";
+    const weightInput = document.createElement("input");
+    weightInput.type = "number";
+    weightInput.step = "1";
+    weightInput.value = topic.weight;
+    weightInput.addEventListener("input", e => {
+      let v = parseFloat(e.target.value);
+      if(isNaN(v)) v = 0;
+      v = clamp(v, -10, 10);
+      topic.weight = v;
+      renderScale();
+    });
+    ref.weightInput = weightInput;
+    weightField.appendChild(weightLabel);
+    weightField.appendChild(weightInput);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "btn remove-btn";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => removeTopic(topic.id));
+
+    topRow.appendChild(nameInput);
+    topRow.appendChild(weightField);
+    row.appendChild(topRow);
+
+    const shareRow = document.createElement("div");
+    shareRow.className = "share-row";
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.className = "share-slider";
+    slider.min = "0";
+    slider.max = "1";
+    slider.step = "0.05";
+    slider.value = topic.leftShare;
+    ref.shareSlider = slider;
+
+    const readout = document.createElement("div");
+    readout.className = "share-readout";
+    const leftShareEl = document.createElement("span");
+    leftShareEl.className = "left-share";
+    const rightShareEl = document.createElement("span");
+    rightShareEl.className = "right-share";
+    ref.leftShareEl = leftShareEl;
+    ref.rightShareEl = rightShareEl;
+
+    function updateShareReadout(){
+      const leftName = displayLabel(leftLabel, "Left");
+      const rightName = displayLabel(rightLabel, "Right");
+      leftShareEl.textContent = leftName + " " + Math.round(topic.leftShare * 100) + "%";
+      rightShareEl.textContent = rightName + " " + Math.round((1 - topic.leftShare) * 100) + "%";
+    }
+    updateShareReadout();
+    ref.updateShareReadout = updateShareReadout;
+
+    slider.addEventListener("input", e => {
+      topic.leftShare = parseFloat(e.target.value);
+      updateShareReadout();
+      renderScale();
+    });
+
+    readout.appendChild(leftShareEl);
+    readout.appendChild(rightShareEl);
+    shareRow.appendChild(slider);
+    shareRow.appendChild(readout);
+    row.appendChild(shareRow);
+
+    const bottomRow = document.createElement("div");
+    bottomRow.className = "topic-bottom-row";
+    bottomRow.appendChild(removeBtn);
+    row.appendChild(bottomRow);
+
+    return row;
+  }
+
+  function renderTopicsList(){
+    topicRefs = {};
+    topicsList.innerHTML = "";
+    topics.forEach(t => topicsList.appendChild(renderTopicRow(t)));
+    emptyHint.style.display = topics.length === 0 ? "block" : "none";
+  }
+
+  function refreshAllShareLabels(){
+    Object.values(topicRefs).forEach(ref => ref.updateShareReadout && ref.updateShareReadout());
+  }
+
+  function addTopic(){
+    topics.push(makeTopic("", 1, 0.5));
+    renderTopicsList();
+    renderScale();
+  }
+
+  function removeTopic(id){
+    topics = topics.filter(t => t.id !== id);
+    renderTopicsList();
+    renderScale();
+  }
+
+  titleInput.addEventListener("input", e => { title = e.target.value; });
+  leftLabelInput.addEventListener("input", e => {
+    leftLabel = e.target.value;
+    refreshAllShareLabels();
+    renderScale();
+  });
+  rightLabelInput.addEventListener("input", e => {
+    rightLabel = e.target.value;
+    refreshAllShareLabels();
+    renderScale();
+  });
+
+  document.getElementById("addTopicBtn").addEventListener("click", addTopic);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if(!confirm("Start over with a blank scale?")) return;
+    idCounter = 1;
+    title = ""; leftLabel = ""; rightLabel = "";
+    topics = [];
+    titleInput.value = "";
+    leftLabelInput.value = "";
+    rightLabelInput.value = "";
+    renderTopicsList();
+    renderScale();
+  });
+
+  renderTopicsList();
+  renderScale();
+})();
+</script>
+</body>
+</html>
