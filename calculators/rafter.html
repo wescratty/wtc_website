@@ -1213,7 +1213,7 @@ function renderRafterSvg(data) {
     const ridgeRise = data.ridgeThickness * scale * 0.6;
     const ridgeBoardFarX = ridgeTopPx.x + (data.ridgeThickness * scale);
     el("polygon", {
-        points: `${ridgeTopPx.x},${ridgeTopPx.y} ${ridgeBoardFarX},${ridgeTopPx.y - ridgeRise} ${ridgeBoardFarX},${ridgeBottomPx.y - ridgeRise} ${ridgeBottomPx.x},${ridgeBottomPx.y}`,
+        points: `${ridgeTopPx.x},${ridgeTopPx.y} ${ridgeBoardFarX},${ridgeTopPx.y} ${ridgeBoardFarX},${ridgeBottomPx.y} ${ridgeBottomPx.x},${ridgeBottomPx.y}`,
         class: "svg-context-fill"
     });
     addText(ridgeTopPx.x + 6, ridgeTopPx.y - ridgeRise - 24, "ridge board", "svg-note-text");
