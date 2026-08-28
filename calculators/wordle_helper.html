@@ -327,7 +327,7 @@ function recomputeResults() {
 
   const answerMatches = filterCandidates(WORDLE_ANSWERS, guesses);
   const guessOnlyMatches = filterCandidates(WORDLE_GUESS_ONLY, guesses);
-  const showAll = document.getElementById('showAllToggle').checked;
+  let showAll = document.getElementById('showAllToggle').checked;
 
   if (answerMatches.length === 0 && guessOnlyMatches.length === 0) {
     summary.innerHTML = '<span class="no-candidates">No words match those results &mdash; double check the colors on each guess above.</span>';
@@ -342,14 +342,31 @@ function recomputeResults() {
   const ranked = answerMatches
     .map((w) => ({ word: w.toUpperCase(), score: Math.round(scoreWord(w) * 10) / 10 }))
     .sort((a, b) => b.score - a.score);
+  const rankedGuessOnly = guessOnlyMatches
+    .map((w) => ({ word: w.toUpperCase(), score: Math.round(scoreWord(w) * 10) / 10 }))
+    .sort((a, b) => b.score - a.score);
+
+  // If none of the curated common answers fit anymore, automatically fall
+  // back to the larger list of less-common (but still valid) guesses
+  // instead of just telling the user to go check a box -- flip the "also
+  // show less-common" toggle on their behalf so the UI matches what's
+  // actually being suggested below.
+  const usingFallback = ranked.length === 0 && rankedGuessOnly.length > 0;
+  if (usingFallback && !showAll) {
+    showAll = true;
+    document.getElementById('showAllToggle').checked = true;
+  }
 
   if (ranked.length) {
     suggestionEl.innerHTML =
       '<div class="sugg-word">Try: ' + ranked[0].word + '</div>' +
       '<div class="sugg-note">Highest-scoring remaining word, based on how often each letter shows up in real Wordle answers.</div>';
-  } else {
+  } else if (usingFallback) {
     suggestionEl.innerHTML =
-      '<div class="sugg-note">None of the common answers fit anymore -- check "also show less-common valid guesses" below for the full remaining list.</div>';
+      '<div class="sugg-word">Try: ' + rankedGuessOnly[0].word + '</div>' +
+      '<div class="sugg-note">None of the common answers fit anymore, so this is pulled automatically from the larger list of less-common (but still valid) words instead.</div>';
+  } else {
+    suggestionEl.innerHTML = '';
   }
 
   listEl.innerHTML = '';
@@ -367,22 +384,24 @@ function recomputeResults() {
     listEl.appendChild(more);
   }
 
-  if (showAll && guessOnlyMatches.length) {
+  if (showAll && rankedGuessOnly.length) {
     const divider = document.createElement('div');
     divider.style.cssText = 'flex-basis:100%; margin-top:10px; font-size:0.8rem; color:#5c6270;';
-    divider.textContent = 'Other valid words (rare as actual Wordle answers, but Wordle will accept them as a guess):';
+    divider.textContent = usingFallback
+      ? 'Less-common valid words (Wordle will accept these as a guess, but they\'re rarely the actual answer):'
+      : 'Other valid words (rare as actual Wordle answers, but Wordle will accept them as a guess):';
     listEl.appendChild(divider);
-    guessOnlyMatches.slice(0, 60).forEach((w) => {
+    rankedGuessOnly.slice(0, 60).forEach((r, idx) => {
       const chip = document.createElement('span');
-      chip.className = 'candidate-chip';
-      chip.textContent = w.toUpperCase();
+      chip.className = 'candidate-chip' + (usingFallback && idx === 0 ? ' top' : '');
+      chip.textContent = r.word;
       listEl.appendChild(chip);
     });
-    if (guessOnlyMatches.length > 60) {
+    if (rankedGuessOnly.length > 60) {
       const more = document.createElement('span');
       more.className = 'candidate-chip';
       more.style.opacity = '0.7';
-      more.textContent = '+ ' + (guessOnlyMatches.length - 60) + ' more';
+      more.textContent = '+ ' + (rankedGuessOnly.length - 60) + ' more';
       listEl.appendChild(more);
     }
   }
