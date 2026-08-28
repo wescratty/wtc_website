@@ -79,12 +79,14 @@ h1, h2.section-title, .cta-band h2, .page-intro h1 {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 .brand:hover { text-decoration: none; }
 .brand img.logo {
   height: 42px;
   width: auto;
   display: block;
+  flex-shrink: 0;
 }
 .brand .brand-tagline {
   display: block;
@@ -96,6 +98,8 @@ h1, h2.section-title, .cta-band h2, .page-intro h1 {
   border-left: 1px solid #4a5c7d;
   padding-left: 12px;
   line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .main-nav {
@@ -444,5 +448,6 @@ form.inquiry button { margin-top: 20px; }
   .main-nav { justify-content: center; }
   .hero { min-height: 480px; }
   .hero-panel { padding: 0 16px 32px; }
-  .brand .brand-tagline { border-left: none; padding-left: 0; }
+  .brand { flex-wrap: wrap; justify-content: center; }
+  .brand .brand-tagline { border-left: none; padding-left: 0; width: 100%; text-align: center; }
 }
