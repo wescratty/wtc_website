@@ -1244,13 +1244,27 @@ function renderRafterSvg(data) {
         addText(ridgeCutPx[0].x + 12, ridgeCutPx[0].y + 16, `Ridge / plumb cut`, "svg-cut-text");
         addText(ridgeCutPx[0].x + 12, ridgeCutPx[0].y + 32, `${data.plumbCut.toFixed(1)}° from level`, "svg-cut-text");
 
-        const p1 = ridgeCutPx[0], p2 = ridgeCutPx[1];
-        const lx = p1.x - 26;
-        el("line", { x1: lx, y1: p1.y, x2: lx, y2: p2.y, class: "svg-dim-line" });
-        el("line", { x1: lx, y1: p1.y, x2: p1.x, y2: p1.y, class: "svg-dim-line" });
-        el("line", { x1: lx, y1: p2.y, x2: p2.x, y2: p2.y, class: "svg-dim-line" });
-        addText(lx - 8, (p1.y + p2.y) / 2, `Rafter depth`, "svg-dim-text", "end");
-        addText(lx - 8, (p1.y + p2.y) / 2 + 16, `${formatInches(data.rafterDepth)}`, "svg-dim-text", "end");
+        // Rafter depth is the board's PERPENDICULAR thickness (the lumber
+        // size you picked from the dropdown) -- not the vertical distance
+        // spanned by the plumb cut. Those two differ by 1 / cos(roof angle)
+        // (see verticalRafterDepth above), so measuring "Rafter depth" along
+        // the vertical plumb-cut line drew a dimension visibly longer than
+        // the labeled value. Drawing it perpendicular to the board's top/
+        // bottom edges instead -- tilted with the roof pitch -- makes the
+        // line's actual length match what it says.
+        const depthPullback = Math.max((data.rafterDepth * tanT) + 2, 6);
+        const depthTop = {
+            x: ridgeTop.x - (depthPullback * cosT),
+            y: ridgeTop.y - (depthPullback * sinT)
+        };
+        const depthBottom = perpOffset(depthTop, -data.rafterDepth);
+        const dTopPx = toPx(depthTop), dBotPx = toPx(depthBottom);
+
+        el("line", { x1: dTopPx.x, y1: dTopPx.y, x2: dBotPx.x, y2: dBotPx.y, class: "svg-dim-line" });
+        const dMidX = (dTopPx.x + dBotPx.x) / 2;
+        const dMidY = (dTopPx.y + dBotPx.y) / 2;
+        addText(dMidX - 8, dMidY, `Rafter depth`, "svg-dim-text", "end");
+        addText(dMidX - 8, dMidY + 16, `${formatInches(data.rafterDepth)}`, "svg-dim-text", "end");
     }
 
     // Tail plumb cut — label sits below/right of the cut, clear of the
