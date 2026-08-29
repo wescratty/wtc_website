@@ -198,9 +198,47 @@
 
   .share-row{ display:flex; flex-direction:column; gap:4px; }
   .share-slider{
+    /* Track fill color is set inline (a left/right gradient split at the
+       current value) by setSliderFill() in the script below, so it always
+       matches the beam's blue-left / orange-right colors instead of the
+       browser's default blue-fill / white-remainder look. */
+    -webkit-appearance:none;
+    appearance:none;
     width:100%;
-    accent-color: var(--accent);
-    height:28px;
+    height:8px;
+    margin:10px 0;
+    border-radius:999px;
+    outline:none;
+    cursor:pointer;
+  }
+  .share-slider::-webkit-slider-runnable-track{
+    height:8px;
+    border-radius:999px;
+    background:transparent;
+  }
+  .share-slider::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:18px;
+    height:18px;
+    margin-top:-5px;
+    border-radius:50%;
+    background:var(--card);
+    border:2px solid var(--text);
+    cursor:pointer;
+  }
+  .share-slider::-moz-range-track{
+    height:8px;
+    border-radius:999px;
+    background:transparent;
+  }
+  .share-slider::-moz-range-thumb{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:var(--card);
+    border:2px solid var(--text);
+    cursor:pointer;
   }
   .share-readout{
     display:flex;
@@ -353,6 +391,16 @@
 
   function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
 
+  // Colors the share slider's track as a blue/orange split at the current
+  // value -- matching the beam's left/right colors -- instead of the
+  // browser's default blue-fill-then-white-remainder look.
+  function setSliderFill(slider){
+    const min = parseFloat(slider.min), max = parseFloat(slider.max);
+    const pct = ((parseFloat(slider.value) - min) / (max - min)) * 100;
+    slider.style.background =
+      `linear-gradient(to right, var(--left) 0%, var(--left) ${pct}%, var(--right) ${pct}%, var(--right) 100%)`;
+  }
+
   function displayLabel(label, fallback){
     const t = (label || "").trim();
     return t.length ? t : fallback;
@@ -472,6 +520,7 @@
     slider.step = "0.05";
     slider.value = topic.leftShare;
     ref.shareSlider = slider;
+    setSliderFill(slider);
 
     const readout = document.createElement("div");
     readout.className = "share-readout";
@@ -494,6 +543,7 @@
     slider.addEventListener("input", e => {
       topic.leftShare = parseFloat(e.target.value);
       updateShareReadout();
+      setSliderFill(slider);
       renderScale();
     });
 
