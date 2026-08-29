@@ -1,0 +1,20 @@
+// Cloudflare Workers config for this static site. The whole repo root is
+// served as static assets (index.html, css/, calculators/, services/, etc.)
+// -- there's no Worker script, just a directory of files.
+//
+// This file went missing from the repo somewhere along the way (it was
+// likely only ever generated locally by an early interactive
+// `wrangler deploy` and never committed). Cloudflare's Git-connected build
+// had apparently been tolerating that via some default/implicit behavior,
+// until a routine `npx wrangler` version bump (each build fetches the
+// latest wrangler fresh -- see the "will be installed: wrangler@..." line
+// in the build log) tightened that and started requiring this file
+// explicitly, which is what broke the 2026-08-29 build:
+// "Missing entry-point to Worker script or to assets directory".
+{
+  "name": "wtc-website",
+  "compatibility_date": "2026-08-29",
+  "assets": {
+    "directory": "."
+  }
+}
