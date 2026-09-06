@@ -211,10 +211,11 @@
   background:rgba(26,39,64,0.92);
   z-index:2000;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
   padding:20px;
-  overflow:auto;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .ht-gate-card{
   background:#fff;
@@ -222,6 +223,7 @@
   max-width:560px;
   width:100%;
   padding:30px;
+  margin:20px 0 40px;
   box-shadow:0 10px 40px rgba(0,0,0,0.4);
 }
 .ht-gate-card h2{
@@ -327,7 +329,7 @@
 
 @media print{
   .site-header, .page-intro, .tools-disclaimer, .ht-privacy-note, .ht-app fieldset,
-  .ht-select-row, #districtNotes, #detailPanel, .ht-fieldcard-btn,
+  #homeScreenHelp, .ht-select-row, #districtNotes, #detailPanel, .ht-fieldcard-btn,
   .ht-distfilter, .ht-print-btn, .site-footer, .ht-gate,
   section > .container > p{
     display:none !important;
@@ -352,8 +354,8 @@
     <div class="ht-privacy-note">
       🔒 Nothing you enter here is sent anywhere &mdash; it's saved only in this browser, on this device.
       Fill it out on your <b>phone</b> ahead of time, with a signal (a PC and a phone don't share this
-      storage). After that first load, it keeps working with <b>zero cell service</b> &mdash; add it to
-      your home screen for the smoothest offline experience.
+      storage). After that first load, it keeps working with <b>zero cell service</b> &mdash; see the
+      how-to just below the disclaimer on the next screen for adding it to your Home Screen.
     </div>
     <label class="ht-gate-check" for="gateAgree">
       <input type="checkbox" id="gateAgree" onchange="document.getElementById('gateEnterBtn').disabled = !this.checked;">
@@ -406,9 +408,23 @@
         time, with a signal &mdash; a PC and a phone don't share this storage, so setting it up on a
         computer won't carry over to your phone. Once it's loaded here once, it keeps working with
         <b>zero cell service</b> after that &mdash; closed tab, airplane mode, phone restart, doesn't
-        matter. For the smoothest offline experience, use your phone browser's menu to
-        <b>Add to Home Screen</b> so it opens like its own app.
+        matter. For the smoothest experience, add it to your Home Screen &mdash; steps below.
       </div>
+
+      <details class="ht-defs" id="homeScreenHelp" style="margin-top:-10px;margin-bottom:26px;">
+        <summary>How do I add this to my Home Screen? (and why did my data disappear?)</summary>
+        <dl>
+          <dt>iPhone &mdash; Safari</dt>
+          <dd>Tap the <b>Share</b> icon (square with an arrow up, in the bottom toolbar) &rarr; scroll down and tap <b>Add to Home Screen</b> &rarr; Add.</dd>
+          <dt>iPhone &mdash; DuckDuckGo, Chrome, or another browser</dt>
+          <dd>Tap the <b>&#8942;</b> or <b>&#8226;&#8226;&#8226;</b> menu in the browser's toolbar &rarr; <b>Add to Home Screen</b>. Don't see it? Open this same page in Safari once instead and use its Share icon &mdash; that always has the option.</dd>
+          <dt>Android</dt>
+          <dd>Tap the <b>&#8942;</b> menu (top-right of the browser) &rarr; <b>Add to Home Screen</b> or <b>Install app</b>.</dd>
+          <dt>Using DuckDuckGo? Read this before you fill anything out.</dt>
+          <dd>DuckDuckGo can automatically erase a site's saved data &mdash; that's what its flame/fire button does, and it can trigger automatically when the app closes. If your entries disappeared after adding this to your Home Screen, that's almost certainly why. Fix it by marking this site <b>Fireproof</b> first: tap the site info/shield icon next to the address bar &rarr; <b>Fireproof This Site</b> &mdash; then fill out your profile and tags again. Menu wording varies by DuckDuckGo version; look for "Fireproof."</dd>
+        </dl>
+        <div class="cite">If a menu item above isn't worded exactly the same on your phone, look for anything mentioning "Home Screen," "Install," or "Fireproof."</div>
+      </details>
 
       <fieldset>
         <legend>Hunter Profile</legend>
@@ -760,6 +776,21 @@ function setConfirmedTag(distId, tagId, val){
   saveTagState();
 }
 
+/* Many Deer B / Elk B tags and permits are explicitly one physical
+   tag valid across several districts (e.g. 260-01 in HDs 240, 260,
+   261, 262 & 270). Confirming "I have this tag" in one district
+   should mark it everywhere it's valid, not just there - matched by
+   code + species so a numeric code can't accidentally cross species. */
+function findTagsByCode(code, species){
+  const matches = [];
+  DISTRICT_ORDER.forEach(distId => {
+    DISTRICTS[distId].tags.forEach(t => {
+      if(t.code === code && t.species === species) matches.push({distId, tag: t});
+    });
+  });
+  return matches;
+}
+
 /* Whether the hunter currently POSSESSES this tag (general license
    coverage comes from the profile; B-licenses/permits are confirmed
    per tag). */
@@ -1024,11 +1055,17 @@ function renderDetail(distId, tagId){
 
   let confirmHTML = "";
   if(tagNeedsManualConfirm(tag)){
+    const otherDistricts = findTagsByCode(tag.code, tag.species)
+      .map(m => m.distId).filter(d => d !== distId);
+    const shareNote = otherDistricts.length
+      ? `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;">Same tag as ${tag.code} in HD ${otherDistricts.join(", HD ")} &mdash; checking this here marks it there too.</div>`
+      : "";
     confirmHTML = `
       <div class="ht-confirm">
         <input type="checkbox" id="confirmBox" ${confirmed ? "checked" : ""} onchange="onConfirmChange('${distId}','${tag.id}')">
         <label for="confirmBox">Do you have this tag?</label>
-      </div>`;
+      </div>
+      ${shareNote}`;
   } else {
     const which = tag.issue.indexOf("Deer") > -1 ? "General Deer License" : "General Elk License";
     confirmHTML = `<div class="ht-license-note">Covered by your <b>${which}</b> checkbox in Hunter Profile above ${profile[tag.issue.indexOf("Deer")>-1?"hasDeerLicense":"hasElkLicense"] ? "(you have it checked)" : "(not checked yet)"}.</div>`;
@@ -1068,7 +1105,9 @@ function renderDetail(distId, tagId){
 
 function onConfirmChange(distId, tagId){
   const val = document.getElementById("confirmBox").checked;
-  setConfirmedTag(distId, tagId, val);
+  const tag = findTag(distId, tagId);
+  const matches = findTagsByCode(tag.code, tag.species);
+  matches.forEach(({distId: d, tag: t}) => setConfirmedTag(d, t.id, val));
   renderTagOptions(distId);
   tagSelect.value = tagId;
   renderDetail(distId, tagId);
