@@ -193,6 +193,57 @@
 
 .ht-hidden{ display:none !important; }
 
+.ht-setup-toggle{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:8px;
+}
+.ht-setup-toggle label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.82rem;
+  color:var(--text-muted);
+  cursor:pointer;
+}
+.ht-setup-toggle input{ width:16px; height:16px; }
+
+.ht-done-btn{
+  display:block;
+  margin:12px 0 0 auto;
+  padding:9px 18px;
+  border-radius:4px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--navy);
+  font-weight:700;
+  cursor:pointer;
+}
+.ht-done-btn:disabled{ color:var(--text-muted); cursor:not-allowed; }
+
+.ht-picker-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:var(--cream-dark);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 14px;
+  margin-bottom:22px;
+}
+.ht-picker-summary span{ font-weight:700; color:var(--navy); font-size:0.95rem; }
+.ht-picker-summary button{
+  flex-shrink:0;
+  padding:7px 14px;
+  border-radius:4px;
+  border:1px solid var(--gold);
+  background:#fff;
+  color:var(--gold-dark);
+  font-weight:700;
+  cursor:pointer;
+}
+
 .ht-privacy-note{
   background:#eef2ea;
   border-left:4px solid var(--navy);
@@ -328,8 +379,8 @@
 }
 
 @media print{
-  .site-header, .page-intro, .tools-disclaimer, .ht-privacy-note, .ht-app fieldset,
-  #homeScreenHelp, .ht-select-row, #districtNotes, #detailPanel, .ht-fieldcard-btn,
+  .site-header, .page-intro, .ht-setup-toggle, #setupSection,
+  #pickerExpanded, #pickerSummary, #districtNotes, #detailPanel, .ht-fieldcard-btn,
   .ht-distfilter, .ht-print-btn, .site-footer, .ht-gate,
   section > .container > p{
     display:none !important;
@@ -392,6 +443,15 @@
 <section>
   <div class="container">
     <div class="calc-wrap ht-app">
+
+      <div class="ht-setup-toggle">
+        <label for="hideSetupCheck">
+          <input type="checkbox" id="hideSetupCheck" onchange="onHideSetupChange()">
+          Hide disclaimer &amp; profile
+        </label>
+      </div>
+
+      <div id="setupSection">
 
       <div class="tools-disclaimer">
         <strong>Reference only, not the regulations.</strong> This is a personal memory aid built from the
@@ -464,19 +524,28 @@
         </p>
       </fieldset>
 
-      <div class="ht-select-row">
-        <div class="ht-select-field">
-          <label for="districtSelect">Hunting District</label>
-          <select id="districtSelect" onchange="onDistrictChange()">
-            <option value="">Choose a district&hellip;</option>
-          </select>
+      </div>
+
+      <div id="pickerExpanded">
+        <div class="ht-select-row">
+          <div class="ht-select-field">
+            <label for="districtSelect">Hunting District</label>
+            <select id="districtSelect" onchange="onDistrictChange()">
+              <option value="">Choose a district&hellip;</option>
+            </select>
+          </div>
+          <div class="ht-select-field">
+            <label for="tagSelect">Tag / Opportunity</label>
+            <select id="tagSelect" onchange="onTagChange()" disabled>
+              <option value="">Choose a district first&hellip;</option>
+            </select>
+          </div>
         </div>
-        <div class="ht-select-field">
-          <label for="tagSelect">Tag / Opportunity</label>
-          <select id="tagSelect" onchange="onTagChange()" disabled>
-            <option value="">Choose a district first&hellip;</option>
-          </select>
-        </div>
+        <button type="button" class="ht-done-btn" id="pickerDoneBtn" onclick="collapsePicker()" disabled>Done &#10003;</button>
+      </div>
+      <div class="ht-picker-summary ht-hidden" id="pickerSummary">
+        <span id="pickerSummaryText"></span>
+        <button type="button" onclick="expandPicker()">Change</button>
       </div>
 
       <div id="districtNotes"></div>
@@ -739,6 +808,7 @@ function saveJSON(key, val){
 
 const DISTFILTER_KEY = "wtc-hunting-distfilter-v1";
 const DISCLAIMER_KEY = "wtc-hunting-disclaimer-accepted-v1";
+const HIDESETUP_KEY = "wtc-hunting-hidesetup-v1";
 
 /* Precaches the app shell on first (online) visit so the page - and
    everything it needs to run - keeps working with zero signal after
@@ -921,6 +991,20 @@ DISTRICT_ORDER.forEach(id => {
   distSelect.appendChild(opt);
 });
 
+/* "Hide disclaimer & profile" - it's genuinely just noise after the
+   first minute, so remember the choice per browser/device. */
+(function initHideSetup(){
+  let hidden = false;
+  try{ hidden = localStorage.getItem(HIDESETUP_KEY) === "1"; }catch(e){}
+  document.getElementById("hideSetupCheck").checked = hidden;
+  document.getElementById("setupSection").classList.toggle("ht-hidden", hidden);
+})();
+function onHideSetupChange(){
+  const hidden = document.getElementById("hideSetupCheck").checked;
+  document.getElementById("setupSection").classList.toggle("ht-hidden", hidden);
+  try{ localStorage.setItem(HIDESETUP_KEY, hidden ? "1" : "0"); }catch(e){}
+}
+
 document.getElementById("pAge").value = profile.age != null ? profile.age : "";
 document.getElementById("pPthfv").checked = !!profile.pthfv;
 document.getElementById("pDeerLic").checked = !!profile.hasDeerLicense;
@@ -953,6 +1037,7 @@ function onProfileChange(){
 
 function onDistrictChange(){
   const distId = distSelect.value;
+  document.getElementById("pickerDoneBtn").disabled = true;
   if(!distId){
     tagSelect.innerHTML = `<option value="">Choose a district first&hellip;</option>`;
     tagSelect.disabled = true;
@@ -1004,8 +1089,25 @@ function renderTagOptions(distId){
 function onTagChange(){
   const distId = distSelect.value;
   const tagId = tagSelect.value;
+  document.getElementById("pickerDoneBtn").disabled = !tagId;
   if(!tagId){ detailPanel.innerHTML = ""; return; }
   renderDetail(distId, tagId);
+}
+
+/* Collapses the two pickers down to a one-line summary once a tag is
+   chosen, so the detail panel sits closer to the top of the screen -
+   "Change" brings the pickers back to pick something else. */
+function collapsePicker(){
+  const distId = distSelect.value;
+  const tag = findTag(distId, tagSelect.value);
+  if(!tag) return;
+  document.getElementById("pickerSummaryText").textContent = `HD ${distId} — ${tag.label}`;
+  document.getElementById("pickerExpanded").classList.add("ht-hidden");
+  document.getElementById("pickerSummary").classList.remove("ht-hidden");
+}
+function expandPicker(){
+  document.getElementById("pickerExpanded").classList.remove("ht-hidden");
+  document.getElementById("pickerSummary").classList.add("ht-hidden");
 }
 
 function findTag(distId, tagId){
