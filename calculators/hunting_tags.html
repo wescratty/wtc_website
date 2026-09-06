@@ -195,7 +195,9 @@
 
 .ht-setup-toggle{
   display:flex;
+  flex-wrap:wrap;
   justify-content:flex-end;
+  gap:18px;
   margin-bottom:8px;
 }
 .ht-setup-toggle label{
@@ -220,29 +222,6 @@
   cursor:pointer;
 }
 .ht-done-btn:disabled{ color:var(--text-muted); cursor:not-allowed; }
-
-.ht-picker-summary{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  background:var(--cream-dark);
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:12px 14px;
-  margin-bottom:22px;
-}
-.ht-picker-summary span{ font-weight:700; color:var(--navy); font-size:0.95rem; }
-.ht-picker-summary button{
-  flex-shrink:0;
-  padding:7px 14px;
-  border-radius:4px;
-  border:1px solid var(--gold);
-  background:#fff;
-  color:var(--gold-dark);
-  font-weight:700;
-  cursor:pointer;
-}
 
 .ht-privacy-note{
   background:#eef2ea;
@@ -379,8 +358,8 @@
 }
 
 @media print{
-  .site-header, .page-intro, .ht-setup-toggle, #setupSection,
-  #pickerExpanded, #pickerSummary, #districtNotes, #detailPanel, .ht-fieldcard-btn,
+  .site-header, .page-intro, .ht-setup-toggle, #disclaimerSection, #profileSection,
+  .ht-select-row, #districtNotes, #detailPanel, .ht-fieldcard-btn,
   .ht-distfilter, .ht-print-btn, .site-footer, .ht-gate,
   section > .container > p{
     display:none !important;
@@ -445,13 +424,17 @@
     <div class="calc-wrap ht-app">
 
       <div class="ht-setup-toggle">
-        <label for="hideSetupCheck">
-          <input type="checkbox" id="hideSetupCheck" onchange="onHideSetupChange()">
-          Hide disclaimer &amp; profile
+        <label for="hideDisclaimerCheck">
+          <input type="checkbox" id="hideDisclaimerCheck" onchange="onHideDisclaimerChange()">
+          Hide disclaimer
+        </label>
+        <label for="hideProfileCheck">
+          <input type="checkbox" id="hideProfileCheck" onchange="onHideProfileChange()">
+          Hide profile
         </label>
       </div>
 
-      <div id="setupSection">
+      <div id="disclaimerSection">
 
       <div class="tools-disclaimer">
         <strong>Reference only, not the regulations.</strong> This is a personal memory aid built from the
@@ -486,7 +469,9 @@
         <div class="cite">If a menu item above isn't worded exactly the same on your phone, look for anything mentioning "Home Screen," "Install," or "Fireproof."</div>
       </details>
 
-      <fieldset>
+      </div>
+
+      <fieldset id="profileSection">
         <legend>Hunter Profile</legend>
         <div class="ht-row">
           <div class="ht-field">
@@ -524,28 +509,19 @@
         </p>
       </fieldset>
 
-      </div>
-
-      <div id="pickerExpanded">
-        <div class="ht-select-row">
-          <div class="ht-select-field">
-            <label for="districtSelect">Hunting District</label>
-            <select id="districtSelect" onchange="onDistrictChange()">
-              <option value="">Choose a district&hellip;</option>
-            </select>
-          </div>
-          <div class="ht-select-field">
-            <label for="tagSelect">Tag / Opportunity</label>
-            <select id="tagSelect" onchange="onTagChange()" disabled>
-              <option value="">Choose a district first&hellip;</option>
-            </select>
-          </div>
+      <div class="ht-select-row">
+        <div class="ht-select-field">
+          <label for="districtSelect">Hunting District</label>
+          <select id="districtSelect" onchange="onDistrictChange()">
+            <option value="">Choose a district&hellip;</option>
+          </select>
         </div>
-        <button type="button" class="ht-done-btn" id="pickerDoneBtn" onclick="collapsePicker()" disabled>Done &#10003;</button>
-      </div>
-      <div class="ht-picker-summary ht-hidden" id="pickerSummary">
-        <span id="pickerSummaryText"></span>
-        <button type="button" onclick="expandPicker()">Change</button>
+        <div class="ht-select-field">
+          <label for="tagSelect">Tag / Opportunity</label>
+          <select id="tagSelect" onchange="onTagChange()" disabled>
+            <option value="">Choose a district first&hellip;</option>
+          </select>
+        </div>
       </div>
 
       <div id="districtNotes"></div>
@@ -808,7 +784,8 @@ function saveJSON(key, val){
 
 const DISTFILTER_KEY = "wtc-hunting-distfilter-v1";
 const DISCLAIMER_KEY = "wtc-hunting-disclaimer-accepted-v1";
-const HIDESETUP_KEY = "wtc-hunting-hidesetup-v1";
+const HIDEDISCLAIMER_KEY = "wtc-hunting-hidedisclaimer-v1";
+const HIDEPROFILE_KEY = "wtc-hunting-hideprofile-v1";
 
 /* Precaches the app shell on first (online) visit so the page - and
    everything it needs to run - keeps working with zero signal after
@@ -834,7 +811,7 @@ function acceptDisclaimer(){
 
 let tagState = loadJSON(TAG_KEY, {});
 let profile = loadJSON(PROFILE_KEY, {age:null, pthfv:false, hasDeerLicense:false, hasElkLicense:false, hasBowLicense:false});
-let distFilter = loadJSON(DISTFILTER_KEY, null); // null = not set yet -> defaults to "all shown"
+let distFilter = loadJSON(DISTFILTER_KEY, []); // [] = nothing shown until the hunter picks districts
 
 function saveTagState(){ saveJSON(TAG_KEY, tagState); }
 function saveProfile(){ saveJSON(PROFILE_KEY, profile); }
@@ -991,18 +968,28 @@ DISTRICT_ORDER.forEach(id => {
   distSelect.appendChild(opt);
 });
 
-/* "Hide disclaimer & profile" - it's genuinely just noise after the
-   first minute, so remember the choice per browser/device. */
-(function initHideSetup(){
+/* "Hide disclaimer" / "Hide profile" - each genuinely just noise
+   after the first minute, kept as two independent toggles (not one
+   combined switch) so hiding one doesn't also bury the other. Each
+   remembered per browser/device. */
+function initHideToggle(checkboxId, sectionId, storageKey){
   let hidden = false;
-  try{ hidden = localStorage.getItem(HIDESETUP_KEY) === "1"; }catch(e){}
-  document.getElementById("hideSetupCheck").checked = hidden;
-  document.getElementById("setupSection").classList.toggle("ht-hidden", hidden);
-})();
-function onHideSetupChange(){
-  const hidden = document.getElementById("hideSetupCheck").checked;
-  document.getElementById("setupSection").classList.toggle("ht-hidden", hidden);
-  try{ localStorage.setItem(HIDESETUP_KEY, hidden ? "1" : "0"); }catch(e){}
+  try{ hidden = localStorage.getItem(storageKey) === "1"; }catch(e){}
+  document.getElementById(checkboxId).checked = hidden;
+  document.getElementById(sectionId).classList.toggle("ht-hidden", hidden);
+}
+initHideToggle("hideDisclaimerCheck", "disclaimerSection", HIDEDISCLAIMER_KEY);
+initHideToggle("hideProfileCheck", "profileSection", HIDEPROFILE_KEY);
+
+function onHideDisclaimerChange(){
+  const hidden = document.getElementById("hideDisclaimerCheck").checked;
+  document.getElementById("disclaimerSection").classList.toggle("ht-hidden", hidden);
+  try{ localStorage.setItem(HIDEDISCLAIMER_KEY, hidden ? "1" : "0"); }catch(e){}
+}
+function onHideProfileChange(){
+  const hidden = document.getElementById("hideProfileCheck").checked;
+  document.getElementById("profileSection").classList.toggle("ht-hidden", hidden);
+  try{ localStorage.setItem(HIDEPROFILE_KEY, hidden ? "1" : "0"); }catch(e){}
 }
 
 document.getElementById("pAge").value = profile.age != null ? profile.age : "";
@@ -1037,7 +1024,6 @@ function onProfileChange(){
 
 function onDistrictChange(){
   const distId = distSelect.value;
-  document.getElementById("pickerDoneBtn").disabled = true;
   if(!distId){
     tagSelect.innerHTML = `<option value="">Choose a district first&hellip;</option>`;
     tagSelect.disabled = true;
@@ -1089,25 +1075,17 @@ function renderTagOptions(distId){
 function onTagChange(){
   const distId = distSelect.value;
   const tagId = tagSelect.value;
-  document.getElementById("pickerDoneBtn").disabled = !tagId;
   if(!tagId){ detailPanel.innerHTML = ""; return; }
   renderDetail(distId, tagId);
 }
 
-/* Collapses the two pickers down to a one-line summary once a tag is
-   chosen, so the detail panel sits closer to the top of the screen -
-   "Change" brings the pickers back to pick something else. */
-function collapsePicker(){
-  const distId = distSelect.value;
-  const tag = findTag(distId, tagSelect.value);
-  if(!tag) return;
-  document.getElementById("pickerSummaryText").textContent = `HD ${distId} — ${tag.label}`;
-  document.getElementById("pickerExpanded").classList.add("ht-hidden");
-  document.getElementById("pickerSummary").classList.remove("ht-hidden");
-}
-function expandPicker(){
-  document.getElementById("pickerExpanded").classList.remove("ht-hidden");
-  document.getElementById("pickerSummary").classList.add("ht-hidden");
+/* "Done" on the detail card just closes it and clears the Tag picker
+   back to its placeholder, ready to look up the next one - the
+   District picker is left alone since you're often checking several
+   tags in the same district in a row. */
+function dismissDetail(){
+  tagSelect.value = "";
+  detailPanel.innerHTML = "";
 }
 
 function findTag(distId, tagId){
@@ -1165,7 +1143,7 @@ function renderDetail(distId, tagId){
     confirmHTML = `
       <div class="ht-confirm">
         <input type="checkbox" id="confirmBox" ${confirmed ? "checked" : ""} onchange="onConfirmChange('${distId}','${tag.id}')">
-        <label for="confirmBox">Do you have this tag?</label>
+        <label for="confirmBox">I have this tag</label>
       </div>
       ${shareNote}`;
   } else {
@@ -1200,6 +1178,7 @@ function renderDetail(distId, tagId){
         ${tag.eligibility ? `<dt>Eligibility</dt><dd>${eligibilityText(tag)}</dd>` : ``}
       </dl>
       ${confirmHTML}
+      <button type="button" class="ht-done-btn" onclick="dismissDetail()">Done &#10003;</button>
       ${defsHTML}
     </div>
   `;
@@ -1223,14 +1202,13 @@ function onConfirmChange(distId, tagId){
    shown" until the hunter narrows it down.
 ----------------------------------------------------------------*/
 function isDistrictShown(distId){
-  return !distFilter || distFilter.includes(distId);
+  return distFilter.includes(distId);
 }
 function renderDistFilterPanel(){
   const panel = document.getElementById("distFilterPanel");
-  const shown = distFilter || DISTRICT_ORDER.slice();
   panel.innerHTML = DISTRICT_ORDER.map(id => `
     <label>
-      <input type="checkbox" data-dist="${id}" ${shown.includes(id) ? "checked" : ""} onchange="onDistFilterCheck('${id}', this.checked)">
+      <input type="checkbox" data-dist="${id}" ${distFilter.includes(id) ? "checked" : ""} onchange="onDistFilterCheck('${id}', this.checked)">
       HD ${id} — ${DISTRICTS[id].name}
     </label>`).join("") + `
     <div class="ht-df-actions">
@@ -1240,19 +1218,22 @@ function renderDistFilterPanel(){
   updateDistFilterBtnLabel();
 }
 function updateDistFilterBtnLabel(){
-  const n = distFilter ? distFilter.length : DISTRICT_ORDER.length;
-  document.getElementById("distFilterBtn").innerHTML =
-    (n === DISTRICT_ORDER.length ? "All districts" : `${n} district${n === 1 ? "" : "s"}`) + " &#9662;";
+  const n = distFilter.length;
+  let label;
+  if(n === 0) label = "Show/hide districts";
+  else if(n === DISTRICT_ORDER.length) label = "All districts";
+  else label = `${n} district${n === 1 ? "" : "s"}`;
+  document.getElementById("distFilterBtn").innerHTML = label + " &#9662;";
 }
 function onDistFilterCheck(distId, checked){
-  const current = distFilter ? distFilter.slice() : DISTRICT_ORDER.slice();
+  const current = distFilter.slice();
   distFilter = checked ? Array.from(new Set([...current, distId])) : current.filter(id => id !== distId);
   saveJSON(DISTFILTER_KEY, distFilter);
   updateDistFilterBtnLabel();
   renderFieldCard();
 }
 function setAllDistFilter(all){
-  distFilter = all ? null : [];
+  distFilter = all ? DISTRICT_ORDER.slice() : [];
   saveJSON(DISTFILTER_KEY, distFilter);
   renderDistFilterPanel();
   renderFieldCard();
