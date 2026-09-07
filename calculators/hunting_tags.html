@@ -1307,11 +1307,19 @@ function renderTagOptions(distId){
     `<optgroup label="Elk">${buildGroup("elk")}</optgroup>`;
 }
 
-function onTagChange(){
+function onTagChange(skipConfirmScroll){
   const distId = distSelect.value;
   const tagId = tagSelect.value;
   if(!tagId){ detailPanel.innerHTML = ""; return; }
   renderDetail(distId, tagId);
+  // Deer B/Elk B tags and permits need an extra "I have this tag" click
+  // that's easy to miss since it's further down the card than the rest
+  // of the detail - nudge straight to it so confirming isn't a step
+  // people have to remember on their own. Skipped when jumpToTag() is
+  // about to do its own scroll to the top of the detail panel instead.
+  if(!skipConfirmScroll && tagNeedsManualConfirm(findTag(distId, tagId))){
+    document.getElementById("confirmBox")?.scrollIntoView({behavior:"smooth", block:"center"});
+  }
 }
 
 /* "Done" on the detail card just closes it and clears the Tag picker
@@ -1330,7 +1338,7 @@ function jumpToTag(distId, tagId){
   distSelect.value = distId;
   onDistrictChange();
   tagSelect.value = tagId;
-  onTagChange();
+  onTagChange(true);
   detailPanel.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
