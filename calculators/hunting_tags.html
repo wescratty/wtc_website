@@ -644,14 +644,14 @@
 
       <div style="margin-top:30px;border-top:1px solid var(--border);padding-top:22px;">
         <div class="ht-fc-controls">
-          <button class="ht-fieldcard-btn" onclick="toggleFieldCard()" id="fcToggleBtn">Show My Field Card</button>
+          <button class="ht-fieldcard-btn" onclick="toggleFieldCard()" id="fcToggleBtn">Hide My Field Card</button>
           <div class="ht-distfilter" id="distFilterWrap">
             <button type="button" class="ht-distfilter-btn" id="distFilterBtn" onclick="toggleDistFilterPanel()">Districts shown &#9662;</button>
             <div class="ht-distfilter-panel ht-hidden" id="distFilterPanel"></div>
           </div>
           <button type="button" class="ht-print-btn" onclick="printFieldCard()">&#128424; Print</button>
         </div>
-        <div id="fieldCardView" class="ht-hidden" style="margin-top:20px;"></div>
+        <div id="fieldCardView" style="margin-top:20px;"></div>
       </div>
 
     </div>
@@ -1507,13 +1507,14 @@ document.addEventListener("click", (e) => {
   }
 });
 renderDistFilterPanel();
+renderFieldCard();
 
 /* ---------------------------------------------------------------
    FIELD CARD - tags you currently hold (license or confirmed tag)
    and are eligible for, with live open/closed status. Sorted so
    what's huntable RIGHT NOW stands out from what isn't.
 ----------------------------------------------------------------*/
-let fieldCardOpen = false;
+let fieldCardOpen = true;
 function toggleFieldCard(){
   fieldCardOpen = !fieldCardOpen;
   document.getElementById("fcToggleBtn").textContent = fieldCardOpen ? "Hide My Field Card" : "Show My Field Card";
