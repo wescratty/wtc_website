@@ -101,6 +101,7 @@
   flex-wrap:wrap;
 }
 .ht-icon-box{
+  position:relative;
   width:110px;
   height:110px;
   flex-shrink:0;
@@ -157,9 +158,14 @@
   font-size:0.9rem;
 }
 
+.ht-fc-controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+}
 .ht-fieldcard-btn{
   display:inline-block;
-  margin-top:6px;
   padding:10px 18px;
   border-radius:4px;
   border:none;
@@ -184,6 +190,7 @@
   cursor:pointer;
 }
 .ht-fc-card .icon-wrap{
+  position:relative;
   width:100%;
   aspect-ratio:1;
   border-radius:8px;
@@ -193,6 +200,34 @@
   transition:box-shadow 0.15s, border-color 0.15s;
 }
 .ht-fc-card .icon-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
+.ht-caveat-corner{
+  position:absolute;
+  top:3px;
+  right:3px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:#fff;
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.72rem;
+  line-height:1;
+}
+.ht-caveat-inline{
+  display:inline-block;
+  font-size:0.9em;
+}
+.ht-caveat-note{
+  margin-top:10px;
+  padding:10px 12px;
+  background:#fff6e5;
+  border-left:4px solid var(--gold);
+  border-radius:0 6px 6px 0;
+  font-size:0.88rem;
+  color:#5a4321;
+}
 .ht-fc-card:hover .icon-wrap, .ht-fc-card:focus .icon-wrap{
   box-shadow:0 0 0 2px var(--gold);
   border-color:var(--gold);
@@ -364,7 +399,7 @@
 .ht-defs .cite{ margin-top:8px; font-size:0.78rem; color:var(--text-muted); font-style:italic; }
 
 /* District multi-select filter (Field Card) */
-.ht-distfilter{ position:relative; display:inline-block; margin-left:10px; }
+.ht-distfilter{ position:relative; display:inline-block; }
 .ht-distfilter-btn{
   padding:10px 16px;
   border-radius:4px;
@@ -406,7 +441,6 @@
 
 .ht-print-btn{
   display:inline-block;
-  margin-left:10px;
   padding:10px 16px;
   border-radius:4px;
   border:1px solid var(--border);
@@ -414,6 +448,16 @@
   color:var(--navy);
   font-weight:700;
   cursor:pointer;
+}
+
+@media (max-width: 640px){
+  .ht-fc-controls{ flex-direction:column; align-items:stretch; }
+  .ht-fc-controls .ht-fieldcard-btn,
+  .ht-fc-controls .ht-distfilter,
+  .ht-fc-controls .ht-distfilter-btn,
+  .ht-fc-controls .ht-print-btn{ width:100%; }
+  .ht-fc-controls .ht-distfilter-panel{ left:0; right:0; width:auto; }
+  .ht-fc-controls .ht-distfilter-panel label{ white-space:normal; }
 }
 
 @media print{
@@ -599,12 +643,14 @@
       <div id="detailPanel"></div>
 
       <div style="margin-top:30px;border-top:1px solid var(--border);padding-top:22px;">
-        <button class="ht-fieldcard-btn" onclick="toggleFieldCard()" id="fcToggleBtn">Show My Field Card</button>
-        <div class="ht-distfilter" id="distFilterWrap">
-          <button type="button" class="ht-distfilter-btn" id="distFilterBtn" onclick="toggleDistFilterPanel()">Districts shown &#9662;</button>
-          <div class="ht-distfilter-panel ht-hidden" id="distFilterPanel"></div>
+        <div class="ht-fc-controls">
+          <button class="ht-fieldcard-btn" onclick="toggleFieldCard()" id="fcToggleBtn">Show My Field Card</button>
+          <div class="ht-distfilter" id="distFilterWrap">
+            <button type="button" class="ht-distfilter-btn" id="distFilterBtn" onclick="toggleDistFilterPanel()">Districts shown &#9662;</button>
+            <div class="ht-distfilter-panel ht-hidden" id="distFilterPanel"></div>
+          </div>
+          <button type="button" class="ht-print-btn" onclick="printFieldCard()">&#128424; Print</button>
         </div>
-        <button type="button" class="ht-print-btn" onclick="printFieldCard()">&#128424; Print</button>
         <div id="fieldCardView" class="ht-hidden" style="margin-top:20px;"></div>
       </div>
 
@@ -868,12 +914,61 @@ const ICON_IMG = {
   mdDoe:     "../assets/hunting/icons/mdDoe.png",
   elkBull:   "../assets/hunting/icons/elkBull.png",
   elkEither: "../assets/hunting/icons/elkEither.png",
-  elkCow:    "../assets/hunting/icons/elkCow.png"
+  elkCow:    "../assets/hunting/icons/elkCow.png",
+  elkSpike:  "../assets/hunting/icons/elkSpike.png" // reserved: no current tag uses this (see hunting_tags.README.md, "Data source & scope") - unbranched/spike-only bull tags exist in MT regs (e.g. HD 339/343) but none of the 13 districts here have one yet. When one is added, use this icon, NOT elkBull/elkEither - a spike does not satisfy a brow-tined requirement.
 };
 function tagIconImg(tag, opts){
   const locked = !!(opts && opts.locked);
   const style = locked ? ` style="filter:grayscale(1) opacity(0.45)"` : "";
   return `<img src="${ICON_IMG[tag.icon]}" alt="${tag.label}"${style}>`;
+}
+
+/* Flags tags whose legal-animal definition isn't the simple
+   antlered/antlerless/either-sex case the icon signals - e.g. a
+   "Brow-tined Bull" tag needs a qualifying brow tine, not just any
+   antlered bull, and some permits cap antler points. The icon alone
+   can't show these, so they get a ⚠️ instead of silently looking
+   like a normal buck/bull tag. `field` says which line to mark it on
+   in the detail popup (label = the headline, restriction = the
+   Restrictions line). */
+function tagCaveats(tag){
+  const caveats = [];
+  if(/Brow-tined/i.test(tag.label)){
+    caveats.push({
+      field:"label",
+      note:"Requires a brow-tined bull (a qualifying point 4″+ long on the lower half of a main beam) — not just any antlered bull."
+    });
+  }
+  if(/\d+\s*points?\s*(or fewer|or less|maximum|max)\b/i.test(tag.restriction || "")){
+    caveats.push({
+      field:"restriction",
+      note:"Antler configuration is restricted on this tag — not just any legal antlered buck."
+    });
+  }
+  if(/shotgun|traditional handgun/i.test(tag.restriction || "")){
+    caveats.push({
+      field:"restriction",
+      note:"Limited weapon types allowed on this tag — check exactly which before you hunt."
+    });
+  }
+  return caveats;
+}
+function tagHasCaveat(distId, tag){ return tagCaveats(tag).length > 0; }
+/* Corner badge (icon thumbnails) - must sit on a position:relative
+   parent. Inline flag (headline / restriction text) - plain inline,
+   no positioning, so it doesn't get yanked out of the text flow. */
+function caveatCornerHTML(note){
+  // Corner badge on a Field Card / icon-box thumbnail. `title` is a
+  // harmless desktop-hover bonus here, not the only way to see the
+  // reason - tapping the button opens the full detail popup, which
+  // is the real (mobile-friendly) path to the explanation.
+  return `<span class="ht-caveat-corner" title="${note.replace(/"/g, "&quot;")}">&#9888;&#65039;</span>`;
+}
+function caveatInlineHTML(){
+  // Plain icon, no tooltip - the actual reason is rendered as real
+  // visible text right next to it (see renderDetail), since a hover
+  // title doesn't work on a phone.
+  return `<span class="ht-caveat-inline">&#9888;&#65039;</span>`;
 }
 
 /* ---------------------------------------------------------------
@@ -1153,7 +1248,19 @@ function renderDistrictNotes(distId){
   districtNotesEl.innerHTML = `<div class="ht-notes"><ul>${notes.map(n => `<li>${n}</li>`).join("")}</ul></div>`;
 }
 
-function tagOptionLabel(distId, tag){
+/* When a district has two tags with the identical label (the regs
+   sometimes list the same opportunity as two rows with different
+   land/phase scope - see renderFieldCard's dedup comment), the
+   dropdown needs *some* way to tell them apart. Derive a short hint
+   from whatever actually differs, so the option list doesn't show
+   the same phrase twice with no way to pick between them. */
+function tagDisambiguator(tag){
+  if(/private land/i.test(tag.restriction || "")) return "private land";
+  if(tag.phases.length === 1) return tag.phases[0].label.toLowerCase();
+  return null;
+}
+
+function tagOptionLabel(distId, tag, needsHint){
   const state = overallState(distId, tag);
   const prefix = {good:"✅", off:"⏳", need:"🔒", "need-bow":"🏹", ineligible:"🚫"}[state];
   let suffix = "";
@@ -1170,17 +1277,30 @@ function tagOptionLabel(distId, tag){
   // "General License" is redundant on nearly every option in a district -
   // only show the code when it's an actual purchasable tag/permit number.
   const codePart = tag.code === "General License" ? "" : `${tag.code} — `;
-  return `${prefix} ${codePart}${tag.label}${suffix}`;
+  const hint = needsHint ? ` [${tagDisambiguator(tag) || "variant"}]` : "";
+  return `${prefix} ${codePart}${tag.label}${hint}${suffix}`;
 }
 
 function renderTagOptions(distId){
   const tags = DISTRICTS[distId].tags;
   tagSelect.disabled = false;
+  const buildGroup = species => {
+    const groupTags = tags.filter(t => t.species === species);
+    // Only "General License" rows hide their code from the option text,
+    // so only those can actually collide on label alone - a Deer B/Elk B
+    // tag's own code (260-01, 299-00, ...) already tells them apart.
+    const labelCounts = {};
+    groupTags.forEach(t => {
+      if(t.code === "General License") labelCounts[t.label] = (labelCounts[t.label] || 0) + 1;
+    });
+    return groupTags.map(t => {
+      const needsHint = t.code === "General License" && labelCounts[t.label] > 1;
+      return `<option value="${t.id}">${tagOptionLabel(distId, t, needsHint)}</option>`;
+    }).join("");
+  };
   tagSelect.innerHTML = `<option value="">Choose a tag / opportunity&hellip;</option>` +
-    `<optgroup label="Deer">${tags.filter(t=>t.species==="deer").map(t=>
-      `<option value="${t.id}">${tagOptionLabel(distId,t)}</option>`).join("")}</optgroup>` +
-    `<optgroup label="Elk">${tags.filter(t=>t.species==="elk").map(t=>
-      `<option value="${t.id}">${tagOptionLabel(distId,t)}</option>`).join("")}</optgroup>`;
+    `<optgroup label="Deer">${buildGroup("deer")}</optgroup>` +
+    `<optgroup label="Elk">${buildGroup("elk")}</optgroup>`;
 }
 
 function onTagChange(){
@@ -1252,6 +1372,9 @@ function renderDetail(distId, tagId){
   const tag = findTag(distId, tagId);
   const state = overallState(distId, tag);
   const confirmed = hasConfirmedTag(distId, tag.id);
+  const caveats = tagCaveats(tag);
+  const labelCaveat = caveats.find(c => c.field === "label");
+  const restrictionCaveat = caveats.find(c => c.field === "restriction");
 
   const phaseListHTML = tag.phases.map(p => `${p.label}: ${phaseRangeStr(p)}`).join(" &nbsp;•&nbsp; ");
 
@@ -1286,17 +1409,21 @@ function renderDetail(distId, tagId){
   detailPanel.innerHTML = `
     <div class="ht-detail">
       <div class="ht-detail-top">
-        <div class="ht-icon-box state-${state}">${tagIconImg(tag, {locked: state === "need" || state === "need-bow" || state === "ineligible"})}</div>
+        <div class="ht-icon-box state-${state}">
+          ${tagIconImg(tag, {locked: state === "need" || state === "need-bow" || state === "ineligible"})}
+          ${caveats.length ? caveatCornerHTML(caveats.map(c => c.note).join(" ")) : ""}
+        </div>
         <div class="ht-headline">
-          <h3>${tag.label}</h3>
+          <h3>${labelCaveat ? caveatInlineHTML() + " " : ""}${tag.label}</h3>
           <div class="code">${tag.code}</div>
           ${validLineHTML(tag, state)}
         </div>
       </div>
+      ${labelCaveat ? `<div class="ht-caveat-note">${caveatInlineHTML()} ${labelCaveat.note}</div>` : ""}
       <dl class="ht-dl">
         <dt>How it's issued</dt><dd>${tag.issue}</dd>
         <dt>All season windows</dt><dd>${phaseListHTML}</dd>
-        ${tag.restriction ? `<dt>Restrictions</dt><dd>${tag.restriction}</dd>` : ``}
+        ${tag.restriction ? `<dt>Restrictions</dt><dd>${restrictionCaveat ? caveatInlineHTML() + " " : ""}${tag.restriction}</dd>` : ``}
         ${tag.eligibility ? `<dt>Eligibility</dt><dd>${eligibilityText(tag)}</dd>` : ``}
       </dl>
       ${confirmHTML}
@@ -1311,6 +1438,16 @@ function onConfirmChange(distId, tagId){
   const tag = findTag(distId, tagId);
   const matches = findTagsByCode(tag.code, tag.species);
   matches.forEach(({distId: d, tag: t}) => setConfirmedTag(d, t.id, val));
+  if(val){
+    // Confirming a tag means the hunter is out in this district - show it
+    // on the Field Card automatically so they don't also have to remember
+    // to flip on the district filter to see the result of what they just did.
+    matches.forEach(({distId: d}) => {
+      if(!distFilter.includes(d)) distFilter.push(d);
+    });
+    saveJSON(DISTFILTER_KEY, distFilter);
+    renderDistFilterPanel();
+  }
   renderTagOptions(distId);
   tagSelect.value = tagId;
   renderDetail(distId, tagId);
@@ -1402,15 +1539,35 @@ function renderFieldCard(){
   // district is still there in the Tag / Opportunity dropdown above.
   DISTRICT_ORDER.filter(isDistrictShown).forEach(distId => {
     const d = DISTRICTS[distId];
-    const huntableNow = d.tags.filter(t => overallState(distId, t) === "good");
+    let huntableNow = d.tags.filter(t => overallState(distId, t) === "good");
     if(!huntableNow.length) return;
     any = true;
 
+    // The regs sometimes list the same opportunity as two rows with
+    // different land/phase scope (e.g. "private land, all season" vs
+    // "no restriction, archery only") - real rows, but when both are
+    // open at once they look identical and add nothing over just one.
+    // Only collapse "included with license" rows this way: those
+    // aren't separately held, so one is enough. Never collapse B-tags/
+    // permits - each is a distinct physical tag worth showing on its
+    // own even if the icon happens to match another.
+    const seenLicenseIcons = new Set();
+    huntableNow = huntableNow.filter(t => {
+      if(tagNeedsManualConfirm(t)) return true;
+      if(seenLicenseIcons.has(t.icon)) return false;
+      seenLicenseIcons.add(t.icon);
+      return true;
+    });
+
     html += `<div class="ht-fc-district"><h4>HD ${distId} — ${d.name}</h4><div class="ht-fc-grid">`;
     huntableNow.forEach(t => {
+      const caveats = tagCaveats(t);
       html += `
         <div class="ht-fc-card" onclick="jumpToTag('${distId}','${t.id}')">
-          <div class="icon-wrap">${tagIconImg(t)}</div>
+          <div class="icon-wrap">
+            ${tagIconImg(t)}
+            ${caveats.length ? caveatCornerHTML(caveats.map(c => c.note).join(" ")) : ""}
+          </div>
           <div class="ht-fc-print-label">${t.code === "General License" ? "" : t.code + " — "}${t.label}</div>
         </div>`;
     });

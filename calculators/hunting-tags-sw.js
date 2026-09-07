@@ -12,7 +12,7 @@
   returning visitors with a signal pick up the update instead of
   being stuck on a stale cached copy.
 */
-const CACHE_NAME = "hunting-tags-v3";
+const CACHE_NAME = "hunting-tags-v4";
 
 const PRECACHE_PATHS = [
   "/calculators/hunting_tags.html",
@@ -32,7 +32,8 @@ const PRECACHE_PATHS = [
   "/assets/hunting/icons/mdDoe.png",
   "/assets/hunting/icons/elkBull.png",
   "/assets/hunting/icons/elkEither.png",
-  "/assets/hunting/icons/elkCow.png"
+  "/assets/hunting/icons/elkCow.png",
+  "/assets/hunting/icons/elkSpike.png"
 ];
 
 self.addEventListener("install", (event) => {
