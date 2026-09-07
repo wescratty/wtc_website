@@ -1082,16 +1082,35 @@ function findTagsByCode(code, species){
   return matches;
 }
 
-/* Whether the hunter currently POSSESSES this tag (general license
-   coverage comes from the profile; B-licenses/permits are confirmed
-   per tag). */
-function tagPossessed(distId, tag){
-  if(tag.issue.indexOf("Included with General Deer") === 0) return !!profile.hasDeerLicense;
-  if(tag.issue.indexOf("Included with General Elk") === 0) return !!profile.hasElkLicense;
-  return hasConfirmedTag(distId, tag.id);
-}
 function tagNeedsManualConfirm(tag){
   return tag.issue.indexOf("Included with") !== 0;
+}
+
+/* A General Deer/Elk License is ONE physical tag - profile.hasDeerLicense
+   and profile.hasElkLicense are single flags, not per-district, because
+   there's only one to hold. Every "included with license" row for that
+   species, in every district, is just a different possible way to fill
+   that same one tag - so once any one of them is marked filled, none of
+   the others are still available, anywhere, until it's unfilled. */
+function generalLicenseFilledElsewhere(tag){
+  if(tagNeedsManualConfirm(tag)) return false;
+  let usedElsewhere = false;
+  DISTRICT_ORDER.forEach(d => {
+    DISTRICTS[d].tags.forEach(t => {
+      if(t.id === tag.id || t.species !== tag.species || tagNeedsManualConfirm(t)) return;
+      if(hasFilledTag(d, t.id)) usedElsewhere = true;
+    });
+  });
+  return usedElsewhere;
+}
+
+/* Whether the hunter currently POSSESSES this tag (general license
+   coverage comes from the profile, minus any other row for the same
+   species already filled; B-licenses/permits are confirmed per tag). */
+function tagPossessed(distId, tag){
+  if(tag.issue.indexOf("Included with General Deer") === 0) return !!profile.hasDeerLicense && !generalLicenseFilledElsewhere(tag);
+  if(tag.issue.indexOf("Included with General Elk") === 0) return !!profile.hasElkLicense && !generalLicenseFilledElsewhere(tag);
+  return hasConfirmedTag(distId, tag.id);
 }
 
 /* Whether the hunter's profile (age / PTHFV) meets a special
@@ -1397,7 +1416,11 @@ function validLineHTML(tag, state){
     return `<div class="ht-valid-line state-ineligible">Not eligible for you — ${eligibilityText(tag)}</div>`;
   }
   if(state === "need"){
-    const needWhat = tagNeedsManualConfirm(tag) ? "you haven't confirmed you hold this tag" : "license not checked above";
+    let needWhat = tagNeedsManualConfirm(tag) ? "you haven't confirmed you hold this tag" : "license not checked above";
+    if(!tagNeedsManualConfirm(tag) && generalLicenseFilledElsewhere(tag)){
+      const which = tag.issue.indexOf("Deer") > -1 ? "General Deer License" : "General Elk License";
+      needWhat = `you've already filled your ${which} on a different tag this season`;
+    }
     return `<div class="ht-valid-line state-need">${seasonPhrase(tag)} — but ${needWhat}</div>`;
   }
   if(state === "need-bow"){
@@ -1439,7 +1462,11 @@ function renderDetail(distId, tagId){
       ${shareNote}`;
   } else {
     const which = tag.issue.indexOf("Deer") > -1 ? "General Deer License" : "General Elk License";
-    confirmHTML = `<div class="ht-license-note">Covered by your <b>${which}</b> checkbox in Hunter Profile above ${profile[tag.issue.indexOf("Deer")>-1?"hasDeerLicense":"hasElkLicense"] ? "(you have it checked)" : "(not checked yet)"}.</div>`;
+    const spent = generalLicenseFilledElsewhere(tag);
+    const statusNote = spent
+      ? `already filled on a different tag this season — see that tag to unfill it if this was a mistake`
+      : (profile[tag.issue.indexOf("Deer")>-1?"hasDeerLicense":"hasElkLicense"] ? "you have it checked" : "not checked yet");
+    confirmHTML = `<div class="ht-license-note">Covered by your <b>${which}</b> checkbox in Hunter Profile above (${statusNote}).</div>`;
   }
 
   // Filled = the hunter already took an animal under this tag. Only
