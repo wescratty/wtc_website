@@ -310,6 +310,9 @@ form.inquiry input, form.inquiry textarea, form.inquiry select {
   font-family: inherit;
 }
 form.inquiry button { margin-top: 20px; }
+.inquiry-result { margin-top: 14px; font-weight: 700; text-align: center; min-height: 1.2em; }
+.inquiry-result.success { color: #2e7d32; }
+.inquiry-result.error { color: #b3261e; }
 
 /* Footer */
 .site-footer {
