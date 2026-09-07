@@ -201,31 +201,34 @@
   cursor:pointer;
 }
 .ht-fc-card .icon-wrap{
-  display:flex;
-  flex-direction:column;
+  position:relative;
   width:100%;
+  aspect-ratio:1;
   border-radius:8px;
   border:1px solid var(--border);
   background:#fff;
   overflow:hidden;
   transition:box-shadow 0.15s, border-color 0.15s;
 }
+.ht-fc-card .icon-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
+.ht-fc-card.is-filled .icon-wrap img{ opacity:0.35; filter:grayscale(60%); }
 .ht-fc-label{
-  font-size:0.64rem;
+  position:absolute;
+  top:0; left:0; right:0;
+  z-index:2;
+  font-size:0.62rem;
   font-weight:700;
   color:var(--navy);
-  background:var(--cream-dark);
+  background:rgba(210,210,202,0.92);
   border-bottom:1px solid var(--border);
   padding:3px 4px;
   line-height:1.15;
   text-align:center;
 }
-.ht-fc-img{ position:relative; width:100%; aspect-ratio:1; }
-.ht-fc-img img{ width:100%; height:100%; object-fit:contain; display:block; }
-.ht-fc-card.is-filled .ht-fc-img img{ opacity:0.35; filter:grayscale(60%); }
 .ht-filled-mark{
   position:absolute;
   inset:0;
+  z-index:1;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -235,6 +238,11 @@
   text-shadow:0 0 6px #fff, 0 0 6px #fff, 0 0 3px #fff;
   pointer-events:none;
 }
+/* The label banner now sits across the top of the card, where the
+   caveat badge used to live - bottom-right instead, so the two never
+   overlap. Only scoped to the Field Card; the detail panel's icon
+   box has no label banner, so its badge stays top-right there. */
+.ht-fc-card .icon-wrap .ht-caveat-corner{ top:auto; bottom:3px; z-index:1; }
 .ht-caveat-corner{
   position:absolute;
   top:3px;
@@ -1130,13 +1138,28 @@ function generalLicenseFilledElsewhere(tag){
   return usedElsewhere;
 }
 
+/* A Deer B/Elk B tag or permit is one physical tag valid across every
+   district `findTagsByCode()` turns up for its code - confirming "I
+   have this tag" rightly marks all of them held, but filling only
+   ever happens in ONE of those districts. Once it's filled anywhere,
+   the others aren't still available under the same physical tag, so
+   they drop out too (this doesn't account for the handful of codes
+   the regs let a hunter buy more than one of, e.g. 260-01's "up to 3
+   per hunter" - a real gap, accepted for now: uncheck and re-check
+   "I filled this tag" on another district's card to log a second one). */
+function tagFilledElsewhere(tag){
+  if(!tagNeedsManualConfirm(tag)) return false;
+  return findTagsByCode(tag.code, tag.species).some(({distId: d, tag: t}) => t.id !== tag.id && hasFilledTag(d, t.id));
+}
+
 /* Whether the hunter currently POSSESSES this tag (general license
    coverage comes from the profile, minus any other row for the same
-   species already filled; B-licenses/permits are confirmed per tag). */
+   species already filled; B-licenses/permits are confirmed per tag,
+   minus this same code already filled under a different district). */
 function tagPossessed(distId, tag){
   if(tag.issue.indexOf("Included with General Deer") === 0) return !!profile.hasDeerLicense && !generalLicenseFilledElsewhere(tag);
   if(tag.issue.indexOf("Included with General Elk") === 0) return !!profile.hasElkLicense && !generalLicenseFilledElsewhere(tag);
-  return hasConfirmedTag(distId, tag.id);
+  return hasConfirmedTag(distId, tag.id) && !tagFilledElsewhere(tag);
 }
 
 /* Whether the hunter's profile (age / PTHFV) meets a special
@@ -1446,6 +1469,8 @@ function validLineHTML(tag, state){
     if(!tagNeedsManualConfirm(tag) && generalLicenseFilledElsewhere(tag)){
       const which = tag.issue.indexOf("Deer") > -1 ? "General Deer License" : "General Elk License";
       needWhat = `you've already filled your ${which} on a different tag this season`;
+    } else if(tagNeedsManualConfirm(tag) && tagFilledElsewhere(tag)){
+      needWhat = `you've already filled your ${tag.code} tag in a different district this season`;
     }
     return `<div class="ht-valid-line state-need">${seasonPhrase(tag)} — but ${needWhat}</div>`;
   }
@@ -1570,15 +1595,13 @@ function onConfirmChange(distId, tagId){
 
 function onFilledChange(distId, tagId){
   const val = document.getElementById("filledBox").checked;
-  const tag = findTag(distId, tagId);
-  if(tagNeedsManualConfirm(tag)){
-    // Same physical Deer B/Elk B tag or permit as elsewhere - filling
-    // it in one district means it's filled everywhere that tag code
-    // is valid, same propagation as confirming you hold it.
-    findTagsByCode(tag.code, tag.species).forEach(({distId: d, tag: t}) => setFilledTag(d, t.id, val));
-  } else {
-    setFilledTag(distId, tag.id, val);
-  }
+  // Unlike "I have this tag", filled is NEVER propagated to the other
+  // districts a shared code is valid in - filling happens in exactly
+  // one place, and marking every district's copy filled too would
+  // just be a copy of the checkmark, not a copy of the animal. The
+  // OTHER districts drop out on their own via tagFilledElsewhere()/
+  // generalLicenseFilledElsewhere() in tagPossessed() instead.
+  setFilledTag(distId, tagId, val);
   renderDetail(distId, tagId);
   renderFieldCard();
 }
@@ -1706,12 +1729,10 @@ function renderFieldCard(){
       html += `
         <div class="ht-fc-card${isFilled ? " is-filled" : ""}" onclick="jumpToTag('${distId}','${t.id}')">
           <div class="icon-wrap">
+            ${tagIconImg(t)}
             <div class="ht-fc-label">${labelText}${isFilled ? " — FILLED" : ""}</div>
-            <div class="ht-fc-img">
-              ${tagIconImg(t)}
-              ${caveats.length ? caveatCornerHTML(caveats.map(c => c.note).join(" ")) : ""}
-              ${isFilled ? `<div class="ht-filled-mark" aria-label="Filled">&#10003;</div>` : ""}
-            </div>
+            ${caveats.length ? caveatCornerHTML(caveats.map(c => c.note).join(" ")) : ""}
+            ${isFilled ? `<div class="ht-filled-mark" aria-label="Filled">&#10003;</div>` : ""}
           </div>
         </div>`;
     });
