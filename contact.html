@@ -79,7 +79,7 @@
       <label for="email">Email</label>
       <input type="email" id="email" name="email" required>
       <label for="phone">Phone</label>
-      <input type="tel" id="phone" name="phone" required>
+      <input type="tel" id="phone" name="phone" inputmode="tel">
       <label for="project">Tell us about your project</label>
       <textarea id="project" name="project" rows="5" required></textarea>
       <button type="submit" class="btn" id="inquirySubmit">Send Inquiry</button>
@@ -95,6 +95,16 @@
       const inquiryResult = document.getElementById("inquiryResult");
       const inquirySubmit = document.getElementById("inquirySubmit");
       const projectField = document.getElementById("project");
+
+      // Not required (some people would rather just leave a name/email),
+      // but strip anything that isn't a phone-number character as they
+      // type, so letters simply never land in the field - no error
+      // message needed since bad input can't get typed in the first
+      // place.
+      const phoneField = document.getElementById("phone");
+      phoneField.addEventListener("input", () => {
+        phoneField.value = phoneField.value.replace(/[^0-9()+\-.\s]/g, "");
+      });
 
       // Support a ready-made message from a link elsewhere on the site
       // (e.g. the hunting tag tracker's "request a district" link),
