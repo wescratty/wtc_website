@@ -101,21 +101,17 @@
   flex-wrap:wrap;
 }
 .ht-icon-box{
-  width:96px;
-  height:96px;
+  width:110px;
+  height:110px;
   flex-shrink:0;
   display:flex;
   align-items:center;
   justify-content:center;
-  border-radius:12px;
-  border:2px solid var(--border);
+  border-radius:50%;
 }
-.ht-icon-box.state-ineligible{ background:#f1f1ee; border-color:#c7c7bd; }
-.ht-icon-box.state-need{ background:#f1f1ee; border-color:#c7c7bd; }
-.ht-icon-box.state-need-bow{ background:#f1f1ee; border-color:#c7c7bd; }
-.ht-icon-box.state-off{ background:#eeeeea; border-color:#a8a89e; }
-.ht-icon-box.state-good{ background:#e9f5ec; border-color:#2e7d32; }
-.ht-icon-box.state-need svg, .ht-icon-box.state-ineligible svg, .ht-icon-box.state-need-bow svg{ filter:grayscale(1) opacity(0.45); }
+.ht-icon-box svg{ width:100%; height:100%; }
+.ht-icon-box.state-good{ box-shadow:0 0 0 3px #2e7d32; }
+.ht-icon-box.state-off{ box-shadow:0 0 0 3px #a8a89e; }
 .ht-headline h3{ margin:0 0 2px; color:var(--navy); font-size:1.3rem; }
 .ht-headline .code{ font-weight:600; color:var(--text-muted); font-size:0.85rem; }
 .ht-valid-line{
@@ -174,22 +170,26 @@
 .ht-fc-district h4{ color:var(--navy); margin:26px 0 10px; }
 .ht-fc-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(150px,1fr));
-  gap:14px;
+  grid-template-columns:repeat(auto-fill, minmax(92px,1fr));
+  gap:16px 10px;
 }
 .ht-fc-card{
-  border:2px solid var(--border);
-  border-radius:10px;
-  padding:12px 8px;
   text-align:center;
-  background:#fff;
+  background:none;
+  border:none;
+  padding:0;
+  cursor:pointer;
 }
-.ht-fc-card.state-good{ border-color:#2e7d32; background:#e9f5ec; }
-.ht-fc-card.state-off, .ht-fc-card.state-need-bow{ border-color:#a8a89e; background:#eeeeea; }
-.ht-fc-card .icon-wrap{ height:52px; display:flex; align-items:center; justify-content:center; }
-.ht-fc-card .lbl{ font-weight:700; color:var(--navy); font-size:0.82rem; margin-top:2px; line-height:1.2; }
-.ht-fc-card .code{ font-size:0.72rem; color:var(--text-muted); }
-.ht-fc-card .valid{ font-size:0.72rem; font-weight:700; margin-top:3px; }
+.ht-fc-card .icon-wrap{
+  width:100%;
+  aspect-ratio:1;
+  border-radius:50%;
+  margin:0 auto;
+}
+.ht-fc-card .icon-wrap svg{ width:100%; height:100%; display:block; }
+.ht-fc-card.state-good .icon-wrap{ box-shadow:0 0 0 3px #2e7d32; }
+.ht-fc-card.state-off .icon-wrap, .ht-fc-card.state-need-bow .icon-wrap{ box-shadow:0 0 0 3px #a8a89e; }
+.ht-fc-card .valid{ font-size:0.68rem; font-weight:700; margin-top:5px; line-height:1.2; }
 
 .ht-hidden{ display:none !important; }
 
@@ -702,72 +702,73 @@ const DISTRICTS = {
 const DISTRICT_ORDER = ["240","250","260","261","262","270"];
 
 /* ---------------------------------------------------------------
-   ICONS - simple flat SVGs. Antler amount signals legal-animal type:
-   no antlers = antlerless only, small mark = either-sex, full rack = buck-only.
+   BADGES - tattoo-flash-style seals. A bold ring, a field color
+   pulled from the real animal (cream/white whitetail, gray mule
+   deer, brown elk), curved border text carrying the actual tag
+   language, and a center mark: Y forks like an antler (antlered/
+   buck/bull only), X reads as "none" (antlerless only), X/Y for
+   either-sex. Locked (don't hold it / don't qualify) tags render
+   desaturated, same "grayed out until you have it" idea as v1.
 ----------------------------------------------------------------*/
-function deerSvg(opts){
-  const {earSize, antlers, tint} = opts;
-  const earPath = earSize === "big"
-    ? `<path d="M30 26 L14 14 L26 30 Z" fill="${tint}"/><path d="M50 26 L66 14 L54 30 Z" fill="${tint}"/>`
-    : `<path d="M32 26 L22 16 L28 30 Z" fill="${tint}"/><path d="M48 26 L58 16 L52 30 Z" fill="${tint}"/>`;
-  let antlerPath = "";
-  if(antlers === "full"){
-    antlerPath = `<path d="M34 20 L28 4 M28 4 L22 8 M28 4 L32 10 M46 20 L52 4 M52 4 L58 8 M52 4 L48 10" stroke="${tint}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
-  } else if(antlers === "either"){
-    antlerPath = `<path d="M36 22 L33 12 M44 22 L47 12" stroke="${tint}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
-  }
+function badgeIconKind(tag){
+  if(/Buck$|Bull$/.test(tag.icon)) return "full";
+  if(/Either$/.test(tag.icon)) return "either";
+  return "none"; // Doe / Cow
+}
+function badgeSpeciesStyle(tag){
+  if(tag.icon.startsWith("wtd")) return {bg:"#f2ede0", ink:"#241a12", bottom:"White-tail"};
+  if(tag.icon.startsWith("md"))  return {bg:"#6e6a5f", ink:"#f2ede0", bottom:"Mule Deer"};
+  return {bg:"#5c4326", ink:"#f2ede0", bottom:"Elk"}; // elk*
+}
+function badgeTopText(tag){
+  const label = tag.label.replace(/\s*\(Youth.*?\)\s*$/, "").trim();
+  let top = label
+    .replace(/\s*Whitetail Deer$/, "")
+    .replace(/\s*Mule Deer$/, "")
+    .replace(/\s*Elk$/, "")
+    .trim();
+  if(top === "Brow-tined Bull or Antlerless") top = "Brow-tined or Antlerless";
+  return top;
+}
+function badgeFontSize(len){
+  if(len <= 10) return 19;
+  if(len <= 13) return 17;
+  if(len <= 16) return 15;
+  if(len <= 20) return 13;
+  return 11.5;
+}
+let badgeIdCounter = 0;
+function tagBadgeSvg(tag, opts){
+  const locked = !!(opts && opts.locked);
+  const kind = badgeIconKind(tag);
+  const {bg, ink, bottom} = badgeSpeciesStyle(tag);
+  const top = badgeTopText(tag);
+  const topSize = badgeFontSize(top.length);
+  const botSize = badgeFontSize(bottom.length);
+  const glyphText = kind === "none" ? "X" : kind === "full" ? "Y" : "X/Y";
+  const glyphSize = kind === "either" ? 34 : 46;
+  const id = "badge" + (badgeIdCounter++);
+  const style = locked ? ` style="filter:grayscale(1) opacity(0.45)"` : "";
   return `
-  <svg viewBox="0 0 80 60" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="40" cy="42" rx="22" ry="12" fill="${tint}"/>
-    <rect x="20" y="46" width="4" height="12" fill="${tint}"/>
-    <rect x="30" y="48" width="4" height="10" fill="${tint}"/>
-    <rect x="48" y="48" width="4" height="10" fill="${tint}"/>
-    <rect x="58" y="46" width="4" height="12" fill="${tint}"/>
-    <circle cx="40" cy="26" r="10" fill="${tint}"/>
-    ${earPath}
-    ${antlerPath}
-    <circle cx="36" cy="25" r="1.4" fill="#fff"/>
-    <circle cx="44" cy="25" r="1.4" fill="#fff"/>
+  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"${style}>
+    <defs>
+      <path id="arcTop${id}" d="M 22 112 A 78 78 0 0 1 178 112" fill="none"/>
+      <path id="arcBot${id}" d="M 34 144 A 74 74 0 0 0 166 144" fill="none"/>
+    </defs>
+    <circle cx="100" cy="100" r="94" fill="${ink}"/>
+    <circle cx="100" cy="100" r="84" fill="${bg}"/>
+    <circle cx="100" cy="100" r="86" fill="none" stroke="${ink}" stroke-opacity="0.35" stroke-width="1.5"/>
+    <text x="100" y="124" font-family="Rye" font-size="${glyphSize}" text-anchor="middle" fill="${ink}">${glyphText}</text>
+    <circle cx="26" cy="122" r="2.6" fill="${ink}"/>
+    <circle cx="174" cy="122" r="2.6" fill="${ink}"/>
+    <text font-family="Rye" font-size="${topSize}" letter-spacing="1.5" fill="${ink}">
+      <textPath href="#arcTop${id}" startOffset="50%" text-anchor="middle">${top}</textPath>
+    </text>
+    <text font-family="Rye" font-size="${botSize}" letter-spacing="1.5" fill="${ink}">
+      <textPath href="#arcBot${id}" startOffset="50%" text-anchor="middle">${bottom}</textPath>
+    </text>
   </svg>`;
 }
-function elkSvg(opts){
-  const {antlers} = opts;
-  const tint = "#8a6d3b";
-  let antlerPath = "";
-  if(antlers === "full"){
-    antlerPath = `<path d="M34 16 L24 2 M24 2 L18 6 M24 2 L28 8 M24 2 L20 10
-                        M46 16 L56 2 M56 2 L62 6 M56 2 L52 8 M56 2 L60 10"
-                   stroke="${tint}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-  } else if(antlers === "either"){
-    antlerPath = `<path d="M36 18 L31 6 M44 18 L49 6" stroke="${tint}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-  }
-  return `
-  <svg viewBox="0 0 80 60" width="56" height="56" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="42" cy="40" rx="26" ry="14" fill="${tint}"/>
-    <rect x="22" y="46" width="5" height="12" fill="${tint}"/>
-    <rect x="34" y="49" width="5" height="9" fill="${tint}"/>
-    <rect x="52" y="49" width="5" height="9" fill="${tint}"/>
-    <rect x="62" y="46" width="5" height="12" fill="${tint}"/>
-    <path d="M56 28 L68 40 L58 40 Z" fill="${tint}"/>
-    <circle cx="40" cy="22" r="10" fill="${tint}"/>
-    <path d="M32 18 L24 12 L30 24 Z" fill="${tint}"/>
-    <path d="M48 18 L56 12 L50 24 Z" fill="${tint}"/>
-    ${antlerPath}
-    <circle cx="36" cy="21" r="1.4" fill="#fff"/>
-    <circle cx="44" cy="21" r="1.4" fill="#fff"/>
-  </svg>`;
-}
-const ICONS = {
-  wtdBuck:   () => deerSvg({earSize:"small", antlers:"full",   tint:"#7a4a2b"}),
-  wtdEither: () => deerSvg({earSize:"small", antlers:"either", tint:"#7a4a2b"}),
-  wtdDoe:    () => deerSvg({earSize:"small", antlers:"none",   tint:"#7a4a2b"}),
-  mdBuck:    () => deerSvg({earSize:"big",   antlers:"full",   tint:"#5f6b4f"}),
-  mdEither:  () => deerSvg({earSize:"big",   antlers:"either", tint:"#5f6b4f"}),
-  mdDoe:     () => deerSvg({earSize:"big",   antlers:"none",   tint:"#5f6b4f"}),
-  elkBull:   () => elkSvg({antlers:"full"}),
-  elkEither: () => elkSvg({antlers:"either"}),
-  elkCow:    () => elkSvg({antlers:"none"})
-};
 
 /* ---------------------------------------------------------------
    STATE / STORAGE
@@ -1088,6 +1089,17 @@ function dismissDetail(){
   detailPanel.innerHTML = "";
 }
 
+/* Tapping a Field Card badge jumps the main pickers to that tag and
+   scrolls to its full detail - badge size has no room for season
+   text or restrictions, so this is how you get the rest of it. */
+function jumpToTag(distId, tagId){
+  distSelect.value = distId;
+  onDistrictChange();
+  tagSelect.value = tagId;
+  onTagChange();
+  detailPanel.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
 function findTag(distId, tagId){
   return DISTRICTS[distId].tags.find(t => t.id === tagId);
 }
@@ -1164,7 +1176,7 @@ function renderDetail(distId, tagId){
   detailPanel.innerHTML = `
     <div class="ht-detail">
       <div class="ht-detail-top">
-        <div class="ht-icon-box state-${state}">${ICONS[tag.icon]()}</div>
+        <div class="ht-icon-box state-${state}">${tagBadgeSvg(tag, {locked: state === "need" || state === "need-bow" || state === "ineligible"})}</div>
         <div class="ht-headline">
           <h3>${tag.label}</h3>
           <div class="code">${tag.code}</div>
@@ -1301,10 +1313,8 @@ function renderFieldCard(){
         validText = "Closed for the year";
       }
       html += `
-        <div class="ht-fc-card state-${state}">
-          <div class="icon-wrap">${ICONS[t.icon]()}</div>
-          <div class="lbl">${t.label}</div>
-          <div class="code">${t.code === "General License" ? "" : t.code}</div>
+        <div class="ht-fc-card state-${state}" onclick="jumpToTag('${distId}','${t.id}')">
+          <div class="icon-wrap">${tagBadgeSvg(t)}</div>
           <div class="valid" style="color:${state==='good' ? '#2e7d32' : '#6b6b62'};">${validText}</div>
         </div>`;
     });

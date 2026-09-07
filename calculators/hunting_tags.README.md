@@ -21,6 +21,12 @@ A personal field-reference tool for Bitterroot Valley deer & elk hunting distric
 - **Field Card**: a rollup of every tag/license the hunter actually holds and is eligible for, across whichever districts they choose to show (via the "Districts shown" filter), sorted open-now-first. Has a Print button.
 - **Disclaimer gate**: blocks the whole page until the hunter checks an acknowledgment that this is a personal reference, not the regulations, and they're responsible for double-checking everything. Remembered per browser/device (`localStorage`), so it only shows once.
 
+## Badge icons
+
+Each tag/opportunity renders as a tattoo-flash-style seal (`tagBadgeSvg()` in the script): a bold ring, a field color pulled from the real animal (cream/white whitetail, gray mule deer, brown elk), curved border text carrying the actual tag language (e.g. "Antlered Buck" / "White-tail"), and a center mark — **Y** for antlered/buck/bull-only tags (forks like an antler), **X** for antlerless-only, **X/Y** for either-sex. A locked tag (not held, not eligible, or missing the Bow and Arrow License for an archery-only window) renders desaturated via a CSS `grayscale` filter on the `<svg>` itself.
+
+The top/bottom text is derived from `tag.label` and `tag.icon` at render time (see `badgeTopText`/`badgeSpeciesStyle`/`badgeIconKind`), not hand-authored per tag — so a label change in the data updates its badge automatically. Font is Rye (already loaded site-wide via `style.css`'s `@font-face`, and precached by the service worker for offline use).
+
 ## Data source & scope
 
 Hand-transcribed from the **2026 Montana Deer, Elk & Antelope regulations** (FWP), covering only hunting districts **240, 250, 260, 261, 262, and 270** (Bitterroot Valley). Definitions (Antlered Buck, Antlerless, Brow-tined, Either-sex, etc.) are from page 9 of that same document.
