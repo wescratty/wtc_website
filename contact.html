@@ -66,7 +66,7 @@
       <span style="color:var(--text-muted);">Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley)</span>
     </div>
     <p style="max-width:640px;color:var(--text-muted);margin-bottom:30px;">A quick heads-up: we don't offer free quotes on every job. For a straightforward request we're usually happy to give you a number at no cost — but for a custom build, remodel, or anything with real design work involved, let's talk first so we can give you an honest, accurate estimate instead of a guess.</p>
-    <form class="inquiry" action="mailto:REPLACE_WITH_YOUR_EMAIL" method="post" enctype="text/plain">
+    <form class="inquiry" id="inquiryForm">
       <label for="name">Name</label>
       <input type="text" id="name" name="name" required>
       <label for="phone">Phone</label>
@@ -75,6 +75,34 @@
       <textarea id="project" name="project" rows="5" required></textarea>
       <button type="submit" class="btn">Send Inquiry</button>
     </form>
+    <script>
+      // A plain mailto: navigation (not a native form POST) - browsers
+      // only show the "this form is not secure" warning for an actual
+      // form submission to a non-https action, mailto: included. A
+      // link-style navigation built here in JS sidesteps that check
+      // entirely while still opening the visitor's email client with
+      // everything filled in.
+      const CONTACT_EMAIL = "wtcmontana@gmail.com";
+      const inquiryForm = document.getElementById("inquiryForm");
+      const projectField = document.getElementById("project");
+
+      // Support a ready-made message from a link elsewhere on the site
+      // (e.g. the hunting tag tracker's "request a district" link),
+      // so the visitor doesn't have to retype context that's already
+      // known: contact.html?msg=...
+      const prefill = new URLSearchParams(location.search).get("msg");
+      if(prefill) projectField.value = prefill;
+
+      inquiryForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("name").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+        const project = projectField.value.trim();
+        const subject = `Website inquiry from ${name}`;
+        const body = `Name: ${name}\nPhone: ${phone}\n\n${project}`;
+        window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      });
+    </script>
     <p style="max-width:560px;margin:16px auto 0;color:var(--text-muted);font-size:0.85rem;text-align:center;">
       Prefer to skip the form? Call or text (406) 360-5446 directly.
     </p>
