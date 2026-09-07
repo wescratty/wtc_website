@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MT Hunting Tag Tracker | WTC Montana Construction</title>
-<meta name="description" content="Look up which deer and elk tags are open right now in Bitterroot Valley hunting districts 240, 250, 260, 261, 262 and 270.">
+<meta name="description" content="Look up which deer and elk tags are open right now in southwest Montana hunting districts 211, 240, 250, 260, 261, 262, 270, 302, 319, 321, 329, 331 and 340.">
 <link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/hunting_tags.html">
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/logo/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/favicon-192.png">
@@ -107,9 +107,12 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  border-radius:50%;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#fff;
+  overflow:hidden;
 }
-.ht-icon-box svg{ width:100%; height:100%; }
+.ht-icon-box img{ width:100%; height:100%; object-fit:contain; display:block; }
 .ht-icon-box.state-good{ box-shadow:0 0 0 3px #2e7d32; }
 .ht-icon-box.state-off{ box-shadow:0 0 0 3px #a8a89e; }
 .ht-headline h3{ margin:0 0 2px; color:var(--navy); font-size:1.3rem; }
@@ -183,15 +186,71 @@
 .ht-fc-card .icon-wrap{
   width:100%;
   aspect-ratio:1;
-  border-radius:50%;
-  margin:0 auto;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#fff;
+  overflow:hidden;
+  transition:box-shadow 0.15s, border-color 0.15s;
 }
-.ht-fc-card .icon-wrap svg{ width:100%; height:100%; display:block; }
-.ht-fc-card.state-good .icon-wrap{ box-shadow:0 0 0 3px #2e7d32; }
-.ht-fc-card.state-off .icon-wrap, .ht-fc-card.state-need-bow .icon-wrap{ box-shadow:0 0 0 3px #a8a89e; }
-.ht-fc-card .valid{ font-size:0.68rem; font-weight:700; margin-top:5px; line-height:1.2; }
+.ht-fc-card .icon-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
+.ht-fc-card:hover .icon-wrap, .ht-fc-card:focus .icon-wrap{
+  box-shadow:0 0 0 2px var(--gold);
+  border-color:var(--gold);
+}
+.ht-fc-print-label{
+  display:none;
+  font-size:0.68rem;
+  color:var(--text-muted);
+  margin-top:4px;
+  line-height:1.2;
+}
 
 .ht-hidden{ display:none !important; }
+
+.ht-map-btn{
+  display:block;
+  margin:-6px 0 22px;
+  padding:9px 16px;
+  border-radius:4px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--navy);
+  font-weight:700;
+  cursor:pointer;
+}
+.ht-map-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(26,39,64,0.88);
+  z-index:1500;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:20px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.ht-map-modal-inner{
+  background:#fff;
+  border-radius:10px;
+  max-width:720px;
+  width:100%;
+  padding:16px;
+  margin:20px 0 40px;
+}
+.ht-map-modal-inner img{ width:100%; height:auto; border-radius:6px; display:block; }
+.ht-map-close{
+  display:block;
+  margin:0 0 10px auto;
+  padding:8px 14px;
+  border-radius:4px;
+  border:1px solid var(--border);
+  background:var(--cream-dark);
+  color:var(--navy);
+  font-weight:700;
+  cursor:pointer;
+}
+.ht-map-caption{ font-size:0.8rem; color:var(--text-muted); margin:10px 2px 2px; }
 
 .ht-setup-toggle{
   display:flex;
@@ -359,13 +418,14 @@
 
 @media print{
   .site-header, .page-intro, .ht-setup-toggle, #disclaimerSection, #profileSection,
-  .ht-select-row, #districtNotes, #detailPanel, .ht-fieldcard-btn,
+  .ht-select-row, .ht-map-btn, .ht-map-modal, #districtNotes, #detailPanel, .ht-fieldcard-btn,
   .ht-distfilter, .ht-print-btn, .site-footer, .ht-gate,
   section > .container > p{
     display:none !important;
   }
   #fieldCardView{ display:block !important; }
-  .ht-fc-card.state-off, .ht-fc-card.state-need-bow{ break-inside:avoid; }
+  .ht-fc-card{ break-inside:avoid; }
+  .ht-fc-print-label{ display:block !important; }
   body{ background:#fff; }
 }
 </style>
@@ -376,7 +436,8 @@
     <h2>Before you start</h2>
     <div class="tools-disclaimer">
       <strong>Reference only, not the regulations.</strong> This is a personal memory aid built from the
-      2026 Montana Deer, Elk &amp; Antelope regulations for HDs 240, 250, 260, 261, 262 &amp; 270. Season
+      2026 Montana Deer, Elk &amp; Antelope regulations for HDs 211, 240, 250, 260, 261, 262, 270, 302, 319,
+      321, 329, 331 &amp; 340. Season
       windows and rules are simplified for quick reference. Always confirm exact dates, quotas, and
       restrictions in the current official regulations or at
       <a href="https://fwp.mt.gov/hunt/regulations" target="_blank" rel="noopener">fwp.mt.gov</a> before you hunt.
@@ -394,6 +455,13 @@
       double-check everything here against the current official Montana FWP regulations.</span>
     </label>
     <button id="gateEnterBtn" disabled onclick="acceptDisclaimer()">Enter Tracker</button>
+  </div>
+</div>
+<div class="ht-map-modal ht-hidden" id="mapModal" onclick="if(event.target===this) toggleMapModal()">
+  <div class="ht-map-modal-inner">
+    <button type="button" class="ht-map-close" onclick="toggleMapModal()">&#10005; Close</button>
+    <img src="../assets/hunting/district-map-region2-3.png" alt="Map of southwest Montana hunting districts, Region 2 and 3">
+    <p class="ht-map-caption">Reference only, for finding a district on the ground &mdash; boundaries can change. Always confirm against the current official regulations.</p>
   </div>
 </div>
 <header class="site-header">
@@ -416,7 +484,7 @@
 <div class="page-intro">
   <div class="container">
     <h1>🏔️ MT Hunting Tag Tracker</h1>
-    <p>A field lookup for Bitterroot Valley deer &amp; elk districts &mdash; what's open today, and which tags you're carrying.</p>
+    <p>A field lookup for southwest Montana deer &amp; elk districts &mdash; what's open today, and which tags you're carrying.</p>
   </div>
 </div>
 <section>
@@ -438,7 +506,8 @@
 
       <div class="tools-disclaimer">
         <strong>Reference only, not the regulations.</strong> This is a personal memory aid built from the
-        2026 Montana Deer, Elk &amp; Antelope regulations for HDs 240, 250, 260, 261, 262 &amp; 270. Season
+        2026 Montana Deer, Elk &amp; Antelope regulations for HDs 211, 240, 250, 260, 261, 262, 270, 302, 319,
+      321, 329, 331 &amp; 340. Season
         windows and rules are simplified for quick reference. Always confirm exact dates, quotas, and
         restrictions in the current official regulations or at
         <a href="https://fwp.mt.gov/hunt/regulations" target="_blank" rel="noopener">fwp.mt.gov</a> before you hunt.
@@ -524,6 +593,8 @@
         </div>
       </div>
 
+      <button type="button" class="ht-map-btn" onclick="toggleMapModal()">&#128506;&#65039; District Map</button>
+
       <div id="districtNotes"></div>
       <div id="detailPanel"></div>
 
@@ -605,10 +676,16 @@ const P_LATE_FEB          = {label:"Late",                        start:"2026-11
 const P_LATE_JAN8         = {label:"Late",                        start:"2026-11-30", end:"2027-01-08"};
 const P_GEN_SHORT_240ELK  = {label:"General",                     start:"2026-10-24", end:"2026-11-01"};
 const P_GEN_262BUCK       = {label:"General",                     start:"2026-09-05", end:"2026-10-18"};
+const P_GEN_211A          = {label:"General",                     start:"2026-10-24", end:"2026-10-30"};
+const P_GEN_OCT31         = {label:"General",                     start:"2026-10-31", end:"2026-11-29"};
+const P_EARLY_LONG        = {label:"Early",                       start:"2026-08-15", end:"2026-10-23"};
+const P_GEN_SPLIT_A       = {label:"General",                     start:"2026-10-24", end:"2026-11-08"};
+const P_GEN_SPLIT_B       = {label:"General",                     start:"2026-11-09", end:"2026-11-29"};
 
 /* ---------------------------------------------------------------
    DISTRICT / TAG DATA - hand-entered from the 2026 regs, HDs
-   240, 250, 260, 261, 262, 270. "issue" starting with "Included"
+   211, 240, 250, 260, 261, 262, 270, 302, 319, 321, 329, 331, 340.
+   "issue" starting with "Included"
    means coverage comes from the Hunter Profile license checkboxes
    instead of a per-tag confirmation.
 ----------------------------------------------------------------*/
@@ -697,77 +774,106 @@ const DISTRICTS = {
     {id:"270-elkb-270-01", code:"270-01", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN], restriction:"", issue:"Drawing – apply by Jun 1 (quota 300)"},
     {id:"270-elkb-270-02", code:"270-02", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN], restriction:"", issue:"Drawing – apply by Jun 1 (quota 500)"},
     {id:"270-elkp-270-45", code:"270-45", species:"elk", icon:"elkBull", label:"Brow-tined Bull Elk", phases:[P_ARCH,P_GEN], restriction:"Permits do not manage for older age-class bulls — hunter numbers run high in this HD.", issue:"Drawing – apply by Apr 1 (unlimited quota)"}
+  ]},
+  "211": { name:"Upper Rock Creek–Georgetown Lake", notes:[], tags:[
+    {id:"211-gen-wtd-either-a", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer", phases:[P_ARCH,P_GEN_211A], restriction:"", issue:"Included with General Deer License"},
+    {id:"211-gen-md-buck", code:"General License", species:"deer", icon:"mdBuck", label:"Antlered Buck Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"211-gen-wtd-buck", code:"General License", species:"deer", icon:"wtdBuck", label:"Antlered Buck Whitetail Deer", phases:[P_GEN_OCT31,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"211-gen-wtd-either-youth", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer (Youth)", phases:[P_GEN_OCT31,P_MUZZ], restriction:"Youth ages 10–15 only.", issue:"Included with General Deer License", eligibility:{youthMin:10,youthMax:15}},
+    {id:"211-deerb-211-00", code:"211-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Drawing – apply by Jun 1 (quota 25)"},
+    {id:"211-gen-elk-either-arch", code:"General License", species:"elk", icon:"elkEither", label:"Brow-tined Bull or Antlerless Elk", phases:[P_ARCH], restriction:"", issue:"Included with General Elk License"},
+    {id:"211-gen-elk-bull", code:"General License", species:"elk", icon:"elkBull", label:"Brow-tined Bull Elk", phases:[P_GEN,P_MUZZ], restriction:"", issue:"Included with General Elk License"},
+    {id:"211-gen-elk-either-youth", code:"General License", species:"elk", icon:"elkEither", label:"Bull or Antlerless Elk (Youth/PTHFV/Senior)", phases:[P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders. Resident hunters 75+ may take an antlerless elk on private land.", issue:"Included with General Elk License", eligibility:{youthMin:12,youthMax:15,pthfv:true,seniorMin:75}},
+    {id:"211-elkb-210-03", code:"210-03", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_GEN,P_MUZZ], restriction:"Valid on private lands in HDs 211, 212, 216 & the south portion of HD 210 (Rattling Gulch–Henderson Creek), and on DNRC lands outside the National Forest boundary. Quota varies — confirm current details.", issue:"Drawing – apply by Jun 1"},
+    {id:"211-elkb-211-00", code:"211-00", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_EARLY_LONG,P_LATE_JAN8], restriction:"Season windows for this tag were ambiguous in the source table — confirm current details.", issue:"Drawing – apply by Jun 1 (quota 150)"}
+  ]},
+  "302": { name:"Tendoys", notes:[], tags:[
+    {id:"302-gen-wtd-either", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"302-gen-md-either", code:"General License", species:"deer", icon:"mdEither", label:"Either-sex Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"302-deerb-003-00", code:"003-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"One per hunter. Valid in all Region 3 HDs.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"302-deerb-399-00", code:"399-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Per-hunter quota set annually. Also valid in HDs 303, 320, 322, 323, 324, 329, 331, 340 & 360.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"302-gen-elk-either-arch", code:"General License", species:"elk", icon:"elkEither", label:"Brow-tined Bull or Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Elk License"},
+    {id:"302-gen-elk-either-youth", code:"General License", species:"elk", icon:"elkEither", label:"Either-sex Elk (Youth/PTHFV/Senior)", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders. Resident hunters 75+ may take an antlerless elk on private land.", issue:"Included with General Elk License", eligibility:{youthMin:12,youthMax:15,pthfv:true,seniorMin:75}},
+    {id:"302-elkb-399-00", code:"399-00", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Multi-district license.", issue:"Drawing – apply by Jun 1 (quota 500)"}
+  ]},
+  "319": { name:"Fleecer–High Rye", notes:[], tags:[
+    {id:"319-gen-wtd-either", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"319-deerb-003-00", code:"003-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"One per hunter. Valid in all Region 3 HDs.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"319-deerb-319-01", code:"319-01", species:"deer", icon:"mdDoe", label:"Antlerless Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Drawing – apply by Jun 1 (quota 50)"},
+    {id:"319-deerp-319-50", code:"319-50", species:"deer", icon:"mdBuck", label:"Antlered Buck Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Must be used with a General Deer License — holders can't take a buck mule deer in any other HD.", issue:"Drawing – apply by Apr 1 (quota 125)"},
+    {id:"319-gen-elk-either-arch", code:"General License", species:"elk", icon:"elkEither", label:"Brow-tined Bull or Antlerless Elk", phases:[P_ARCH,P_GEN_SPLIT_A], restriction:"", issue:"Included with General Elk License"},
+    {id:"319-gen-elk-either-youth", code:"General License", species:"elk", icon:"elkEither", label:"Either-sex Elk (Youth/PTHFV/Senior)", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders. Resident hunters 75+ may take an antlerless elk on private land.", issue:"Included with General Elk License", eligibility:{youthMin:12,youthMax:15,pthfv:true,seniorMin:75}},
+    {id:"319-gen-elk-bull", code:"General License", species:"elk", icon:"elkBull", label:"Brow-tined Bull Elk", phases:[P_GEN_SPLIT_B,P_MUZZ], restriction:"", issue:"Included with General Elk License"},
+    {id:"319-elkb-319-00", code:"319-00", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Per-hunter quota set annually. Multi-district license.", issue:"Drawing – apply by Jun 1 (quota 500)"}
+  ]},
+  "321": { name:"West Big Hole–Mussigbrod", notes:["A few season dates for this district's general elk opportunities were unclear in the source table — flagged below."], tags:[
+    {id:"321-gen-wtd-either-youth", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer (Youth/PTHFV)", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders.", issue:"Included with General Deer License", eligibility:{youthMin:12,youthMax:15,pthfv:true}},
+    {id:"321-gen-md-either", code:"General License", species:"deer", icon:"mdEither", label:"Either-sex Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"321-deerb-003-00", code:"003-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Valid in all Region 3 HDs.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"321-gen-elk-either-arch", code:"General License", species:"elk", icon:"elkEither", label:"Brow-tined Bull or Antlerless Elk", phases:[P_ARCH], restriction:"Season dates for this row were unclear in the source table — confirm current details.", issue:"Included with General Elk License"},
+    {id:"321-gen-elk-either-youth", code:"General License", species:"elk", icon:"elkEither", label:"Either-sex Elk (Youth/PTHFV)", phases:[P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders. Season dates for this row were unclear in the source table — confirm current details.", issue:"Included with General Elk License", eligibility:{youthMin:12,youthMax:15,pthfv:true}},
+    {id:"321-elkb-321-00", code:"321-00", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Only valid on private land.", issue:"Drawing – apply by Jun 1 (quota 200)"}
+  ]},
+  "329": { name:"Big Hole Divide–Horse Prairie", notes:[], tags:[
+    {id:"329-gen-wtd-either", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"329-gen-md-either", code:"General License", species:"deer", icon:"mdEither", label:"Either-sex Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"329-deerb-003-00", code:"003-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"One per hunter. Valid in all Region 3 HDs.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"329-deerb-399-00", code:"399-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Per-hunter quota set annually. Also valid in HDs 302, 303, 320, 322, 323, 324, 331, 340 & 360.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"329-gen-elk-either-arch", code:"General License", species:"elk", icon:"elkEither", label:"Brow-tined Bull or Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Elk License"},
+    {id:"329-gen-elk-either-youth", code:"General License", species:"elk", icon:"elkEither", label:"Either-sex Elk (Youth/PTHFV)", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders.", issue:"Included with General Elk License", eligibility:{youthMin:12,youthMax:15,pthfv:true}},
+    {id:"329-elkb-399-00", code:"399-00", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Multi-district license.", issue:"Drawing – apply by Jun 1 (quota 500)"}
+  ]},
+  "331": { name:"Pioneer Mountains–East Big Hole", notes:[
+      "Poindexter Slough FAS south of Dillon is restricted to archery equipment, shotgun, traditional handgun, muzzleloader, or crossbow only — check the Restricted Area Legal Description (regs p.28–30)."
+    ], tags:[
+    {id:"331-gen-md-either", code:"General License", species:"deer", icon:"mdEither", label:"Either-sex Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"331-gen-wtd-either", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"331-deerb-003-00", code:"003-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"One per hunter. Valid in all Region 3 HDs.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"331-deerb-331-01", code:"331-01", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Drawing – apply by Jun 1 (quota 25)"},
+    {id:"331-deerb-399-00", code:"399-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Per-hunter quota set annually. Also valid in HDs 302, 303, 320, 322, 323, 324, 329, 340 & 360.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"331-gen-elk-either-arch", code:"General License", species:"elk", icon:"elkEither", label:"Brow-tined Bull or Antlerless Elk", phases:[P_ARCH], restriction:"", issue:"Included with General Elk License"},
+    {id:"331-gen-elk-either-youth", code:"General License", species:"elk", icon:"elkEither", label:"Bull or Antlerless Elk (Youth/PTHFV/Senior)", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders. Resident hunters 75+ may take an antlerless elk on private land.", issue:"Included with General Elk License", eligibility:{youthMin:12,youthMax:15,pthfv:true,seniorMin:75}},
+    {id:"331-gen-elk-cow", code:"General License", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_GEN,P_MUZZ], restriction:"Only valid on private land.", issue:"Included with General Elk License"},
+    {id:"331-gen-elk-bull", code:"General License", species:"elk", icon:"elkBull", label:"Brow-tined Bull Elk", phases:[P_GEN,P_MUZZ], restriction:"", issue:"Included with General Elk License"},
+    {id:"331-elkb-331-00", code:"331-00", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Drawing – apply by Jun 1 (quota 500)"}
+  ]},
+  "340": { name:"Highlands", notes:[], tags:[
+    {id:"340-gen-md-either-arch", code:"General License", species:"deer", icon:"mdEither", label:"Either-sex Mule Deer", phases:[P_ARCH], restriction:"", issue:"Included with General Deer License"},
+    {id:"340-gen-md-buck", code:"General License", species:"deer", icon:"mdBuck", label:"Antlered Buck Mule Deer", phases:[P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"340-gen-wtd-either", code:"General License", species:"deer", icon:"wtdEither", label:"Either-sex Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Included with General Deer License"},
+    {id:"340-deerb-003-00", code:"003-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"One per hunter. Valid in all Region 3 HDs.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"340-deerb-340-00", code:"340-00", species:"deer", icon:"mdDoe", label:"Antlerless Mule Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Drawing – apply by Jun 1 (quota 100)"},
+    {id:"340-deerb-399-00", code:"399-00", species:"deer", icon:"wtdDoe", label:"Antlerless Whitetail Deer", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Per-hunter quota set annually. Only valid on private land. Also valid in HD 339.", issue:"Over-the-counter – buy by Jun 15"},
+    {id:"340-gen-elk-either-arch", code:"General License", species:"elk", icon:"elkEither", label:"Brow-tined Bull or Antlerless Elk", phases:[P_ARCH,P_GEN_SPLIT_A], restriction:"", issue:"Included with General Elk License"},
+    {id:"340-gen-elk-either-youth", code:"General License", species:"elk", icon:"elkEither", label:"Either-sex Elk (Youth/PTHFV/Senior)", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"Youth ages 12–15 or PTHFV holders. Resident hunters 75+ may take an antlerless elk on private land.", issue:"Included with General Elk License", eligibility:{youthMin:12,youthMax:15,pthfv:true,seniorMin:75}},
+    {id:"340-gen-elk-bull", code:"General License", species:"elk", icon:"elkBull", label:"Brow-tined Bull Elk", phases:[P_GEN_SPLIT_B,P_MUZZ], restriction:"", issue:"Included with General Elk License"},
+    {id:"340-elkb-340-00", code:"340-00", species:"elk", icon:"elkCow", label:"Antlerless Elk", phases:[P_ARCH,P_GEN,P_MUZZ], restriction:"", issue:"Drawing – apply by Jun 1 (quota 400)"}
   ]}
 };
-const DISTRICT_ORDER = ["240","250","260","261","262","270"];
+const DISTRICT_ORDER = ["240","250","260","261","262","270","211","302","319","321","329","331","340"];
 
 /* ---------------------------------------------------------------
-   BADGES - tattoo-flash-style seals. A bold ring, a field color
-   pulled from the real animal (cream/white whitetail, gray mule
-   deer, brown elk), curved border text carrying the actual tag
-   language, and a center mark: Y forks like an antler (antlered/
-   buck/bull only), X reads as "none" (antlerless only), X/Y for
-   either-sex. Locked (don't hold it / don't qualify) tags render
-   desaturated, same "grayed out until you have it" idea as v1.
+   ICONS - real FWP identification-guide illustrations (white
+   background, trimmed to a consistent square). No color-coding, no
+   text baked in - the image itself is the "at a glance" signal
+   (antlers = buck-only, none = antlerless-only, two animals =
+   either-sex), and clicking one opens the full detail.
 ----------------------------------------------------------------*/
-function badgeIconKind(tag){
-  if(/Buck$|Bull$/.test(tag.icon)) return "full";
-  if(/Either$/.test(tag.icon)) return "either";
-  return "none"; // Doe / Cow
-}
-function badgeSpeciesStyle(tag){
-  if(tag.icon.startsWith("wtd")) return {bg:"#f2ede0", ink:"#241a12", bottom:"White-tail"};
-  if(tag.icon.startsWith("md"))  return {bg:"#6e6a5f", ink:"#f2ede0", bottom:"Mule Deer"};
-  return {bg:"#5c4326", ink:"#f2ede0", bottom:"Elk"}; // elk*
-}
-function badgeTopText(tag){
-  const label = tag.label.replace(/\s*\(Youth.*?\)\s*$/, "").trim();
-  let top = label
-    .replace(/\s*Whitetail Deer$/, "")
-    .replace(/\s*Mule Deer$/, "")
-    .replace(/\s*Elk$/, "")
-    .trim();
-  if(top === "Brow-tined Bull or Antlerless") top = "Brow-tined or Antlerless";
-  return top;
-}
-function badgeFontSize(len){
-  if(len <= 10) return 19;
-  if(len <= 13) return 17;
-  if(len <= 16) return 15;
-  if(len <= 20) return 13;
-  return 11.5;
-}
-let badgeIdCounter = 0;
-function tagBadgeSvg(tag, opts){
+const ICON_IMG = {
+  wtdBuck:   "../assets/hunting/icons/wtdBuck.png",
+  wtdEither: "../assets/hunting/icons/wtdEither.png",
+  wtdDoe:    "../assets/hunting/icons/wtdDoe.png",
+  mdBuck:    "../assets/hunting/icons/mdBuck.png",
+  mdEither:  "../assets/hunting/icons/mdEither.png",
+  mdDoe:     "../assets/hunting/icons/mdDoe.png",
+  elkBull:   "../assets/hunting/icons/elkBull.png",
+  elkEither: "../assets/hunting/icons/elkEither.png",
+  elkCow:    "../assets/hunting/icons/elkCow.png"
+};
+function tagIconImg(tag, opts){
   const locked = !!(opts && opts.locked);
-  const kind = badgeIconKind(tag);
-  const {bg, ink, bottom} = badgeSpeciesStyle(tag);
-  const top = badgeTopText(tag);
-  const topSize = badgeFontSize(top.length);
-  const botSize = badgeFontSize(bottom.length);
-  const glyphText = kind === "none" ? "X" : kind === "full" ? "Y" : "X/Y";
-  const glyphSize = kind === "either" ? 34 : 46;
-  const id = "badge" + (badgeIdCounter++);
   const style = locked ? ` style="filter:grayscale(1) opacity(0.45)"` : "";
-  return `
-  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"${style}>
-    <defs>
-      <path id="arcTop${id}" d="M 22 112 A 78 78 0 0 1 178 112" fill="none"/>
-      <path id="arcBot${id}" d="M 34 144 A 74 74 0 0 0 166 144" fill="none"/>
-    </defs>
-    <circle cx="100" cy="100" r="94" fill="${ink}"/>
-    <circle cx="100" cy="100" r="84" fill="${bg}"/>
-    <circle cx="100" cy="100" r="86" fill="none" stroke="${ink}" stroke-opacity="0.35" stroke-width="1.5"/>
-    <text x="100" y="124" font-family="Rye" font-size="${glyphSize}" text-anchor="middle" fill="${ink}">${glyphText}</text>
-    <circle cx="26" cy="122" r="2.6" fill="${ink}"/>
-    <circle cx="174" cy="122" r="2.6" fill="${ink}"/>
-    <text font-family="Rye" font-size="${topSize}" letter-spacing="1.5" fill="${ink}">
-      <textPath href="#arcTop${id}" startOffset="50%" text-anchor="middle">${top}</textPath>
-    </text>
-    <text font-family="Rye" font-size="${botSize}" letter-spacing="1.5" fill="${ink}">
-      <textPath href="#arcBot${id}" startOffset="50%" text-anchor="middle">${bottom}</textPath>
-    </text>
-  </svg>`;
+  return `<img src="${ICON_IMG[tag.icon]}" alt="${tag.label}"${style}>`;
 }
 
 /* ---------------------------------------------------------------
@@ -808,6 +914,10 @@ if("serviceWorker" in navigator){
 function acceptDisclaimer(){
   try{ localStorage.setItem(DISCLAIMER_KEY, "1"); }catch(e){}
   document.getElementById("disclaimerGate").classList.add("ht-hidden");
+}
+
+function toggleMapModal(){
+  document.getElementById("mapModal").classList.toggle("ht-hidden");
 }
 
 let tagState = loadJSON(TAG_KEY, {});
@@ -1176,7 +1286,7 @@ function renderDetail(distId, tagId){
   detailPanel.innerHTML = `
     <div class="ht-detail">
       <div class="ht-detail-top">
-        <div class="ht-icon-box state-${state}">${tagBadgeSvg(tag, {locked: state === "need" || state === "need-bow" || state === "ineligible"})}</div>
+        <div class="ht-icon-box state-${state}">${tagIconImg(tag, {locked: state === "need" || state === "need-bow" || state === "ineligible"})}</div>
         <div class="ht-headline">
           <h3>${tag.label}</h3>
           <div class="code">${tag.code}</div>
@@ -1286,36 +1396,22 @@ function renderFieldCard(){
   let html = "";
   let any = false;
 
+  // Clean, glanceable list: only tags you can actually hunt RIGHT NOW
+  // (held, eligible, season open, bow license satisfied) get a button -
+  // everything else just isn't shown. The full option list for a
+  // district is still there in the Tag / Opportunity dropdown above.
   DISTRICT_ORDER.filter(isDistrictShown).forEach(distId => {
     const d = DISTRICTS[distId];
-    const held = d.tags.filter(t => tagEligible(t) && tagPossessed(distId, t));
-    if(!held.length) return;
+    const huntableNow = d.tags.filter(t => overallState(distId, t) === "good");
+    if(!huntableNow.length) return;
     any = true;
 
-    // Open-now ("good") tags first, so the field card reads huntable-first.
-    held.sort((a, b) => {
-      const rank = s => s === "good" ? 0 : 1;
-      return rank(overallState(distId, a)) - rank(overallState(distId, b));
-    });
-
     html += `<div class="ht-fc-district"><h4>HD ${distId} — ${d.name}</h4><div class="ht-fc-grid">`;
-    held.forEach(t => {
-      const state = overallState(distId, t);
-      const ps = phaseStatus(t);
-      let validText;
-      if(state === "need-bow"){
-        validText = "Need Bow &amp; Arrow License";
-      } else if(ps.status === "open"){
-        validText = `Open now: ${phaseRangeStr(ps.phase)}`;
-      } else if(ps.status === "upcoming"){
-        validText = `Opens ${fmtShort(ps.phase.start)}`;
-      } else {
-        validText = "Closed for the year";
-      }
+    huntableNow.forEach(t => {
       html += `
-        <div class="ht-fc-card state-${state}" onclick="jumpToTag('${distId}','${t.id}')">
-          <div class="icon-wrap">${tagBadgeSvg(t)}</div>
-          <div class="valid" style="color:${state==='good' ? '#2e7d32' : '#6b6b62'};">${validText}</div>
+        <div class="ht-fc-card" onclick="jumpToTag('${distId}','${t.id}')">
+          <div class="icon-wrap">${tagIconImg(t)}</div>
+          <div class="ht-fc-print-label">${t.code === "General License" ? "" : t.code + " — "}${t.label}</div>
         </div>`;
     });
     html += `</div></div>`;
@@ -1323,7 +1419,7 @@ function renderFieldCard(){
 
   view.innerHTML = any
     ? html
-    : `<p style="color:var(--text-muted);">No tags yet in the districts shown — check your general license boxes above, confirm a Deer B / Elk B tag or permit, or widen the district filter.</p>`;
+    : `<p style="color:var(--text-muted);">Nothing you hold is in season right now in the districts shown. Check your general license boxes above, confirm a Deer B / Elk B tag or permit, or widen the district filter — or browse everything for a district in the Tag / Opportunity dropdown.</p>`;
 }
 </script>
 </body>

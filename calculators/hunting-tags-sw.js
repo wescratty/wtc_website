@@ -12,7 +12,7 @@
   returning visitors with a signal pick up the update instead of
   being stuck on a stale cached copy.
 */
-const CACHE_NAME = "hunting-tags-v1";
+const CACHE_NAME = "hunting-tags-v3";
 
 const PRECACHE_PATHS = [
   "/calculators/hunting_tags.html",
@@ -22,7 +22,17 @@ const PRECACHE_PATHS = [
   "/assets/logo/wtc-montana-logo-white.png",
   "/assets/logo/favicon-32.png",
   "/assets/logo/favicon-192.png",
-  "/assets/logo/favicon-512.png"
+  "/assets/logo/favicon-512.png",
+  "/assets/hunting/district-map-region2-3.png",
+  "/assets/hunting/icons/wtdBuck.png",
+  "/assets/hunting/icons/wtdEither.png",
+  "/assets/hunting/icons/wtdDoe.png",
+  "/assets/hunting/icons/mdBuck.png",
+  "/assets/hunting/icons/mdEither.png",
+  "/assets/hunting/icons/mdDoe.png",
+  "/assets/hunting/icons/elkBull.png",
+  "/assets/hunting/icons/elkEither.png",
+  "/assets/hunting/icons/elkCow.png"
 ];
 
 self.addEventListener("install", (event) => {
