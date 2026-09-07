@@ -212,9 +212,23 @@
 }
 .ht-fc-card .icon-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
 .ht-fc-card.is-filled .icon-wrap img{ opacity:0.35; filter:grayscale(60%); }
+.ht-fc-label{
+  position:absolute;
+  top:0; left:0; right:0;
+  z-index:2;
+  font-size:0.62rem;
+  font-weight:700;
+  color:var(--navy);
+  background:rgba(210,210,202,0.92);
+  border-bottom:1px solid var(--border);
+  padding:3px 4px;
+  line-height:1.15;
+  text-align:center;
+}
 .ht-filled-mark{
   position:absolute;
   inset:0;
+  z-index:1;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -224,6 +238,11 @@
   text-shadow:0 0 6px #fff, 0 0 6px #fff, 0 0 3px #fff;
   pointer-events:none;
 }
+/* The label banner now sits across the top of the card, where the
+   caveat badge used to live - bottom-right instead, so the two never
+   overlap. Only scoped to the Field Card; the detail panel's icon
+   box has no label banner, so its badge stays top-right there. */
+.ht-fc-card .icon-wrap .ht-caveat-corner{ top:auto; bottom:3px; z-index:1; }
 .ht-caveat-corner{
   position:absolute;
   top:3px;
@@ -256,14 +275,6 @@
   box-shadow:0 0 0 2px var(--gold);
   border-color:var(--gold);
 }
-.ht-fc-print-label{
-  display:none;
-  font-size:0.68rem;
-  color:var(--text-muted);
-  margin-top:4px;
-  line-height:1.2;
-}
-
 .ht-hidden{ display:none !important; }
 
 .ht-map-btn{
@@ -271,12 +282,13 @@
   margin:-6px 0 22px;
   padding:9px 16px;
   border-radius:4px;
-  border:1px solid var(--border);
-  background:#fff;
-  color:var(--navy);
+  border:none;
+  background:var(--navy);
+  color:#fff;
   font-weight:700;
   cursor:pointer;
 }
+.ht-map-btn:hover{ background:var(--navy-light); }
 .ht-map-modal{
   position:fixed;
   inset:0;
@@ -463,23 +475,11 @@
 }
 .ht-distfilter-panel .ht-df-actions a{ font-size:0.8rem; font-weight:700; cursor:pointer; }
 
-.ht-print-btn{
-  display:inline-block;
-  padding:10px 16px;
-  border-radius:4px;
-  border:1px solid var(--border);
-  background:#fff;
-  color:var(--navy);
-  font-weight:700;
-  cursor:pointer;
-}
-
 @media (max-width: 640px){
   .ht-fc-controls{ flex-direction:column; align-items:stretch; }
   .ht-fc-controls .ht-fieldcard-btn,
   .ht-fc-controls .ht-distfilter,
-  .ht-fc-controls .ht-distfilter-btn,
-  .ht-fc-controls .ht-print-btn{ width:100%; }
+  .ht-fc-controls .ht-distfilter-btn{ width:100%; }
   .ht-fc-controls .ht-distfilter-panel{ left:0; right:0; width:auto; }
   .ht-fc-controls .ht-distfilter-panel label{ white-space:normal; }
 }
@@ -487,13 +487,12 @@
 @media print{
   .site-header, .page-intro, .ht-setup-toggle, #disclaimerSection, #profileSection,
   .ht-select-row, .ht-map-btn, .ht-map-modal, #districtNotes, #detailPanel, .ht-fieldcard-btn,
-  .ht-distfilter, .ht-print-btn, .site-footer, .ht-gate,
+  .ht-distfilter, .site-footer, .ht-gate,
   section > .container > p{
     display:none !important;
   }
   #fieldCardView{ display:block !important; }
   .ht-fc-card{ break-inside:avoid; }
-  .ht-fc-print-label{ display:block !important; }
   body{ background:#fff; }
 }
 </style>
@@ -648,6 +647,7 @@
           any time you're hunting an Archery Only season or an ArchEquip-only area/district (MCA 87-2-708) &mdash;
           it's checked automatically wherever that applies.
         </p>
+        <button type="button" class="ht-done-btn" onclick="onProfileDoneClick()">Done &#10003;</button>
       </fieldset>
 
       <div class="ht-select-row">
@@ -677,7 +677,6 @@
             <button type="button" class="ht-distfilter-btn" id="distFilterBtn" onclick="toggleDistFilterPanel()">Districts shown &#9662;</button>
             <div class="ht-distfilter-panel ht-hidden" id="distFilterPanel"></div>
           </div>
-          <button type="button" class="ht-print-btn" onclick="printFieldCard()">&#128424; Print</button>
         </div>
         <div id="fieldCardView" style="margin-top:20px;"></div>
       </div>
@@ -1038,6 +1037,13 @@ if("serviceWorker" in navigator){
 function acceptDisclaimer(){
   try{ localStorage.setItem(DISCLAIMER_KEY, "1"); }catch(e){}
   document.getElementById("disclaimerGate").classList.add("ht-hidden");
+  // The hunter just read and agreed to this exact text in the gate -
+  // no need to make them dismiss the same disclaimer again right
+  // below it. Auto-hide it now; the toggle up top still brings it
+  // back if they want it.
+  document.getElementById("hideDisclaimerCheck").checked = true;
+  document.getElementById("disclaimerSection").classList.add("ht-hidden");
+  try{ localStorage.setItem(HIDEDISCLAIMER_KEY, "1"); }catch(e){}
 }
 
 function toggleMapModal(){
@@ -1086,6 +1092,30 @@ function tagNeedsManualConfirm(tag){
   return tag.issue.indexOf("Included with") !== 0;
 }
 
+/* What a hunter would actually call this tag when talking about their
+   license/tag situation - which physical tag it draws from - rather
+   than the animal-type description (`tag.label` already covers that,
+   and the illustration covers it again). Three cases:
+   - "included with license" rows all draw from the ONE General Deer/
+     Elk License, so they're just "General Deer" / "General Elk".
+   - a Deer B/Elk B tag (id has "-deerb-"/"-elkb-") is its own
+     standalone tag - "Deer B 260-01".
+   - a drawn permit (id has "-deerp-"/"-elkp-") is issued ON TOP OF
+     the general license, not instead of it - real Montana permits
+     work this way even on the handful of rows here whose transcribed
+     restriction text doesn't happen to spell it out - so the label
+     says both: "General Elk & 270-45". The restriction-text check is
+     a safety net for the one B-tag (250-elkb-250-00) that also
+     happens to require the general license despite its id. */
+function tagIdentityLabel(tag){
+  if(!tagNeedsManualConfirm(tag)){
+    return tag.species === "deer" ? "General Deer" : "General Elk";
+  }
+  const which = tag.species === "deer" ? "Deer" : "Elk";
+  const pairsWithGeneral = /-deerp-|-elkp-/.test(tag.id) || /must be used with a general/i.test(tag.restriction || "");
+  return pairsWithGeneral ? `General ${which} & ${tag.code}` : `${which} B ${tag.code}`;
+}
+
 /* A General Deer/Elk License is ONE physical tag - profile.hasDeerLicense
    and profile.hasElkLicense are single flags, not per-district, because
    there's only one to hold. Every "included with license" row for that
@@ -1104,13 +1134,28 @@ function generalLicenseFilledElsewhere(tag){
   return usedElsewhere;
 }
 
+/* A Deer B/Elk B tag or permit is one physical tag valid across every
+   district `findTagsByCode()` turns up for its code - confirming "I
+   have this tag" rightly marks all of them held, but filling only
+   ever happens in ONE of those districts. Once it's filled anywhere,
+   the others aren't still available under the same physical tag, so
+   they drop out too (this doesn't account for the handful of codes
+   the regs let a hunter buy more than one of, e.g. 260-01's "up to 3
+   per hunter" - a real gap, accepted for now: uncheck and re-check
+   "I filled this tag" on another district's card to log a second one). */
+function tagFilledElsewhere(tag){
+  if(!tagNeedsManualConfirm(tag)) return false;
+  return findTagsByCode(tag.code, tag.species).some(({distId: d, tag: t}) => t.id !== tag.id && hasFilledTag(d, t.id));
+}
+
 /* Whether the hunter currently POSSESSES this tag (general license
    coverage comes from the profile, minus any other row for the same
-   species already filled; B-licenses/permits are confirmed per tag). */
+   species already filled; B-licenses/permits are confirmed per tag,
+   minus this same code already filled under a different district). */
 function tagPossessed(distId, tag){
   if(tag.issue.indexOf("Included with General Deer") === 0) return !!profile.hasDeerLicense && !generalLicenseFilledElsewhere(tag);
   if(tag.issue.indexOf("Included with General Elk") === 0) return !!profile.hasElkLicense && !generalLicenseFilledElsewhere(tag);
-  return hasConfirmedTag(distId, tag.id);
+  return hasConfirmedTag(distId, tag.id) && !tagFilledElsewhere(tag);
 }
 
 /* Whether the hunter's profile (age / PTHFV) meets a special
@@ -1235,14 +1280,25 @@ DISTRICT_ORDER.forEach(id => {
    after the first minute, kept as two independent toggles (not one
    combined switch) so hiding one doesn't also bury the other. Each
    remembered per browser/device. */
-function initHideToggle(checkboxId, sectionId, storageKey){
-  let hidden = false;
-  try{ hidden = localStorage.getItem(storageKey) === "1"; }catch(e){}
+function initHideToggle(checkboxId, sectionId, storageKey, defaultHidden){
+  let hidden = !!defaultHidden;
+  try{
+    const stored = localStorage.getItem(storageKey);
+    if(stored !== null) hidden = stored === "1"; // an explicit past choice always wins over the default
+  }catch(e){}
   document.getElementById(checkboxId).checked = hidden;
   document.getElementById(sectionId).classList.toggle("ht-hidden", hidden);
 }
-initHideToggle("hideDisclaimerCheck", "disclaimerSection", HIDEDISCLAIMER_KEY);
-initHideToggle("hideProfileCheck", "profileSection", HIDEPROFILE_KEY);
+// A returning hunter who accepted the gate in an earlier visit, before
+// ever touching "Hide disclaimer" here, shouldn't have to re-hide the
+// on-page copy by hand every time either - default it to hidden for
+// them too. Brand new visitors fall through to acceptDisclaimer()'s
+// own auto-hide instead, since the gate blocks this whole section
+// until they click through.
+let gateAlreadyAccepted = false;
+try{ gateAlreadyAccepted = localStorage.getItem(DISCLAIMER_KEY) === "1"; }catch(e){}
+initHideToggle("hideDisclaimerCheck", "disclaimerSection", HIDEDISCLAIMER_KEY, gateAlreadyAccepted);
+initHideToggle("hideProfileCheck", "profileSection", HIDEPROFILE_KEY, false);
 
 function onHideDisclaimerChange(){
   const hidden = document.getElementById("hideDisclaimerCheck").checked;
@@ -1253,6 +1309,14 @@ function onHideProfileChange(){
   const hidden = document.getElementById("hideProfileCheck").checked;
   document.getElementById("profileSection").classList.toggle("ht-hidden", hidden);
   try{ localStorage.setItem(HIDEPROFILE_KEY, hidden ? "1" : "0"); }catch(e){}
+}
+/* The "Done" button at the bottom of the profile form is just a more
+   natural way to reach the same hide-profile toggle, for a hunter who
+   filled it out top-to-bottom and wants it out of the way now rather
+   than hunting for the small checkbox back up top. */
+function onProfileDoneClick(){
+  document.getElementById("hideProfileCheck").checked = true;
+  onHideProfileChange();
 }
 
 document.getElementById("pAge").value = profile.age != null ? profile.age : "";
@@ -1420,6 +1484,8 @@ function validLineHTML(tag, state){
     if(!tagNeedsManualConfirm(tag) && generalLicenseFilledElsewhere(tag)){
       const which = tag.issue.indexOf("Deer") > -1 ? "General Deer License" : "General Elk License";
       needWhat = `you've already filled your ${which} on a different tag this season`;
+    } else if(tagNeedsManualConfirm(tag) && tagFilledElsewhere(tag)){
+      needWhat = `you've already filled your ${tag.code} tag in a different district this season`;
     }
     return `<div class="ht-valid-line state-need">${seasonPhrase(tag)} — but ${needWhat}</div>`;
   }
@@ -1544,15 +1610,13 @@ function onConfirmChange(distId, tagId){
 
 function onFilledChange(distId, tagId){
   const val = document.getElementById("filledBox").checked;
-  const tag = findTag(distId, tagId);
-  if(tagNeedsManualConfirm(tag)){
-    // Same physical Deer B/Elk B tag or permit as elsewhere - filling
-    // it in one district means it's filled everywhere that tag code
-    // is valid, same propagation as confirming you hold it.
-    findTagsByCode(tag.code, tag.species).forEach(({distId: d, tag: t}) => setFilledTag(d, t.id, val));
-  } else {
-    setFilledTag(distId, tag.id, val);
-  }
+  // Unlike "I have this tag", filled is NEVER propagated to the other
+  // districts a shared code is valid in - filling happens in exactly
+  // one place, and marking every district's copy filled too would
+  // just be a copy of the checkmark, not a copy of the animal. The
+  // OTHER districts drop out on their own via tagFilledElsewhere()/
+  // generalLicenseFilledElsewhere() in tagPossessed() instead.
+  setFilledTag(distId, tagId, val);
   renderDetail(distId, tagId);
   renderFieldCard();
 }
@@ -1625,11 +1689,6 @@ function toggleFieldCard(){
   if(fieldCardOpen) renderFieldCard();
 }
 
-function printFieldCard(){
-  if(!fieldCardOpen) toggleFieldCard();
-  setTimeout(() => window.print(), 50);
-}
-
 function renderFieldCard(){
   const view = document.getElementById("fieldCardView");
   if(view.classList.contains("ht-hidden")) return;
@@ -1676,14 +1735,15 @@ function renderFieldCard(){
     huntableNow.forEach(t => {
       const caveats = tagCaveats(t);
       const isFilled = tagNeedsManualConfirm(t) ? hasFilledTag(distId, t.id) : (hasFilledTag(distId, t.id) || iconFilledMap[t.icon]);
+      const labelText = tagIdentityLabel(t);
       html += `
         <div class="ht-fc-card${isFilled ? " is-filled" : ""}" onclick="jumpToTag('${distId}','${t.id}')">
           <div class="icon-wrap">
             ${tagIconImg(t)}
+            <div class="ht-fc-label">${labelText}${isFilled ? " — FILLED" : ""}</div>
             ${caveats.length ? caveatCornerHTML(caveats.map(c => c.note).join(" ")) : ""}
             ${isFilled ? `<div class="ht-filled-mark" aria-label="Filled">&#10003;</div>` : ""}
           </div>
-          <div class="ht-fc-print-label">${t.code === "General License" ? "" : t.code + " — "}${t.label}${isFilled ? " — FILLED" : ""}</div>
         </div>`;
     });
     html += `</div></div>`;
@@ -1691,7 +1751,9 @@ function renderFieldCard(){
 
   view.innerHTML = any
     ? html
-    : `<p style="color:var(--text-muted);">Nothing you hold is in season right now in the districts shown. Check your general license boxes above, confirm a Deer B / Elk B tag or permit, or widen the district filter — or browse everything for a district in the Tag / Opportunity dropdown.</p>`;
+    : (distFilter.length === 0
+      ? `<p style="color:var(--text-muted);">Select a few districts to see your Field Card here — tap "Show/hide districts" above and check the ones you're hunting.</p>`
+      : `<p style="color:var(--text-muted);">Nothing you hold is in season right now in the districts shown. Check your general license boxes above, confirm a Deer B / Elk B tag or permit, or widen the district filter — or browse everything for a district in the Tag / Opportunity dropdown.</p>`);
 }
 </script>
 </body>
