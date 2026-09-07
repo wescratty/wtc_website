@@ -67,23 +67,33 @@
     </div>
     <p style="max-width:640px;color:var(--text-muted);margin-bottom:30px;">A quick heads-up: we don't offer free quotes on every job. For a straightforward request we're usually happy to give you a number at no cost — but for a custom build, remodel, or anything with real design work involved, let's talk first so we can give you an honest, accurate estimate instead of a guess.</p>
     <form class="inquiry" id="inquiryForm">
+      <input type="hidden" name="access_key" value="dd425d21-97e9-47b6-9bc2-ab919350729b">
+      <input type="hidden" name="subject" value="New inquiry from wtcmontanaconstruction.com">
+      <!-- Honeypot spam trap - real visitors never see or fill this in;
+           left blank, Web3Forms silently drops the submission if a bot
+           fills it. -->
+      <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+
       <label for="name">Name</label>
       <input type="text" id="name" name="name" required>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
       <label for="phone">Phone</label>
       <input type="tel" id="phone" name="phone" required>
       <label for="project">Tell us about your project</label>
       <textarea id="project" name="project" rows="5" required></textarea>
-      <button type="submit" class="btn">Send Inquiry</button>
+      <button type="submit" class="btn" id="inquirySubmit">Send Inquiry</button>
+      <p id="inquiryResult" class="inquiry-result" role="status"></p>
     </form>
     <script>
-      // A plain mailto: navigation (not a native form POST) - browsers
-      // only show the "this form is not secure" warning for an actual
-      // form submission to a non-https action, mailto: included. A
-      // link-style navigation built here in JS sidesteps that check
-      // entirely while still opening the visitor's email client with
-      // everything filled in.
-      const CONTACT_EMAIL = "wtcmontana@gmail.com";
+      // Real server-side delivery via Web3Forms (https://web3forms.com) -
+      // no backend of our own needed, submissions land straight in
+      // email. Submitted as JSON via fetch rather than a native form
+      // POST so the page can show a success/error message inline
+      // instead of navigating to Web3Forms' own response.
       const inquiryForm = document.getElementById("inquiryForm");
+      const inquiryResult = document.getElementById("inquiryResult");
+      const inquirySubmit = document.getElementById("inquirySubmit");
       const projectField = document.getElementById("project");
 
       // Support a ready-made message from a link elsewhere on the site
@@ -93,14 +103,31 @@
       const prefill = new URLSearchParams(location.search).get("msg");
       if(prefill) projectField.value = prefill;
 
-      inquiryForm.addEventListener("submit", (e) => {
+      inquiryForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const name = document.getElementById("name").value.trim();
-        const phone = document.getElementById("phone").value.trim();
-        const project = projectField.value.trim();
-        const subject = `Website inquiry from ${name}`;
-        const body = `Name: ${name}\nPhone: ${phone}\n\n${project}`;
-        window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        inquirySubmit.disabled = true;
+        inquiryResult.textContent = "Sending…";
+        inquiryResult.className = "inquiry-result";
+        try{
+          const res = await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify(Object.fromEntries(new FormData(inquiryForm)))
+          });
+          const data = await res.json();
+          if(res.ok && data.success){
+            inquiryResult.textContent = "Thanks — your message is on its way. We'll be in touch soon.";
+            inquiryResult.className = "inquiry-result success";
+            inquiryForm.reset();
+          } else {
+            throw new Error(data.message || "Submission failed");
+          }
+        } catch(err){
+          inquiryResult.textContent = "Something went wrong sending that. Please call or text (406) 360-5446 instead.";
+          inquiryResult.className = "inquiry-result error";
+        } finally {
+          inquirySubmit.disabled = false;
+        }
       });
     </script>
     <p style="max-width:560px;margin:16px auto 0;color:var(--text-muted);font-size:0.85rem;text-align:center;">
