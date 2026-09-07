@@ -1088,6 +1088,30 @@ function tagNeedsManualConfirm(tag){
   return tag.issue.indexOf("Included with") !== 0;
 }
 
+/* What a hunter would actually call this tag when talking about their
+   license/tag situation - which physical tag it draws from - rather
+   than the animal-type description (`tag.label` already covers that,
+   and the illustration covers it again). Three cases:
+   - "included with license" rows all draw from the ONE General Deer/
+     Elk License, so they're just "General Deer" / "General Elk".
+   - a Deer B/Elk B tag (id has "-deerb-"/"-elkb-") is its own
+     standalone tag - "Deer B 260-01".
+   - a drawn permit (id has "-deerp-"/"-elkp-") is issued ON TOP OF
+     the general license, not instead of it - real Montana permits
+     work this way even on the handful of rows here whose transcribed
+     restriction text doesn't happen to spell it out - so the label
+     says both: "General Elk & 270-45". The restriction-text check is
+     a safety net for the one B-tag (250-elkb-250-00) that also
+     happens to require the general license despite its id. */
+function tagIdentityLabel(tag){
+  if(!tagNeedsManualConfirm(tag)){
+    return tag.species === "deer" ? "General Deer" : "General Elk";
+  }
+  const which = tag.species === "deer" ? "Deer" : "Elk";
+  const pairsWithGeneral = /-deerp-|-elkp-/.test(tag.id) || /must be used with a general/i.test(tag.restriction || "");
+  return pairsWithGeneral ? `General ${which} & ${tag.code}` : `${which} B ${tag.code}`;
+}
+
 /* A General Deer/Elk License is ONE physical tag - profile.hasDeerLicense
    and profile.hasElkLicense are single flags, not per-district, because
    there's only one to hold. Every "included with license" row for that
@@ -1678,7 +1702,7 @@ function renderFieldCard(){
     huntableNow.forEach(t => {
       const caveats = tagCaveats(t);
       const isFilled = tagNeedsManualConfirm(t) ? hasFilledTag(distId, t.id) : (hasFilledTag(distId, t.id) || iconFilledMap[t.icon]);
-      const labelText = (t.code === "General License" ? "" : t.code + " — ") + t.label;
+      const labelText = tagIdentityLabel(t);
       html += `
         <div class="ht-fc-card${isFilled ? " is-filled" : ""}" onclick="jumpToTag('${distId}','${t.id}')">
           <div class="icon-wrap">
