@@ -149,6 +149,17 @@
 }
 .ht-confirm input{ width:22px; height:22px; }
 .ht-confirm label{ font-weight:700; }
+.ht-filled-toggle{
+  margin-top:12px;
+  padding:14px 16px;
+  background:#eaf3ea;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.ht-filled-toggle input{ width:22px; height:22px; accent-color:#2e7d32; }
+.ht-filled-toggle label{ font-weight:700; color:#245c27; }
 .ht-license-note{
   margin-top:18px;
   padding:12px 16px;
@@ -200,6 +211,19 @@
   transition:box-shadow 0.15s, border-color 0.15s;
 }
 .ht-fc-card .icon-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
+.ht-fc-card.is-filled .icon-wrap img{ opacity:0.35; filter:grayscale(60%); }
+.ht-filled-mark{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:3.4rem;
+  font-weight:700;
+  color:#2e7d32;
+  text-shadow:0 0 6px #fff, 0 0 6px #fff, 0 0 3px #fff;
+  pointer-events:none;
+}
 .ht-caveat-corner{
   position:absolute;
   top:3px;
@@ -979,6 +1003,7 @@ function caveatInlineHTML(){
    STATE / STORAGE
 ----------------------------------------------------------------*/
 const TAG_KEY = "wtc-hunting-tags-v1";
+const FILLED_KEY = "wtc-hunting-filled-v1";
 const PROFILE_KEY = "wtc-hunting-profile-v1";
 
 function loadJSON(key, fallback){
@@ -1020,10 +1045,12 @@ function toggleMapModal(){
 }
 
 let tagState = loadJSON(TAG_KEY, {});
+let filledState = loadJSON(FILLED_KEY, {});
 let profile = loadJSON(PROFILE_KEY, {age:null, pthfv:false, hasDeerLicense:false, hasElkLicense:false, hasBowLicense:false});
 let distFilter = loadJSON(DISTFILTER_KEY, []); // [] = nothing shown until the hunter picks districts
 
 function saveTagState(){ saveJSON(TAG_KEY, tagState); }
+function saveFilledState(){ saveJSON(FILLED_KEY, filledState); }
 function saveProfile(){ saveJSON(PROFILE_KEY, profile); }
 
 function hasConfirmedTag(distId, tagId){ return !!(tagState[distId] && tagState[distId][tagId]); }
@@ -1031,6 +1058,13 @@ function setConfirmedTag(distId, tagId, val){
   if(!tagState[distId]) tagState[distId] = {};
   tagState[distId][tagId] = val;
   saveTagState();
+}
+
+function hasFilledTag(distId, tagId){ return !!(filledState[distId] && filledState[distId][tagId]); }
+function setFilledTag(distId, tagId, val){
+  if(!filledState[distId]) filledState[distId] = {};
+  filledState[distId][tagId] = val;
+  saveFilledState();
 }
 
 /* Many Deer B / Elk B tags and permits are explicitly one physical
@@ -1408,6 +1442,20 @@ function renderDetail(distId, tagId){
     confirmHTML = `<div class="ht-license-note">Covered by your <b>${which}</b> checkbox in Hunter Profile above ${profile[tag.issue.indexOf("Deer")>-1?"hasDeerLicense":"hasElkLicense"] ? "(you have it checked)" : "(not checked yet)"}.</div>`;
   }
 
+  // Filled = the hunter already took an animal under this tag. Only
+  // offered once they actually hold the underlying tag/license (state
+  // isn't "need"/"need-bow"/"ineligible") - otherwise there's nothing
+  // to have filled yet. Left available even once the season's closed
+  // ("off"), since that's exactly when you'd look back and record it.
+  const filled = hasFilledTag(distId, tag.id);
+  const canMarkFilled = state === "good" || state === "off";
+  const filledHTML = canMarkFilled ? `
+    <div class="ht-filled-toggle">
+      <input type="checkbox" id="filledBox" ${filled ? "checked" : ""} onchange="onFilledChange('${distId}','${tag.id}')">
+      <label for="filledBox">I filled this tag</label>
+    </div>
+    <div style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;">Marks it with a checkmark on your Field Card, as a reminder you've already taken an animal under it.</div>` : "";
+
   const defs = relevantDefinitions(tag);
   const defsHTML = defs.length ? `
     <details class="ht-defs">
@@ -1439,6 +1487,7 @@ function renderDetail(distId, tagId){
         ${tag.eligibility ? `<dt>Eligibility</dt><dd>${eligibilityText(tag)}</dd>` : ``}
       </dl>
       ${confirmHTML}
+      ${filledHTML}
       <button type="button" class="ht-done-btn" onclick="dismissDetail()">Done &#10003;</button>
       ${defsHTML}
     </div>
@@ -1462,6 +1511,21 @@ function onConfirmChange(distId, tagId){
   }
   renderTagOptions(distId);
   tagSelect.value = tagId;
+  renderDetail(distId, tagId);
+  renderFieldCard();
+}
+
+function onFilledChange(distId, tagId){
+  const val = document.getElementById("filledBox").checked;
+  const tag = findTag(distId, tagId);
+  if(tagNeedsManualConfirm(tag)){
+    // Same physical Deer B/Elk B tag or permit as elsewhere - filling
+    // it in one district means it's filled everywhere that tag code
+    // is valid, same propagation as confirming you hold it.
+    findTagsByCode(tag.code, tag.species).forEach(({distId: d, tag: t}) => setFilledTag(d, t.id, val));
+  } else {
+    setFilledTag(distId, tag.id, val);
+  }
   renderDetail(distId, tagId);
   renderFieldCard();
 }
@@ -1564,6 +1628,15 @@ function renderFieldCard(){
     // aren't separately held, so one is enough. Never collapse B-tags/
     // permits - each is a distinct physical tag worth showing on its
     // own even if the icon happens to match another.
+    // A filled "included with license" row can be the one that gets
+    // collapsed away below (its duplicate icon survives instead) - so
+    // filled-ness for that icon has to be gathered from the whole
+    // group first, or the surviving card could wrongly show as open.
+    const iconFilledMap = {};
+    huntableNow.forEach(t => {
+      if(!tagNeedsManualConfirm(t) && hasFilledTag(distId, t.id)) iconFilledMap[t.icon] = true;
+    });
+
     const seenLicenseIcons = new Set();
     huntableNow = huntableNow.filter(t => {
       if(tagNeedsManualConfirm(t)) return true;
@@ -1575,13 +1648,15 @@ function renderFieldCard(){
     html += `<div class="ht-fc-district"><h4>HD ${distId} — ${d.name}</h4><div class="ht-fc-grid">`;
     huntableNow.forEach(t => {
       const caveats = tagCaveats(t);
+      const isFilled = tagNeedsManualConfirm(t) ? hasFilledTag(distId, t.id) : (hasFilledTag(distId, t.id) || iconFilledMap[t.icon]);
       html += `
-        <div class="ht-fc-card" onclick="jumpToTag('${distId}','${t.id}')">
+        <div class="ht-fc-card${isFilled ? " is-filled" : ""}" onclick="jumpToTag('${distId}','${t.id}')">
           <div class="icon-wrap">
             ${tagIconImg(t)}
             ${caveats.length ? caveatCornerHTML(caveats.map(c => c.note).join(" ")) : ""}
+            ${isFilled ? `<div class="ht-filled-mark" aria-label="Filled">&#10003;</div>` : ""}
           </div>
-          <div class="ht-fc-print-label">${t.code === "General License" ? "" : t.code + " — "}${t.label}</div>
+          <div class="ht-fc-print-label">${t.code === "General License" ? "" : t.code + " — "}${t.label}${isFilled ? " — FILLED" : ""}</div>
         </div>`;
     });
     html += `</div></div>`;

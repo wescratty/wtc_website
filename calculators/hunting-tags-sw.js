@@ -12,7 +12,7 @@
   returning visitors with a signal pick up the update instead of
   being stuck on a stale cached copy.
 */
-const CACHE_NAME = "hunting-tags-v4";
+const CACHE_NAME = "hunting-tags-v5";
 
 const PRECACHE_PATHS = [
   "/calculators/hunting_tags.html",
