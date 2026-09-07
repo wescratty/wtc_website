@@ -1751,7 +1751,9 @@ function renderFieldCard(){
 
   view.innerHTML = any
     ? html
-    : `<p style="color:var(--text-muted);">Nothing you hold is in season right now in the districts shown. Check your general license boxes above, confirm a Deer B / Elk B tag or permit, or widen the district filter — or browse everything for a district in the Tag / Opportunity dropdown.</p>`;
+    : (distFilter.length === 0
+      ? `<p style="color:var(--text-muted);">Select a few districts to see your Field Card here — tap "Show/hide districts" above and check the ones you're hunting.</p>`
+      : `<p style="color:var(--text-muted);">Nothing you hold is in season right now in the districts shown. Check your general license boxes above, confirm a Deer B / Elk B tag or permit, or widen the district filter — or browse everything for a district in the Tag / Opportunity dropdown.</p>`);
 }
 </script>
 </body>
