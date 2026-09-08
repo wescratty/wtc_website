@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paint Color Matcher | WTC Montana Construction</title>
+<meta name="description" content="Sample a color from a photo of a house you like, or enter a hex code, and find the closest Sherwin-Williams, Behr, and Benjamin Moore paint matches.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/paint_color_matcher.html">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="../assets/logo/favicon-192.png">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="../index.html" class="brand">
+      <img class="logo" src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="../index.html">Home</a>
+      <a href="../about.html">About</a>
+      <a href="../services/index.html">Services</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../tools.html" class="current">Tools</a>
+      <a href="../contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Paint Color Matcher</h1>
+    <p>Saw a house color you love? Sample it from a photo or type in a hex code, and find the closest Sherwin-Williams, Behr, and Benjamin Moore matches to take to the paint store.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <div class="calc-wrap">
+<style>
+
+.pcm-disclaimer {
+    background: #fff6e5;
+    border: 1px solid var(--gold);
+    border-left: 5px solid var(--gold);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 30px;
+    color: #5a4321;
+    font-size: 0.92rem;
+}
+.pcm-disclaimer strong { color: var(--navy); }
+
+.calc-section { margin-bottom: 34px; }
+.calc-section + .calc-section { padding-top: 30px; border-top: 1px solid #ddd; }
+.calc-section h3 { margin-bottom: 4px; }
+.calc-section .section-note { color: #5c6270; font-size: 0.92rem; margin-top: 0; margin-bottom: 18px; }
+
+.pcm-source-toggle { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.pcm-source-toggle button {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.pcm-source-toggle button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+.pcm-photo-pane, .pcm-manual-pane { display: none; }
+.pcm-photo-pane.visible, .pcm-manual-pane.visible { display: block; }
+
+#pcmFileInput { margin-bottom: 12px; }
+
+.pcm-canvas-wrap {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    touch-action: none;
+}
+#pcmCanvas {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: crosshair;
+    display: block;
+}
+.pcm-loupe {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.4);
+    pointer-events: none;
+    display: none;
+    overflow: hidden;
+    image-rendering: pixelated;
+}
+.pcm-loupe canvas { position: absolute; }
+.pcm-loupe-cross {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 9px; height: 9px;
+    margin: -4.5px 0 0 -4.5px;
+    border: 1px solid rgba(0,0,0,0.6);
+    box-sizing: border-box;
+}
+
+.pcm-wb-section { display: none; margin-top: 22px; padding-top: 18px; border-top: 1px dashed var(--border); }
+.pcm-wb-section.visible { display: block; }
+.pcm-wb-section h4 { margin: 0 0 4px; color: var(--navy); font-size: 1rem; }
+.pcm-wb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.pcm-wb-row button { padding: 8px 14px; border: 1px solid var(--border); background: #fff; border-radius: 4px; cursor: pointer; font-size: 0.88rem; font-weight: 600; }
+.pcm-wb-row button.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+.pcm-neutral-status { font-size: 0.85rem; color: #5c6270; }
+.pcm-wb-sliders { display: flex; flex-direction: column; gap: 10px; max-width: 420px; }
+.pcm-wb-sliders label { display: grid; grid-template-columns: 60px 1fr 60px; align-items: center; gap: 10px; font-size: 0.85rem; color: #5c6270; }
+.pcm-wb-sliders input[type="range"] { width: 100%; }
+.pcm-wb-val { text-align: right; font-variant-numeric: tabular-nums; }
+#pcmCanvas.picking-neutral { cursor: cell; }
+
+.pcm-manual-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.pcm-manual-row label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+.pcm-manual-row input[type="color"] { width: 60px; height: 40px; padding: 2px; cursor: pointer; }
+.pcm-manual-row input[type="text"] { padding: 8px 10px; width: 140px; font-size: 1rem; }
+
+.pcm-sample-box {
+    display: none;
+    align-items: center;
+    gap: 18px;
+    margin-top: 20px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fafafa;
+    flex-wrap: wrap;
+}
+.pcm-sample-box.visible { display: flex; }
+.pcm-sample-swatch {
+    width: 64px;
+    height: 64px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+.pcm-sample-values { font-size: 0.92rem; line-height: 1.6; }
+.pcm-sample-values strong { color: var(--navy); }
+
+.pcm-brand-filters { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
+.pcm-brand-filters label { font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+
+.pcm-results { display: none; }
+.pcm-results.visible { display: block; }
+.pcm-brand-group { margin-bottom: 22px; }
+.pcm-brand-group h4 { margin: 0 0 10px; color: var(--navy); }
+.pcm-match-list { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.pcm-match-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    background: #fff;
+}
+.pcm-match-swatch {
+    width: 40px; height: 40px;
+    border-radius: 5px;
+    border: 1px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+.pcm-match-info { font-size: 0.85rem; line-height: 1.45; }
+.pcm-match-info .name { font-weight: 700; color: var(--navy); }
+.pcm-match-quality { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.pcm-match-quality.q-excellent { color: #2e7d32; }
+.pcm-match-quality.q-good { color: #96692e; }
+.pcm-match-quality.q-rough { color: #b3261e; }
+
+.pcm-summary-box { display: none; }
+.pcm-summary-box.visible { display: block; }
+#pcmSummaryText {
+    width: 100%;
+    min-height: 160px;
+    font-family: "Courier New", monospace;
+    font-size: 0.85rem;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+.pcm-action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.pcm-action-row button, .pcm-action-row a.btn {
+    padding: 10px 18px;
+    cursor: pointer;
+}
+.pcm-copy-msg { font-size: 0.85rem; color: #2e7d32; font-weight: 600; margin-left: 6px; }
+
+</style>
+
+<div class="pcm-disclaimer">
+  <strong>These are ballpark matches, not a guaranteed formula.</strong> The hex values behind each
+  swatch are approximate, publicly-circulated references we compiled for this tool &mdash; not official
+  data from Sherwin-Williams, Behr, or Benjamin Moore. Phone cameras, screens, and lighting all shift
+  color too, so treat the results below as a shopping-list starting point. The only way to get an exact
+  formula is to bring an actual sample (or the summary this tool generates) into the store and have
+  them scan or eyeball it against their own chips.
+</div>
+
+<div class="calc-section">
+  <h3>1. Get your color</h3>
+  <p class="section-note">Upload a photo and click the spot you want to match, or enter a color directly.</p>
+
+  <div class="pcm-source-toggle">
+    <button type="button" id="pcmTabPhotoBtn" class="active">Sample from a photo</button>
+    <button type="button" id="pcmTabManualBtn">Enter a color manually</button>
+  </div>
+
+  <div class="pcm-photo-pane visible" id="pcmPhotoPane">
+    <input type="file" id="pcmFileInput" accept="image/*" capture="environment">
+    <p class="section-note" id="pcmPhotoHint">Choose a photo, then click (or tap) anywhere on it to sample that pixel's color.</p>
+    <div class="pcm-canvas-wrap" id="pcmCanvasWrap">
+      <canvas id="pcmCanvas"></canvas>
+      <div class="pcm-loupe" id="pcmLoupe">
+        <canvas id="pcmLoupeCanvas" width="90" height="90"></canvas>
+        <div class="pcm-loupe-cross"></div>
+      </div>
+    </div>
+
+    <div class="pcm-wb-section" id="pcmWbSection">
+      <h4>White balance (optional)</h4>
+      <p class="section-note">Phone photos often pick up a color cast from the light &mdash; overcast skies skew blue,
+      golden hour skews orange. Set a neutral point for a starting correction, then fine-tune with the sliders
+      against what you know the real color should look like.</p>
+      <div class="pcm-wb-row">
+        <button type="button" id="pcmPickNeutralBtn">Pick a neutral point (something white/gray)</button>
+        <button type="button" id="pcmWbResetBtn">Reset</button>
+        <span class="pcm-neutral-status" id="pcmNeutralStatus"></span>
+      </div>
+      <div class="pcm-wb-sliders">
+        <label>Cooler <input type="range" id="pcmTempSlider" min="-100" max="100" value="0"> Warmer</label>
+        <label>Green <input type="range" id="pcmTintSlider" min="-100" max="100" value="0"> Magenta</label>
+      </div>
+      <p class="section-note" style="margin:14px 0 6px;">Or nudge individual channels by eye:</p>
+      <div class="pcm-wb-sliders">
+        <label>Red <input type="range" id="pcmRSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmRVal">0</span></label>
+        <label>Green <input type="range" id="pcmGSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmGVal">0</span></label>
+        <label>Blue <input type="range" id="pcmBSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmBVal">0</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="pcm-manual-pane" id="pcmManualPane">
+    <div class="pcm-manual-row">
+      <div>
+        <label for="pcmColorPicker">Color picker</label>
+        <input type="color" id="pcmColorPicker" value="#8c9294">
+      </div>
+      <div>
+        <label for="pcmHexInput">Hex code</label>
+        <input type="text" id="pcmHexInput" value="#8C9294" maxlength="7">
+      </div>
+      <div>
+        <button type="button" id="pcmManualUseBtn">Use this color</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pcm-sample-box" id="pcmSampleBox">
+    <div class="pcm-sample-swatch" id="pcmSampleSwatch"></div>
+    <div class="pcm-sample-values" id="pcmSampleValues"></div>
+  </div>
+</div>
+
+<div class="calc-section">
+  <h3>2. Closest paint matches</h3>
+  <p class="section-note">Ranked by color-space distance (&Delta;E), not just eyeballed RGB &mdash; closer to 0 is a tighter match.</p>
+  <div class="pcm-brand-filters">
+    <label><input type="checkbox" class="pcm-brand-cb" value="sw" checked> Sherwin-Williams</label>
+    <label><input type="checkbox" class="pcm-brand-cb" value="behr" checked> Behr</label>
+    <label><input type="checkbox" class="pcm-brand-cb" value="bm" checked> Benjamin Moore</label>
+  </div>
+  <div class="pcm-results" id="pcmResults"></div>
+</div>
+
+<div class="calc-section pcm-summary-box" id="pcmSummaryBox">
+  <h3>3. Take it to the store</h3>
+  <p class="section-note">Copy this and paste it into a text, email, or note &mdash; whatever you've got open.</p>
+  <textarea id="pcmSummaryText" readonly></textarea>
+  <div class="pcm-action-row">
+    <button type="button" id="pcmCopyBtn">Copy summary</button>
+    <span class="pcm-copy-msg" id="pcmCopyMsg" style="display:none;">Copied!</span>
+  </div>
+</div>
+
+<script>
+(function() {
+
+// ---- Curated approximate hex reference data ----
+// Community-compiled approximations for common colors, keyed by brand.
+// Not official manufacturer values -- see on-page disclaimer.
+var PAINT_DB = {
+  sw: {
+    label: "Sherwin-Williams",
+    colors: [
+      ["SW 7008", "Alabaster", "#EDE6D6"],
+      ["SW 7005", "Pure White", "#EEECE1"],
+      ["SW 7004", "Snowbound", "#EDEAE0"],
+      ["SW 7029", "Agreeable Gray", "#D1CBC1"],
+      ["SW 7015", "Repose Gray", "#CABFB1"],
+      ["SW 7030", "Anew Gray", "#D6CFC4"],
+      ["SW 7048", "Urbane Bronze", "#61594F"],
+      ["SW 9130", "Iron Ore", "#434341"],
+      ["SW 6258", "Tricorn Black", "#2D2C2A"],
+      ["SW 6991", "Black Magic", "#292623"],
+      ["SW 6244", "Naval", "#29344B"],
+      ["SW 6206", "Oyster Bay", "#B4BCB1"],
+      ["SW 9179", "Sea Salt", "#CDD4CB"],
+      ["SW 7674", "Peppercorn", "#4B4C46"],
+      ["SW 7036", "Accessible Beige", "#D1C3AE"],
+      ["SW 7043", "Worldly Gray", "#C4C0B4"],
+      ["SW 6106", "Kilim Beige", "#D6C7AD"],
+      ["SW 6148", "Wool Skein", "#E0D3B8"],
+      ["SW 9587", "Rookwood Terra Cotta", "#97533A"],
+      ["SW 7526", "Maison Blanche", "#E4DBC8"],
+      ["SW 6220", "Evening Shadow", "#6D6C63"],
+      ["SW 2848", "Roycroft Bottle Green", "#384633"],
+      ["SW 6466", "Copen Blue", "#6E8A93"],
+      ["SW 6431", "Leapfrog", "#7B8256"],
+      ["SW 2851", "Sage Green Light", "#9C9B7E"],
+      ["SW 6421", "Celery", "#DAD6AA"],
+      ["SW 6178", "Clary Sage", "#A9AC92"],
+      ["SW 6186", "Dried Thyme", "#6E6C4E"],
+      ["SW 6167", "Rosemary", "#5C6650"],
+      ["SW 2816", "Rookwood Dark Green", "#37402E"],
+      ["SW 6749", "Artichoke", "#6C7259"],
+      ["SW 6237", "Storm Cloud", "#5C6770"],
+      ["SW 6535", "Bracing Blue", "#395366"],
+      ["SW 6242", "Grays Harbor", "#757367"],
+      ["SW 6103", "Nomadic Desert", "#C3AA80"],
+      ["SW 6870", "Rousing Red", "#7A2E27"],
+      ["SW 7042", "Shoji White", "#E6DFD3"],
+      ["SW 6385", "Dover White", "#F0EADC"],
+      ["SW 6126", "Navajo White", "#E9DCC6"],
+      ["SW 7551", "Greek Villa", "#F0ECE2"],
+      ["SW 9109", "Natural Linen", "#DFD3C3"],
+      ["SW 7014", "Eider White", "#E2DED8"],
+      ["SW 0055", "Light French Gray", "#C2C0BB"],
+      ["SW 7064", "Passive", "#CBCCC9"],
+      ["SW 7017", "Dorian Gray", "#ACA79E"],
+      ["SW 7019", "Gauntlet Gray", "#78736E"],
+      ["SW 7018", "Dovetail", "#908A83"],
+      ["SW 7022", "Alpaca", "#CCC5BD"],
+      ["SW 6990", "Caviar", "#313031"],
+      ["SW 7020", "Black Fox", "#4F4842"],
+      ["SW 7076", "Cyberspace", "#44484D"],
+      ["SW 7061", "Night Owl", "#63655F"],
+      ["SW 6241", "Aleutian", "#98A9B7"],
+      ["SW 9140", "Blustery Sky", "#6F848C"],
+      ["SW 6218", "Tradewind", "#C2CFCF"],
+      ["SW 6211", "Rainwashed", "#C2CDC5"],
+      ["SW 7602", "Indigo Batik", "#3E5063"],
+      ["SW 0048", "Bunglehouse Blue", "#47626F"],
+      ["SW 6194", "Basil", "#626E60"],
+      ["SW 6209", "Ripe Olive", "#44483D"],
+      ["SW 6193", "Privilege Green", "#7A8775"],
+      ["SW 0041", "Dard Hunter Green", "#3A4A3F"],
+      ["SW 6164", "Svelte Sage", "#B2AC96"],
+      ["SW 6216", "Jasper", "#343B36"],
+      ["SW 6205", "Comfort Gray", "#BEC3BB"],
+      ["SW 6328", "Fireweed", "#7B3730"],
+      ["SW 9081", "Redend Point", "#AE8E7E"],
+      ["SW 7701", "Cavern Clay", "#AC6B53"],
+      ["SW 6089", "Grounded", "#785B47"],
+      ["SW 6407", "Ancestral Gold", "#DDCDA6"],
+      ["SW 6130", "Mannered Gold", "#C19763"],
+      ["SW 2831", "Classical Gold", "#EBB875"],
+      ["SW 6698", "Kingdom Gold", "#D1A436"],
+      ["SW 6141", "Softer Tan", "#DACAB2"],
+      ["SW 7037", "Balanced Beige", "#C0B2A2"],
+      ["SW 6286", "Mature Grape", "#5F3F54"]
+    ]
+  },
+  behr: {
+    label: "Behr",
+    colors: [
+      ["12", "Swiss Coffee", "#ECE5D3"],
+      ["PPU18-06", "Silver Drop", "#C7C6BE"],
+      ["PPU18-01", "Cracked Pepper", "#4C4A47"],
+      ["N520-5", "Backdrop", "#52605B"],
+      ["PPU18-14", "Dolphin Fin", "#ADA997"],
+      ["PPU18-08", "Polar Bear", "#EDEAE0"],
+      ["PPU18-04", "Iron Mountain", "#6E6D66"],
+      ["MQ5-52", "Blueprint", "#37536A"],
+      ["PPU25-19", "French Silver", "#C7C9C2"],
+      ["HDC-CL-24", "Coventry Gray", "#8C9294"],
+      ["PPU7-16", "Tavern Taupe", "#7C6E5D"],
+      ["MQ1-27", "Georgian Brick", "#8B4A3A"],
+      ["460D-7", "Amazon Jungle", "#38513C"],
+      ["N520-7", "Broadway", "#2C3742"],
+      ["PPU18-19", "Ultra Pure White", "#F3F3EE"],
+      ["N230-5", "Mesa Tan", "#B79772"],
+      ["S370-5", "Jojoba", "#6E6F4B"],
+      ["PPU11-08", "Guacamole", "#5F6A3E"],
+      ["N440-4", "Rain Song", "#62767A"],
+      ["600D-4", "Sail Away", "#7A9DAE"],
+      ["N490-2", "Wet Cement", "#8E9494"],
+      ["DC-001", "Whipped Cream", "#F6F5EF"],
+      ["BL-W09", "Bakery Box", "#F0F4F2"],
+      ["PPU7-11", "Cotton Knit", "#E5DFD2"],
+      ["PPU18-12", "Graceful Gray", "#BEB6AE"],
+      ["UL210-8", "Silver Sage", "#C0C2B8"],
+      ["PPU18-13", "Perfect Taupe", "#B6ACA0"],
+      ["PPU26-10", "Chic Gray", "#CFCCC5"],
+      ["PPU18-16", "Elephant Skin", "#97928B"],
+      ["PPU18-18", "Mined Coal", "#6C6B65"],
+      ["PPU18-03", "Antique Tin", "#6A6E72"],
+      ["N490-7", "Ink Black", "#45494D"],
+      ["N480-5", "Adirondack Blue", "#74858F"],
+      ["S-H-580", "Navy Blue", "#1E406B"],
+      ["RAH-74", "Slate Blue", "#697F8E"],
+      ["M530-4", "Washed Denim", "#819DBF"],
+      ["N480-1", "Light Drizzle", "#C9D3D7"],
+      ["MQ3-21", "Breezeway", "#CCD8CF"],
+      ["ICC-77", "Sage Green", "#7B8472"],
+      ["S350-6", "Truly Olive", "#777250"],
+      ["BXC-12", "Deep Forest", "#444A3F"],
+      ["480C-1", "Light Mint", "#E2F3E7"],
+      ["808", "Forest Green", "#576C50"],
+      ["S210-4", "Canyon Dusk", "#C39C83"],
+      ["M200-5", "Terra Cotta Clay", "#D08F73"],
+      ["S-H-170", "Red Brick", "#834841"],
+      ["MQ1-15", "Rumors", "#744245"],
+      ["700D-5", "Toffee Crunch", "#9F866F"],
+      ["360D-6", "Yellow Gold", "#E2B64E"],
+      ["P320-6A", "Flustered Mustard", "#DBC058"],
+      ["2B12-6", "Honey Gold", "#D69B4B"],
+      ["280E-3", "Toasted Wheat", "#C9AF96"],
+      ["320F-4", "Desert Camel", "#D3B68F"],
+      ["720C-3", "Wheat Bread", "#CDC4B7"],
+      ["S-H-670", "Plum", "#55445E"],
+      ["S110-5", "Garden Plum", "#9D8292"]
+    ]
+  },
+  bm: {
+    label: "Benjamin Moore",
+    colors: [
+      ["OC-17", "White Dove", "#EFE9DC"],
+      ["OC-65", "Chantilly Lace", "#F3F1EA"],
+      ["2121-10", "Black", "#2B2A28"],
+      ["HC-172", "Revere Pewter", "#A8A18C"],
+      ["HC-154", "Hale Navy", "#29374A"],
+      ["1546", "Simply White", "#EFECE1"],
+      ["CC-560", "Wickham Gray", "#B8AF9E"],
+      ["2062-10", "Newburyport Blue", "#1F3A52"],
+      ["CSP-95", "Kendall Charcoal", "#4C4C48"],
+      ["AF-690", "Stonington Gray", "#C7C7BE"],
+      ["HC-173", "Edgecomb Gray", "#D6CBB8"],
+      ["AC-20", "Cloud White", "#EDE8D8"],
+      ["HC-91", "Sherwood Green", "#445241"],
+      ["HC-48", "Rockport Gray", "#A6A99E"],
+      ["2115-10", "Onyx", "#38393A"],
+      ["1035", "Navajo White", "#E4D3AE"],
+      ["CC-522", "Yorkshire Tan", "#C6A97A"],
+      ["HC-116", "Guilford Green", "#96A085"],
+      ["1495", "October Mist", "#A9AD8E"],
+      ["HC-125", "Cushing Green", "#7C7F5E"],
+      ["HC-150", "Yarmouth Blue", "#7391A0"],
+      ["HC-143", "Wythe Blue", "#90A8AE"],
+      ["HC-156", "Van Deusen Blue", "#35597C"],
+      ["2041-10", "Hunter Green", "#2A453D"],
+      ["OC-45", "Swiss Coffee", "#EEECE1"],
+      ["OC-152", "Super White", "#F1F2EE"],
+      ["OC-20", "Pale Oak", "#EAE3D8"],
+      ["OC-54", "White Wisp", "#E6E8E1"],
+      ["OC-61", "White Diamond", "#ECEFEC"],
+      ["OC-27", "Balboa Mist", "#DAD6CC"],
+      ["OC-52", "Gray Owl", "#D3D4CC"],
+      ["OC-28", "Collingwood", "#D4CFC5"],
+      ["1560", "Antique Pewter", "#8B8A7B"],
+      ["2128-10", "Black Beauty", "#393736"],
+      ["2129-20", "Soot", "#373C41"],
+      ["AF-180", "Wenge", "#3C2D2B"],
+      ["2130-10", "Black Bean Soup", "#453C39"],
+      ["HC-144", "Palladian Blue", "#C1D1C9"],
+      ["HC-165", "Boothbay Gray", "#AAB2B0"],
+      ["HC-149", "Buxton Blue", "#9DB6BA"],
+      ["2063-10", "Old Navy", "#2E3549"],
+      ["2062-20", "Gentleman's Gray", "#304656"],
+      ["1648", "Slate Blue", "#9BB1BB"],
+      ["HC-114", "Saybrook Sage", "#B1B7A2"],
+      ["HC-98", "Providence Olive", "#ACA182"],
+      ["HC-112", "Tate Olive", "#818066"],
+      ["HC-188", "Essex Green", "#27362E"],
+      ["HC-100", "Gloucester Sage", "#7B7665"],
+      ["AF-290", "Caliente", "#8A2728"],
+      ["2003-10", "Million Dollar Red", "#B5332C"],
+      ["2084-10", "Brick Red", "#793B31"],
+      ["2005-10", "Red Rock", "#7C3E32"],
+      ["HC-4", "Hawthorne Yellow", "#F1DA9C"],
+      ["2152-50", "Golden Straw", "#EFDDB5"],
+      ["HC-6", "Windham Cream", "#F5E9C7"],
+      ["HC-77", "Alexandria Beige", "#A3927C"],
+      ["HC-45", "Shaker Beige", "#D1C2A7"],
+      ["HC-83", "Grant Beige", "#CEC5B0"],
+      ["HC-44", "Lenox Tan", "#C2AE8E"],
+      ["HC-46", "Jackson Tan", "#AA896A"],
+      ["977", "Brandon Beige", "#AFA58F"],
+      ["2117-30", "Shadow", "#514A58"],
+      ["2070-60", "Lavender Mist", "#CFCFE0"]
+    ]
+  }
+};
+
+// ---- Color math: sRGB -> Lab, CIE76 delta-E ----
+function hexToRgb(hex) {
+  hex = hex.replace("#", "");
+  if (hex.length === 3) hex = hex.split("").map(function(c){ return c+c; }).join("");
+  var num = parseInt(hex, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map(function(v) {
+    var h = Math.round(v).toString(16);
+    return h.length === 1 ? "0" + h : h;
+  }).join("").toUpperCase();
+}
+function srgbToLinear(c) {
+  c = c / 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+function rgbToXyz(r, g, b) {
+  r = srgbToLinear(r); g = srgbToLinear(g); b = srgbToLinear(b);
+  return [
+    (r * 0.4124564 + g * 0.3575761 + b * 0.1804375) * 100,
+    (r * 0.2126729 + g * 0.7151522 + b * 0.0721750) * 100,
+    (r * 0.0193339 + g * 0.1191920 + b * 0.9503041) * 100
+  ];
+}
+function xyzToLab(x, y, z) {
+  var refX = 95.047, refY = 100.0, refZ = 108.883;
+  x /= refX; y /= refY; z /= refZ;
+  var f = function(t) { return t > 0.008856 ? Math.cbrt(t) : (7.787 * t + 16 / 116); };
+  var fx = f(x), fy = f(y), fz = f(z);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+function rgbToLab(r, g, b) {
+  var xyz = rgbToXyz(r, g, b);
+  return xyzToLab(xyz[0], xyz[1], xyz[2]);
+}
+function deltaE76(lab1, lab2) {
+  var dl = lab1[0] - lab2[0], da = lab1[1] - lab2[1], db = lab1[2] - lab2[2];
+  return Math.sqrt(dl * dl + da * da + db * db);
+}
+function matchQuality(de) {
+  if (de < 3) return { cls: "q-excellent", label: "Excellent match" };
+  if (de < 10) return { cls: "q-good", label: "Good match" };
+  return { cls: "q-rough", label: "Rough ballpark" };
+}
+
+// ---- State ----
+var currentRgb = null; // [r,g,b]
+
+// ---- Tab switching ----
+var tabPhotoBtn = document.getElementById("pcmTabPhotoBtn");
+var tabManualBtn = document.getElementById("pcmTabManualBtn");
+var photoPane = document.getElementById("pcmPhotoPane");
+var manualPane = document.getElementById("pcmManualPane");
+tabPhotoBtn.addEventListener("click", function() {
+  tabPhotoBtn.classList.add("active");
+  tabManualBtn.classList.remove("active");
+  photoPane.classList.add("visible");
+  manualPane.classList.remove("visible");
+});
+tabManualBtn.addEventListener("click", function() {
+  tabManualBtn.classList.add("active");
+  tabPhotoBtn.classList.remove("active");
+  manualPane.classList.add("visible");
+  photoPane.classList.remove("visible");
+});
+
+// ---- Photo sampling ----
+var fileInput = document.getElementById("pcmFileInput");
+var canvas = document.getElementById("pcmCanvas");
+var ctx = canvas.getContext("2d", { willReadFrequently: true });
+var canvasWrap = document.getElementById("pcmCanvasWrap");
+var loupe = document.getElementById("pcmLoupe");
+var loupeCanvas = document.getElementById("pcmLoupeCanvas");
+var loupeCtx = loupeCanvas.getContext("2d");
+var hasImage = false;
+
+// ---- White balance state ----
+var wbSection = document.getElementById("pcmWbSection");
+var pickNeutralBtn = document.getElementById("pcmPickNeutralBtn");
+var wbResetBtn = document.getElementById("pcmWbResetBtn");
+var neutralStatus = document.getElementById("pcmNeutralStatus");
+var tempSlider = document.getElementById("pcmTempSlider");
+var tintSlider = document.getElementById("pcmTintSlider");
+var rSlider = document.getElementById("pcmRSlider");
+var gSlider = document.getElementById("pcmGSlider");
+var bSlider = document.getElementById("pcmBSlider");
+var rVal = document.getElementById("pcmRVal");
+var gVal = document.getElementById("pcmGVal");
+var bVal = document.getElementById("pcmBVal");
+var originalImageData = null;
+var baseGain = { r: 1, g: 1, b: 1 };
+var pickingNeutral = false;
+var lastSamplePoint = null;
+var wbRaf = null;
+
+fileInput.addEventListener("change", function(e) {
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+  var img = new Image();
+  var url = URL.createObjectURL(file);
+  img.onload = function() {
+    URL.revokeObjectURL(url);
+    var maxW = 700;
+    var scale = Math.min(1, maxW / img.naturalWidth);
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    hasImage = true;
+    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    baseGain = { r: 1, g: 1, b: 1 };
+    resetSliders();
+    neutralStatus.textContent = "";
+    lastSamplePoint = null;
+    wbSection.classList.add("visible");
+    document.getElementById("pcmPhotoHint").textContent =
+      "Click (or tap) anywhere on the photo to sample that pixel's color.";
+  };
+  img.src = url;
+});
+
+function clampGain(g) { return Math.max(0.3, Math.min(3, g)); }
+
+function setNeutralFromPoint(pt) {
+  var d = originalImageData.data;
+  var idx = (pt.y * originalImageData.width + pt.x) * 4;
+  var rawR = d[idx], rawG = d[idx + 1], rawB = d[idx + 2];
+  var rawL = (rawR + rawG + rawB) / 3;
+  if (rawL < 40) {
+    neutralStatus.textContent =
+      "That spot's too dark to use as a reference (RGB " + rawR + ", " + rawG + ", " + rawB +
+      ") — pick something lighter, like sky, concrete, or white trim.";
+    return false;
+  }
+  if (rawL > 248) {
+    neutralStatus.textContent =
+      "That spot's blown out to near-white (RGB " + rawR + ", " + rawG + ", " + rawB +
+      ") — pick a spot with more detail, like a shaded gray area.";
+    return false;
+  }
+  var r = rawR, g = rawG, b = rawB;
+  var l = rawL;
+  baseGain.r = clampGain(l / r);
+  baseGain.g = clampGain(l / g);
+  baseGain.b = clampGain(l / b);
+  resetSliders();
+  neutralStatus.textContent = "Neutral point set (was RGB " + rawR + ", " + rawG + ", " + rawB + ")";
+  applyAdjustment();
+  return true;
+}
+
+function resetSliders() {
+  tempSlider.value = 0;
+  tintSlider.value = 0;
+  rSlider.value = 0;
+  gSlider.value = 0;
+  bSlider.value = 0;
+  rVal.textContent = "0";
+  gVal.textContent = "0";
+  bVal.textContent = "0";
+}
+
+function applyAdjustment() {
+  if (!originalImageData) return;
+  var temp = parseInt(tempSlider.value, 10) / 100;
+  var tint = parseInt(tintSlider.value, 10) / 100;
+  var rNudge = 1 + (parseInt(rSlider.value, 10) / 100) * 0.5;
+  var gNudge = 1 + (parseInt(gSlider.value, 10) / 100) * 0.5;
+  var bNudge = 1 + (parseInt(bSlider.value, 10) / 100) * 0.5;
+  var rGain = baseGain.r * (1 + temp * 0.35) * rNudge;
+  var gGain = baseGain.g * (1 - tint * 0.35) * gNudge;
+  var bGain = baseGain.b * (1 - temp * 0.35) * bNudge;
+
+  var src = originalImageData.data;
+  var out = ctx.createImageData(originalImageData.width, originalImageData.height);
+  var od = out.data;
+  for (var i = 0; i < src.length; i += 4) {
+    od[i] = Math.min(255, src[i] * rGain);
+    od[i + 1] = Math.min(255, src[i + 1] * gGain);
+    od[i + 2] = Math.min(255, src[i + 2] * bGain);
+    od[i + 3] = src[i + 3];
+  }
+  ctx.putImageData(out, 0, 0);
+
+  if (lastSamplePoint) sampleAt(lastSamplePoint);
+}
+
+function scheduleApply() {
+  if (wbRaf) return;
+  wbRaf = requestAnimationFrame(function() { wbRaf = null; applyAdjustment(); });
+}
+
+pickNeutralBtn.addEventListener("click", function() {
+  if (!hasImage) return;
+  pickingNeutral = !pickingNeutral;
+  pickNeutralBtn.classList.toggle("active", pickingNeutral);
+  canvas.classList.toggle("picking-neutral", pickingNeutral);
+  if (pickingNeutral) neutralStatus.textContent = "Click a white/gray spot in the photo…";
+});
+
+wbResetBtn.addEventListener("click", function() {
+  if (!hasImage) return;
+  baseGain = { r: 1, g: 1, b: 1 };
+  resetSliders();
+  neutralStatus.textContent = "";
+  applyAdjustment();
+});
+
+tempSlider.addEventListener("input", scheduleApply);
+tintSlider.addEventListener("input", scheduleApply);
+rSlider.addEventListener("input", function() { rVal.textContent = rSlider.value; scheduleApply(); });
+gSlider.addEventListener("input", function() { gVal.textContent = gSlider.value; scheduleApply(); });
+bSlider.addEventListener("input", function() { bVal.textContent = bSlider.value; scheduleApply(); });
+
+function canvasPointFromEvent(evt) {
+  var rect = canvas.getBoundingClientRect();
+  var clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  var clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
+  var x = Math.floor((clientX - rect.left) * scaleX);
+  var y = Math.floor((clientY - rect.top) * scaleY);
+  x = Math.max(0, Math.min(canvas.width - 1, x));
+  y = Math.max(0, Math.min(canvas.height - 1, y));
+  return { x: x, y: y, clientX: clientX - rect.left, clientY: clientY - rect.top };
+}
+
+function updateLoupe(pt) {
+  loupe.style.display = "block";
+  loupe.style.left = (pt.clientX - 45) + "px";
+  loupe.style.top = (pt.clientY - 110) + "px";
+  var zoomSrc = 12;
+  loupeCtx.imageSmoothingEnabled = false;
+  loupeCtx.clearRect(0, 0, 90, 90);
+  loupeCtx.drawImage(
+    canvas,
+    Math.max(0, pt.x - zoomSrc / 2), Math.max(0, pt.y - zoomSrc / 2), zoomSrc, zoomSrc,
+    0, 0, 90, 90
+  );
+}
+
+function sampleAt(pt) {
+  var data = ctx.getImageData(pt.x, pt.y, 1, 1).data;
+  setCurrentColor([data[0], data[1], data[2]]);
+}
+
+canvas.addEventListener("mousemove", function(evt) {
+  if (!hasImage) return;
+  updateLoupe(canvasPointFromEvent(evt));
+});
+canvas.addEventListener("mouseleave", function() { loupe.style.display = "none"; });
+canvas.addEventListener("click", function(evt) {
+  if (!hasImage) return;
+  var pt = canvasPointFromEvent(evt);
+  handleCanvasPick(pt);
+});
+canvas.addEventListener("touchstart", function(evt) {
+  if (!hasImage) return;
+  var pt = canvasPointFromEvent(evt);
+  updateLoupe(pt);
+}, { passive: true });
+canvas.addEventListener("touchend", function(evt) {
+  if (!hasImage) return;
+  var rect = canvas.getBoundingClientRect();
+  var touch = evt.changedTouches[0];
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
+  var x = Math.max(0, Math.min(canvas.width - 1, Math.floor((touch.clientX - rect.left) * scaleX)));
+  var y = Math.max(0, Math.min(canvas.height - 1, Math.floor((touch.clientY - rect.top) * scaleY)));
+  loupe.style.display = "none";
+  handleCanvasPick({ x: x, y: y });
+}, { passive: true });
+
+function handleCanvasPick(pt) {
+  if (pickingNeutral) {
+    var ok = setNeutralFromPoint(pt);
+    if (ok) {
+      pickingNeutral = false;
+      pickNeutralBtn.classList.remove("active");
+      canvas.classList.remove("picking-neutral");
+    }
+  } else {
+    lastSamplePoint = pt;
+    sampleAt(pt);
+  }
+}
+
+// ---- Manual entry ----
+var colorPicker = document.getElementById("pcmColorPicker");
+var hexInput = document.getElementById("pcmHexInput");
+document.getElementById("pcmManualUseBtn").addEventListener("click", function() {
+  var hex = hexInput.value.trim();
+  if (!/^#?[0-9a-fA-F]{6}$/.test(hex)) {
+    alert("Enter a valid 6-digit hex code, like #8C9294.");
+    return;
+  }
+  if (hex[0] !== "#") hex = "#" + hex;
+  setCurrentColor(hexToRgb(hex));
+});
+colorPicker.addEventListener("input", function() {
+  hexInput.value = colorPicker.value.toUpperCase();
+});
+
+// ---- Set current color + run matching ----
+var sampleBox = document.getElementById("pcmSampleBox");
+var sampleSwatch = document.getElementById("pcmSampleSwatch");
+var sampleValues = document.getElementById("pcmSampleValues");
+
+function setCurrentColor(rgb) {
+  currentRgb = rgb;
+  var hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
+  colorPicker.value = hex;
+  hexInput.value = hex;
+  sampleSwatch.style.background = hex;
+  sampleValues.innerHTML =
+    "<strong>Hex:</strong> " + hex + "<br>" +
+    "<strong>RGB:</strong> " + rgb[0] + ", " + rgb[1] + ", " + rgb[2];
+  sampleBox.classList.add("visible");
+  runMatching();
+}
+
+// ---- Matching ----
+var resultsEl = document.getElementById("pcmResults");
+var brandCbs = document.querySelectorAll(".pcm-brand-cb");
+brandCbs.forEach(function(cb) { cb.addEventListener("change", runMatching); });
+
+function runMatching() {
+  if (!currentRgb) return;
+  var targetLab = rgbToLab(currentRgb[0], currentRgb[1], currentRgb[2]);
+  var activeBrands = [];
+  brandCbs.forEach(function(cb) { if (cb.checked) activeBrands.push(cb.value); });
+
+  var html = "";
+  var summaryLines = [];
+
+  activeBrands.forEach(function(brandKey) {
+    var brand = PAINT_DB[brandKey];
+    var scored = brand.colors.map(function(c) {
+      var rgb = hexToRgb(c[2]);
+      var lab = rgbToLab(rgb[0], rgb[1], rgb[2]);
+      return { code: c[0], name: c[1], hex: c[2], de: deltaE76(targetLab, lab) };
+    });
+    scored.sort(function(a, b) { return a.de - b.de; });
+    var top3 = scored.slice(0, 3);
+
+    html += '<div class="pcm-brand-group"><h4>' + brand.label + '</h4><div class="pcm-match-list">';
+    top3.forEach(function(m) {
+      var q = matchQuality(m.de);
+      html += '<div class="pcm-match-card">' +
+        '<div class="pcm-match-swatch" style="background:' + m.hex + ';"></div>' +
+        '<div class="pcm-match-info">' +
+          '<div class="name">' + m.name + '</div>' +
+          '<div>' + m.code + ' &middot; ' + m.hex + '</div>' +
+          '<div class="pcm-match-quality ' + q.cls + '">' + q.label + ' (ΔE ' + m.de.toFixed(1) + ')</div>' +
+        '</div></div>';
+    });
+    html += "</div></div>";
+
+    summaryLines.push(brand.label + ":");
+    top3.forEach(function(m) {
+      summaryLines.push("  - " + m.name + " (" + m.code + ", " + m.hex + ") - dE " + m.de.toFixed(1));
+    });
+  });
+
+  resultsEl.innerHTML = html;
+  resultsEl.classList.add("visible");
+
+  buildSummary(summaryLines);
+}
+
+// ---- Summary ----
+var summaryBox = document.getElementById("pcmSummaryBox");
+var summaryText = document.getElementById("pcmSummaryText");
+var copyBtn = document.getElementById("pcmCopyBtn");
+var copyMsg = document.getElementById("pcmCopyMsg");
+
+function buildSummary(brandLines) {
+  var hex = colorPicker.value.toUpperCase();
+  var lines = [
+    "Paint color match request",
+    "",
+    "Target color:",
+    "  Hex: " + hex,
+    "  RGB: " + currentRgb[0] + ", " + currentRgb[1] + ", " + currentRgb[2],
+    "",
+    "Closest catalog matches (approximate, please verify against an in-store chip):",
+    ""
+  ].concat(brandLines);
+  var text = lines.join("\n");
+  summaryText.value = text;
+  summaryBox.classList.add("visible");
+}
+
+copyBtn.addEventListener("click", function() {
+  summaryText.select();
+  summaryText.setSelectionRange(0, 999999);
+  var ok = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(summaryText.value);
+      ok = true;
+    } else {
+      ok = document.execCommand("copy");
+    }
+  } catch (e) { ok = false; }
+  if (ok) {
+    copyMsg.style.display = "inline";
+    setTimeout(function() { copyMsg.style.display = "none"; }, 1800);
+  }
+});
+
+})();
+</script>
+
+    </div>
+    <p style="text-align:center;margin-top:20px;"><a href="../tools.html">&larr; Back to all tools</a></p>
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="../assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="../contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="../services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="../services/new-build.html">New Build</a></li>
+        <li><a href="../services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="../services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="../services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="../portfolio.html">Portfolio</a></li>
+        <li><a href="../tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="../about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="../assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>
