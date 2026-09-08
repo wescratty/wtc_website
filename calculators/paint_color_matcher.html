@@ -57,20 +57,16 @@
 .calc-section h3 { margin-bottom: 4px; }
 .calc-section .section-note { color: #5c6270; font-size: 0.92rem; margin-top: 0; margin-bottom: 18px; }
 
-.pcm-source-toggle { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
-.pcm-source-toggle button {
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
+.pcm-input-label {
+    margin: 0 0 10px;
+    color: var(--navy);
+    font-size: 0.95rem;
 }
-.pcm-source-toggle button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
-
-.pcm-photo-pane, .pcm-manual-pane { display: none; }
-.pcm-photo-pane.visible, .pcm-manual-pane.visible { display: block; }
+.pcm-input-label-manual {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px dashed var(--border);
+}
 
 #pcmFileInput { margin-bottom: 12px; }
 
@@ -210,7 +206,8 @@
 .pcm-combo-info { font-size: 0.88rem; line-height: 1.5; }
 .pcm-combo-role { font-weight: 700; color: var(--navy); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
 .pcm-combo-match { font-weight: 600; }
-.pcm-combo-why { color: #5c6270; font-size: 0.85rem; margin-top: 2px; }
+.pcm-combo-hex { font-family: "Courier New", monospace; color: #5c6270; font-size: 0.82rem; margin-top: 1px; }
+.pcm-combo-why { color: #5c6270; font-size: 0.85rem; margin-top: 4px; }
 
 .pcm-summary-box { display: none; }
 .pcm-summary-box.visible { display: block; }
@@ -247,12 +244,8 @@
   <h3>1. Get your color</h3>
   <p class="section-note">Upload a photo and click the spot you want to match, or enter a color directly.</p>
 
-  <div class="pcm-source-toggle">
-    <button type="button" id="pcmTabPhotoBtn" class="active">Sample from a photo</button>
-    <button type="button" id="pcmTabManualBtn">Enter a color manually</button>
-  </div>
-
-  <div class="pcm-photo-pane visible" id="pcmPhotoPane">
+  <h4 class="pcm-input-label">Sample from a photo</h4>
+  <div class="pcm-photo-pane" id="pcmPhotoPane">
     <input type="file" id="pcmFileInput" accept="image/*">
     <p class="section-note" id="pcmPhotoHint">Choose a photo, then click (or tap) anywhere on it to sample that pixel's color.</p>
     <div class="pcm-canvas-wrap" id="pcmCanvasWrap">
@@ -286,6 +279,7 @@
     </div>
   </div>
 
+  <h4 class="pcm-input-label pcm-input-label-manual">Or enter a color manually</h4>
   <div class="pcm-manual-pane" id="pcmManualPane">
     <div class="pcm-manual-row">
       <div>
@@ -653,24 +647,6 @@ function hslToRgb(h, s, l) {
 
 // ---- State ----
 var currentRgb = null; // [r,g,b]
-
-// ---- Tab switching ----
-var tabPhotoBtn = document.getElementById("pcmTabPhotoBtn");
-var tabManualBtn = document.getElementById("pcmTabManualBtn");
-var photoPane = document.getElementById("pcmPhotoPane");
-var manualPane = document.getElementById("pcmManualPane");
-tabPhotoBtn.addEventListener("click", function() {
-  tabPhotoBtn.classList.add("active");
-  tabManualBtn.classList.remove("active");
-  photoPane.classList.add("visible");
-  manualPane.classList.remove("visible");
-});
-tabManualBtn.addEventListener("click", function() {
-  tabManualBtn.classList.add("active");
-  tabPhotoBtn.classList.remove("active");
-  manualPane.classList.add("visible");
-  photoPane.classList.remove("visible");
-});
 
 // ---- Photo sampling ----
 var fileInput = document.getElementById("pcmFileInput");
@@ -1078,8 +1054,9 @@ function renderCombo() {
       '<div class="pcm-combo-info">' +
         '<div class="pcm-combo-role">' + item.role + '</div>' +
         '<div class="pcm-combo-match">' +
-          (match ? match.name + " &middot; " + match.code + " (" + match.brandLabel + ")" : hex) +
+          (match ? match.name + " &middot; " + match.code + " (" + match.brandLabel + ")" : "") +
         '</div>' +
+        '<div class="pcm-combo-hex">' + hex + '</div>' +
         '<div class="pcm-combo-why">' + item.why + '</div>' +
       '</div></div>';
   });
