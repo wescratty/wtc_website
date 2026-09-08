@@ -4,6 +4,10 @@ A personal field-reference tool for southwest Montana deer & elk hunting distric
 
 **Status: not yet linked from the live site.** It isn't referenced from `fun-tools.html`, `tools.html`, or any nav — it's only reachable by knowing the direct URL. Wire it in (see "Going live" below) whenever it's ready.
 
+## Development process
+
+This app was built through **AI pair programming**: Claude Code (Anthropic's agentic coding CLI) acted as the implementation partner, writing the HTML/CSS/JS for every feature and fix in `hunting_tags.html`, while I directed the work as architect and reviewer. My side of that included writing the requirements and feature specs, making the architecture calls, reviewing every diff, testing each change live in-browser before accepting it, and handling deployment myself. I also did ordinary code review on the AI's output the same way I would on any teammate's: for example, the "filling in one district removes the tag from the others it's valid in" logic documented above was corrected through that review after an early version got it wrong, not written correctly on the first pass.
+
 ## Files
 
 | File | Purpose |
