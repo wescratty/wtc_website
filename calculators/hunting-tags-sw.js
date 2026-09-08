@@ -31,7 +31,7 @@
   the cache OR re-fetched from the network - so the handler's own
   fetch() call never actually hits the redirect in the first place.
 */
-const CACHE_NAME = "hunting-tags-v6";
+const CACHE_NAME = "hunting-tags-v7";
 
 const HTML_ALIAS = "/calculators/hunting_tags.html";
 const HTML_CANONICAL = "/calculators/hunting_tags";
@@ -49,6 +49,8 @@ const PRECACHE_PATHS = [
   "/assets/logo/favicon-192.png",
   "/assets/logo/favicon-512.png",
   "/assets/hunting/district-map-region2-3.png",
+  "/assets/hunting/mt-hunting-districts.geojson",
+  "/assets/js/turf.min.js",
   "/assets/hunting/icons/wtdBuck.png",
   "/assets/hunting/icons/wtdEither.png",
   "/assets/hunting/icons/wtdDoe.png",
