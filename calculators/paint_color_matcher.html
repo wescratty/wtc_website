@@ -281,13 +281,13 @@
       </div>
       <div class="pcm-wb-sliders">
         <label>Cooler <input type="range" id="pcmTempSlider" min="-100" max="100" value="0"> Warmer</label>
-        <label>Green <input type="range" id="pcmTintSlider" min="-100" max="100" value="0"> Magenta</label>
+        <label>Darker <input type="range" id="pcmBrightnessSlider" min="-100" max="100" value="0"> Lighter</label>
       </div>
       <p class="section-note" style="margin:14px 0 6px;">Or nudge individual channels by eye:</p>
       <div class="pcm-wb-sliders">
         <label>Red <input type="range" id="pcmRSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmRVal">0</span></label>
+        <label>Green <input type="range" id="pcmGSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmGVal">0</span></label>
         <label>Blue <input type="range" id="pcmBSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmBVal">0</span></label>
-        <label>Darker <input type="range" id="pcmBrightnessSlider" min="-100" max="100" value="0"> Lighter</label>
       </div>
     </div>
   </div>
@@ -681,11 +681,12 @@ var pickNeutralBtn = document.getElementById("pcmPickNeutralBtn");
 var wbResetBtn = document.getElementById("pcmWbResetBtn");
 var neutralStatus = document.getElementById("pcmNeutralStatus");
 var tempSlider = document.getElementById("pcmTempSlider");
-var tintSlider = document.getElementById("pcmTintSlider");
-var rSlider = document.getElementById("pcmRSlider");
-var bSlider = document.getElementById("pcmBSlider");
 var brightnessSlider = document.getElementById("pcmBrightnessSlider");
+var rSlider = document.getElementById("pcmRSlider");
+var gSlider = document.getElementById("pcmGSlider");
+var bSlider = document.getElementById("pcmBSlider");
 var rVal = document.getElementById("pcmRVal");
+var gVal = document.getElementById("pcmGVal");
 var bVal = document.getElementById("pcmBVal");
 var originalImageData = null;
 var baseGain = { r: 1, g: 1, b: 1 };
@@ -750,23 +751,24 @@ function setNeutralFromPoint(pt) {
 
 function resetSliders() {
   tempSlider.value = 0;
-  tintSlider.value = 0;
-  rSlider.value = 0;
-  bSlider.value = 0;
   brightnessSlider.value = 0;
+  rSlider.value = 0;
+  gSlider.value = 0;
+  bSlider.value = 0;
   rVal.textContent = "0";
+  gVal.textContent = "0";
   bVal.textContent = "0";
 }
 
 function applyAdjustment() {
   if (!originalImageData) return;
   var temp = parseInt(tempSlider.value, 10) / 100;
-  var tint = parseInt(tintSlider.value, 10) / 100;
-  var rNudge = 1 + (parseInt(rSlider.value, 10) / 100) * 0.5;
-  var bNudge = 1 + (parseInt(bSlider.value, 10) / 100) * 0.5;
   var brightnessNudge = 1 + (parseInt(brightnessSlider.value, 10) / 100) * 0.5;
+  var rNudge = 1 + (parseInt(rSlider.value, 10) / 100) * 0.5;
+  var gNudge = 1 + (parseInt(gSlider.value, 10) / 100) * 0.5;
+  var bNudge = 1 + (parseInt(bSlider.value, 10) / 100) * 0.5;
   var rGain = baseGain.r * (1 + temp * 0.35) * rNudge * brightnessNudge;
-  var gGain = baseGain.g * (1 - tint * 0.35) * brightnessNudge;
+  var gGain = baseGain.g * gNudge * brightnessNudge;
   var bGain = baseGain.b * (1 - temp * 0.35) * bNudge * brightnessNudge;
 
   var src = originalImageData.data;
@@ -805,10 +807,10 @@ wbResetBtn.addEventListener("click", function() {
 });
 
 tempSlider.addEventListener("input", scheduleApply);
-tintSlider.addEventListener("input", scheduleApply);
-rSlider.addEventListener("input", function() { rVal.textContent = rSlider.value; scheduleApply(); });
-bSlider.addEventListener("input", function() { bVal.textContent = bSlider.value; scheduleApply(); });
 brightnessSlider.addEventListener("input", scheduleApply);
+rSlider.addEventListener("input", function() { rVal.textContent = rSlider.value; scheduleApply(); });
+gSlider.addEventListener("input", function() { gVal.textContent = gSlider.value; scheduleApply(); });
+bSlider.addEventListener("input", function() { bVal.textContent = bSlider.value; scheduleApply(); });
 
 function canvasPointFromEvent(evt) {
   var rect = canvas.getBoundingClientRect();
