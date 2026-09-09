@@ -62,10 +62,21 @@
     color: var(--navy);
     font-size: 0.95rem;
 }
-.pcm-input-label-manual {
-    margin-top: 26px;
+.pcm-input-columns { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+.pcm-input-col { flex: 1 1 320px; min-width: 260px; }
+.pcm-input-col-manual {
+    margin-top: 22px;
     padding-top: 22px;
     border-top: 1px dashed var(--border);
+}
+@media (min-width: 700px) {
+    .pcm-input-col-manual {
+        margin-top: 0;
+        padding-top: 0;
+        padding-left: 28px;
+        border-top: none;
+        border-left: 1px dashed var(--border);
+    }
 }
 
 #pcmFileInput { margin-bottom: 12px; }
@@ -244,6 +255,8 @@
   <h3>1. Get your color</h3>
   <p class="section-note">Upload a photo and click the spot you want to match, or enter a color directly.</p>
 
+  <div class="pcm-input-columns">
+  <div class="pcm-input-col">
   <h4 class="pcm-input-label">Sample from a photo</h4>
   <div class="pcm-photo-pane" id="pcmPhotoPane">
     <input type="file" id="pcmFileInput" accept="image/*">
@@ -273,13 +286,15 @@
       <p class="section-note" style="margin:14px 0 6px;">Or nudge individual channels by eye:</p>
       <div class="pcm-wb-sliders">
         <label>Red <input type="range" id="pcmRSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmRVal">0</span></label>
-        <label>Green <input type="range" id="pcmGSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmGVal">0</span></label>
         <label>Blue <input type="range" id="pcmBSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmBVal">0</span></label>
+        <label>Darker <input type="range" id="pcmBrightnessSlider" min="-100" max="100" value="0"> Lighter</label>
       </div>
     </div>
   </div>
+  </div>
 
-  <h4 class="pcm-input-label pcm-input-label-manual">Or enter a color manually</h4>
+  <div class="pcm-input-col pcm-input-col-manual">
+  <h4 class="pcm-input-label">Or enter a color manually</h4>
   <div class="pcm-manual-pane" id="pcmManualPane">
     <div class="pcm-manual-row">
       <div>
@@ -294,6 +309,8 @@
         <button type="button" id="pcmManualUseBtn">Use this color</button>
       </div>
     </div>
+  </div>
+  </div>
   </div>
 
   <div class="pcm-sample-box" id="pcmSampleBox">
@@ -319,7 +336,7 @@
   color using basic color-wheel relationships, then matched back to real paint chips. Trust your eye over this.</p>
   <div class="pcm-combo-actions">
     <button type="button" id="pcmComboBtn">Suggest a combo</button>
-    <button type="button" id="pcmComboShuffleBtn" style="display:none;">Try another accent</button>
+    <button type="button" id="pcmComboShuffleBtn" style="display:none;">Try another combo</button>
   </div>
   <div class="pcm-combo-results" id="pcmComboResults"></div>
 </div>
@@ -666,10 +683,9 @@ var neutralStatus = document.getElementById("pcmNeutralStatus");
 var tempSlider = document.getElementById("pcmTempSlider");
 var tintSlider = document.getElementById("pcmTintSlider");
 var rSlider = document.getElementById("pcmRSlider");
-var gSlider = document.getElementById("pcmGSlider");
 var bSlider = document.getElementById("pcmBSlider");
+var brightnessSlider = document.getElementById("pcmBrightnessSlider");
 var rVal = document.getElementById("pcmRVal");
-var gVal = document.getElementById("pcmGVal");
 var bVal = document.getElementById("pcmBVal");
 var originalImageData = null;
 var baseGain = { r: 1, g: 1, b: 1 };
@@ -736,10 +752,9 @@ function resetSliders() {
   tempSlider.value = 0;
   tintSlider.value = 0;
   rSlider.value = 0;
-  gSlider.value = 0;
   bSlider.value = 0;
+  brightnessSlider.value = 0;
   rVal.textContent = "0";
-  gVal.textContent = "0";
   bVal.textContent = "0";
 }
 
@@ -748,11 +763,11 @@ function applyAdjustment() {
   var temp = parseInt(tempSlider.value, 10) / 100;
   var tint = parseInt(tintSlider.value, 10) / 100;
   var rNudge = 1 + (parseInt(rSlider.value, 10) / 100) * 0.5;
-  var gNudge = 1 + (parseInt(gSlider.value, 10) / 100) * 0.5;
   var bNudge = 1 + (parseInt(bSlider.value, 10) / 100) * 0.5;
-  var rGain = baseGain.r * (1 + temp * 0.35) * rNudge;
-  var gGain = baseGain.g * (1 - tint * 0.35) * gNudge;
-  var bGain = baseGain.b * (1 - temp * 0.35) * bNudge;
+  var brightnessNudge = 1 + (parseInt(brightnessSlider.value, 10) / 100) * 0.5;
+  var rGain = baseGain.r * (1 + temp * 0.35) * rNudge * brightnessNudge;
+  var gGain = baseGain.g * (1 - tint * 0.35) * brightnessNudge;
+  var bGain = baseGain.b * (1 - temp * 0.35) * bNudge * brightnessNudge;
 
   var src = originalImageData.data;
   var out = ctx.createImageData(originalImageData.width, originalImageData.height);
@@ -792,8 +807,8 @@ wbResetBtn.addEventListener("click", function() {
 tempSlider.addEventListener("input", scheduleApply);
 tintSlider.addEventListener("input", scheduleApply);
 rSlider.addEventListener("input", function() { rVal.textContent = rSlider.value; scheduleApply(); });
-gSlider.addEventListener("input", function() { gVal.textContent = gSlider.value; scheduleApply(); });
 bSlider.addEventListener("input", function() { bVal.textContent = bSlider.value; scheduleApply(); });
+brightnessSlider.addEventListener("input", scheduleApply);
 
 function canvasPointFromEvent(evt) {
   var rect = canvas.getBoundingClientRect();
@@ -1000,6 +1015,11 @@ var comboShuffleBtn = document.getElementById("pcmComboShuffleBtn");
 var comboResults = document.getElementById("pcmComboResults");
 var comboVariant = 0;
 var COMBO_ACCENT_ROTATIONS = [180, 150, 210, 30, 330];
+var COMBO_TRIM_STYLES = [
+  { mode: "light", why: "Same undertone as the body, just much lighter — the classic light-trim look." },
+  { mode: "dark", why: "Same undertone as the body but much darker — a modern, high-contrast trim." },
+  { mode: "wood", why: "A warm stained-wood tone, independent of the body color — common on craftsman-style trim and fascia." }
+];
 
 function resetCombo() {
   comboVariant = 0;
@@ -1033,11 +1053,20 @@ function generateCombo() {
 
   var rotation = COMBO_ACCENT_ROTATIONS[comboVariant % COMBO_ACCENT_ROTATIONS.length];
   var accentRgb = hslToRgb(h + rotation, clampNum(s + 15, 40, 80), clampNum(l - 18, 22, 45));
-  var trimRgb = hslToRgb(h, clampNum(s * 0.25, 4, 18), 92);
+
+  var trimStyle = COMBO_TRIM_STYLES[comboVariant % COMBO_TRIM_STYLES.length];
+  var trimRgb;
+  if (trimStyle.mode === "light") {
+    trimRgb = hslToRgb(h, clampNum(s * 0.25, 4, 18), 92);
+  } else if (trimStyle.mode === "dark") {
+    trimRgb = hslToRgb(h, clampNum(s * 0.6, 10, 35), 18);
+  } else {
+    trimRgb = hslToRgb(28, 38, 30);
+  }
 
   return [
     { role: "Body", rgb: currentRgb, why: "Your matched color, unchanged." },
-    { role: "Trim", rgb: trimRgb, why: "Same undertone as the body, just much lighter — keeps window and corner trim from clashing." },
+    { role: "Trim", rgb: trimRgb, why: trimStyle.why },
     { role: "Accent (door)", rgb: accentRgb, why: "Rotated across the color wheel for a deliberate pop, then darkened so it reads as a door color, not a wall color." }
   ];
 }
