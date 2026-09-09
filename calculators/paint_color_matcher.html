@@ -154,27 +154,77 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
 .pcm-manual-row input[type="color"] { width: 60px; height: 40px; padding: 2px; cursor: pointer; }
 .pcm-manual-row input[type="text"] { padding: 8px 10px; width: 140px; font-size: 1rem; }
 
-.pcm-sample-box {
-    display: none;
-    align-items: center;
-    gap: 18px;
-    margin-top: 20px;
-    padding: 14px 18px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: #fafafa;
+.pcm-cart-box { margin-top: 20px; }
+.pcm-cart-row {
+    display: flex;
     flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
 }
-.pcm-sample-box.visible { display: flex; }
-.pcm-sample-swatch {
-    width: 64px;
-    height: 64px;
+.pcm-cart-chip {
+    position: relative;
+    width: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.pcm-cart-chip:hover { background: #f4f4f4; }
+.pcm-cart-chip-focused { border-color: var(--gold); background: #fffaf0; }
+.pcm-cart-swatch {
+    width: 56px;
+    height: 56px;
     border-radius: 6px;
     border: 1px solid rgba(0,0,0,0.15);
-    flex-shrink: 0;
 }
-.pcm-sample-values { font-size: 0.92rem; line-height: 1.6; }
-.pcm-sample-values strong { color: var(--navy); }
+.pcm-cart-chip-empty .pcm-cart-swatch {
+    border-style: dashed;
+    background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+}
+.pcm-cart-label {
+    font-size: 0.72rem;
+    text-align: center;
+    line-height: 1.25;
+    color: #5c6270;
+    max-width: 84px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pcm-cart-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: #5c6270;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.pcm-cart-remove:hover { background: #fdecec; border-color: #d64545; color: #d64545; }
+#pcmAddColorBtn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
 
 .pcm-brand-filters { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
 .pcm-brand-filters label { font-weight: 600; font-size: 0.9rem; cursor: pointer; }
@@ -192,7 +242,12 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
     border-radius: 6px;
     padding: 10px 12px;
     background: #fff;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
 }
+.pcm-match-card:hover, .pcm-match-card:focus-visible { border-color: var(--gold); background: #fffaf0; outline: none; }
 .pcm-match-swatch {
     width: 40px; height: 40px;
     border-radius: 5px;
@@ -205,61 +260,7 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
 .pcm-match-quality.q-excellent { color: #2e7d32; }
 .pcm-match-quality.q-good { color: #96692e; }
 .pcm-match-quality.q-rough { color: #b3261e; }
-
-.pcm-combo-actions button {
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-right: 10px;
-}
-.pcm-combo-results { display: none; flex-direction: column; gap: 10px; margin-top: 16px; }
-.pcm-combo-results.visible { display: flex; }
-.pcm-combo-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 12px 14px;
-    background: #fff;
-}
-.pcm-combo-swatch {
-    width: 56px; height: 56px;
-    border-radius: 6px;
-    border: 1px solid rgba(0,0,0,0.15);
-    flex-shrink: 0;
-}
-.pcm-combo-info { font-size: 0.88rem; line-height: 1.5; }
-.pcm-combo-role { font-weight: 700; color: var(--navy); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
-.pcm-combo-match { font-weight: 600; }
-.pcm-combo-hex { font-family: "Courier New", monospace; color: #5c6270; font-size: 0.82rem; margin-top: 1px; }
-.pcm-combo-why { color: #5c6270; font-size: 0.85rem; margin-top: 4px; }
-.pcm-combo-row-fixed { border-color: var(--gold); background: #fffaf0; }
-.pcm-combo-fixed-tag {
-    background: var(--gold);
-    color: #fff;
-    font-size: 0.65rem;
-    padding: 2px 6px;
-    border-radius: 3px;
-    letter-spacing: 0.04em;
-    margin-left: 4px;
-}
-.pcm-combo-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.pcm-combo-controls input[type="color"] { width: 34px; height: 30px; padding: 1px; cursor: pointer; }
-.pcm-combo-controls input[type="text"] { width: 90px; padding: 5px 7px; font-size: 0.82rem; }
-.pcm-combo-controls button {
-    padding: 5px 10px;
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.78rem;
-    font-weight: 600;
-}
+.pcm-match-hint { font-size: 0.92rem; color: #5c6270; margin: 0 0 12px; }
 
 .pcm-summary-box { display: none; }
 .pcm-summary-box.visible { display: block; }
@@ -354,15 +355,16 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
   </div>
   </div>
 
-  <div class="pcm-sample-box" id="pcmSampleBox">
-    <div class="pcm-sample-swatch" id="pcmSampleSwatch"></div>
-    <div class="pcm-sample-values" id="pcmSampleValues"></div>
+  <div class="pcm-cart-box" id="pcmCartBox">
+    <div class="pcm-cart-row" id="pcmCartRow"></div>
+    <button type="button" id="pcmAddColorBtn">+ Add a color</button>
   </div>
 </div>
 
 <details class="calc-section" id="pcmMatchesSection" open>
   <summary>2. Closest paint matches</summary>
   <p class="section-note">Ranked by color-space distance (&Delta;E), not just eyeballed RGB &mdash; closer to 0 is a tighter match.</p>
+  <p class="pcm-match-hint">Click a match to use it for the selected color chip above.</p>
   <div class="pcm-brand-filters">
     <label><input type="checkbox" class="pcm-brand-cb" value="sw" checked> Sherwin-Williams</label>
     <label><input type="checkbox" class="pcm-brand-cb" value="behr" checked> Behr</label>
@@ -371,20 +373,8 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
   <div class="pcm-results" id="pcmResults"></div>
 </details>
 
-<details class="calc-section" id="pcmComboBox" open>
-  <summary>3. Combinations</summary>
-  <p class="section-note">A starting point, not gospel &mdash; trim and accent are generated from your body color
-  (and each other) using basic color-wheel relationships, then matched back to real paint chips. Lock a row once
-  you like it, or choose your own color for it directly &mdash; the rest keep suggesting around whatever you've
-  fixed. Trust your eye over this.</p>
-  <div class="pcm-combo-actions">
-    <button type="button" id="pcmComboShuffleBtn" style="display:none;">Try another combo</button>
-  </div>
-  <div class="pcm-combo-results" id="pcmComboResults"></div>
-</details>
-
 <div class="calc-section pcm-summary-box" id="pcmSummaryBox">
-  <h3>4. Take it to the store</h3>
+  <h3>3. Take it to the store</h3>
   <p class="section-note">Copy this and paste it into a text, email, or note &mdash; whatever you've got open.</p>
   <textarea id="pcmSummaryText" readonly></textarea>
   <div class="pcm-action-row">
@@ -658,54 +648,8 @@ function matchQuality(de) {
   return { cls: "q-rough", label: "Rough ballpark" };
 }
 
-function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  var max = Math.max(r, g, b), min = Math.min(r, g, b);
-  var h, s, l = (max + min) / 2;
-  if (max === min) {
-    h = s = 0;
-  } else {
-    var d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      default: h = (r - g) / d + 4; break;
-    }
-    h /= 6;
-  }
-  return [h * 360, s * 100, l * 100];
-}
-
-function hslToRgb(h, s, l) {
-  h = ((h % 360) + 360) % 360 / 360;
-  s = clampNum(s, 0, 100) / 100;
-  l = clampNum(l, 0, 100) / 100;
-  var r, g, b;
-  if (s === 0) {
-    r = g = b = l;
-  } else {
-    var hue2rgb = function(p, q, t) {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    var p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-}
-
 // ---- Remember collapsed/open state of collapsible sections ----
-["pcmMatchesSection", "pcmComboBox", "pcmWbSection"].forEach(function(id) {
+["pcmMatchesSection", "pcmWbSection"].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
   var storageKey = "pcm-section-open-" + id;
@@ -718,8 +662,11 @@ function hslToRgb(h, s, l) {
   });
 });
 
-// ---- State ----
-var currentRgb = null; // [r,g,b]
+// ---- State: a "cart" of color chips, one of which is focused at a time ----
+var cart = [{ rgb: null, match: null }];
+var focusedIndex = 0;
+
+function focusedChip() { return cart[focusedIndex]; }
 
 // ---- Photo sampling ----
 var fileInput = document.getElementById("pcmFileInput");
@@ -746,7 +693,7 @@ var gVal = document.getElementById("pcmGVal");
 var bVal = document.getElementById("pcmBVal");
 var originalImageData = null;
 var baseGain = { r: 1, g: 1, b: 1 };
-var pickMode = null; // null | "neutral" | "trim" | "accent"
+var pickMode = null; // null | "neutral"
 var lastSamplePoint = null;
 var wbRaf = null;
 
@@ -948,12 +895,6 @@ function handleCanvasPick(pt) {
   if (pickMode === "neutral") {
     var ok = setNeutralFromPoint(pt);
     if (ok) exitPickMode();
-  } else if (pickMode === "trim" || pickMode === "accent") {
-    var data = ctx.getImageData(pt.x, pt.y, 1, 1).data;
-    comboFixed[pickMode] = [data[0], data[1], data[2]];
-    exitPickMode();
-    renderCombo();
-    document.getElementById("pcmComboBox").scrollIntoView({ behavior: "smooth", block: "start" });
   } else {
     lastSamplePoint = pt;
     sampleAt(pt);
@@ -976,24 +917,71 @@ colorPicker.addEventListener("input", function() {
   hexInput.value = colorPicker.value.toUpperCase();
 });
 
-// ---- Set current color + run matching ----
-var sampleBox = document.getElementById("pcmSampleBox");
-var sampleSwatch = document.getElementById("pcmSampleSwatch");
-var sampleValues = document.getElementById("pcmSampleValues");
+// ---- Cart: a list of color chips, one focused at a time ----
+var cartRow = document.getElementById("pcmCartRow");
+var addColorBtn = document.getElementById("pcmAddColorBtn");
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function renderCart() {
+  cartRow.innerHTML = cart.map(function(chip, i) {
+    var empty = !chip.rgb;
+    var hex = chip.rgb ? rgbToHex(chip.rgb[0], chip.rgb[1], chip.rgb[2]) : "#ffffff";
+    var label = empty ? "Empty" : (chip.match ? chip.match.name : hex);
+    var classes = "pcm-cart-chip" + (i === focusedIndex ? " pcm-cart-chip-focused" : "") + (empty ? " pcm-cart-chip-empty" : "");
+    return '<div class="' + classes + '" data-index="' + i + '">' +
+      (cart.length > 1 ? '<button type="button" class="pcm-cart-remove" data-index="' + i + '" title="Remove this color">&times;</button>' : "") +
+      '<div class="pcm-cart-swatch" style="' + (empty ? "" : "background:" + hex + ";") + '"></div>' +
+      '<div class="pcm-cart-label">' + escapeHtml(label) + '</div>' +
+    '</div>';
+  }).join("");
+}
+
+function focusChip(i) {
+  focusedIndex = i;
+  var chip = cart[focusedIndex];
+  if (chip && chip.rgb) {
+    var hex = rgbToHex(chip.rgb[0], chip.rgb[1], chip.rgb[2]);
+    colorPicker.value = hex;
+    hexInput.value = hex;
+  } else {
+    hexInput.value = "";
+  }
+  renderCart();
+  runMatching();
+}
+
+cartRow.addEventListener("click", function(e) {
+  var removeBtn = e.target.closest(".pcm-cart-remove");
+  if (removeBtn) {
+    var idx = parseInt(removeBtn.getAttribute("data-index"), 10);
+    cart.splice(idx, 1);
+    if (focusedIndex >= cart.length) focusedIndex = cart.length - 1;
+    else if (focusedIndex > idx) focusedIndex--;
+    focusChip(focusedIndex);
+    return;
+  }
+  var chipEl = e.target.closest(".pcm-cart-chip");
+  if (!chipEl) return;
+  focusChip(parseInt(chipEl.getAttribute("data-index"), 10));
+});
+
+addColorBtn.addEventListener("click", function() {
+  cart.push({ rgb: null, match: null });
+  focusChip(cart.length - 1);
+});
 
 function setCurrentColor(rgb) {
-  currentRgb = rgb;
+  var chip = focusedChip();
+  chip.rgb = rgb;
+  chip.match = null;
   var hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
   colorPicker.value = hex;
   hexInput.value = hex;
-  sampleSwatch.style.background = hex;
-  sampleValues.innerHTML =
-    "<strong>Hex:</strong> " + hex + "<br>" +
-    "<strong>RGB:</strong> " + rgb[0] + ", " + rgb[1] + ", " + rgb[2];
-  sampleBox.classList.add("visible");
+  renderCart();
   runMatching();
-  resetCombo();
-  renderCombo();
 }
 
 // ---- Matching ----
@@ -1001,49 +989,80 @@ var resultsEl = document.getElementById("pcmResults");
 var brandCbs = document.querySelectorAll(".pcm-brand-cb");
 brandCbs.forEach(function(cb) { cb.addEventListener("change", runMatching); });
 
-function runMatching() {
-  if (!currentRgb) return;
-  var targetLab = rgbToLab(currentRgb[0], currentRgb[1], currentRgb[2]);
-  var activeBrands = [];
-  brandCbs.forEach(function(cb) { if (cb.checked) activeBrands.push(cb.value); });
+function getActiveBrands() {
+  var active = [];
+  brandCbs.forEach(function(cb) { if (cb.checked) active.push(cb.value); });
+  return active;
+}
 
-  var html = "";
-  var summaryLines = [];
-
+function computeTopMatches(rgb, activeBrands) {
+  var lab = rgbToLab(rgb[0], rgb[1], rgb[2]);
+  var out = {};
   activeBrands.forEach(function(brandKey) {
     var brand = PAINT_DB[brandKey];
     var scored = brand.colors.map(function(c) {
-      var rgb = hexToRgb(c[2]);
-      var lab = rgbToLab(rgb[0], rgb[1], rgb[2]);
-      return { code: c[0], name: c[1], hex: c[2], de: deltaE76(targetLab, lab) };
+      var crgb = hexToRgb(c[2]);
+      var clab = rgbToLab(crgb[0], crgb[1], crgb[2]);
+      return { code: c[0], name: c[1], hex: c[2], de: deltaE76(lab, clab) };
     });
     scored.sort(function(a, b) { return a.de - b.de; });
-    var top3 = scored.slice(0, 3);
+    out[brandKey] = scored.slice(0, 3);
+  });
+  return out;
+}
 
+function runMatching() {
+  var chip = focusedChip();
+  if (!chip || !chip.rgb) {
+    resultsEl.innerHTML = "";
+    resultsEl.classList.remove("visible");
+    refreshSummary();
+    return;
+  }
+  var activeBrands = getActiveBrands();
+  var matches = computeTopMatches(chip.rgb, activeBrands);
+
+  var html = "";
+  activeBrands.forEach(function(brandKey) {
+    var brand = PAINT_DB[brandKey];
     html += '<div class="pcm-brand-group"><h4>' + brand.label + '</h4><div class="pcm-match-list">';
-    top3.forEach(function(m) {
+    matches[brandKey].forEach(function(m) {
       var q = matchQuality(m.de);
-      html += '<div class="pcm-match-card">' +
-        '<div class="pcm-match-swatch" style="background:' + m.hex + ';"></div>' +
-        '<div class="pcm-match-info">' +
-          '<div class="name">' + m.name + '</div>' +
-          '<div>' + m.code + ' &middot; ' + m.hex + '</div>' +
-          '<div class="pcm-match-quality ' + q.cls + '">' + q.label + ' (ΔE ' + m.de.toFixed(1) + ')</div>' +
-        '</div></div>';
+      html += '<button type="button" class="pcm-match-card" data-hex="' + m.hex + '" data-name="' + escapeHtml(m.name) +
+        '" data-code="' + escapeHtml(m.code) + '" data-brand="' + escapeHtml(brand.label) + '" data-de="' + m.de.toFixed(1) + '">' +
+        '<span class="pcm-match-swatch" style="background:' + m.hex + ';"></span>' +
+        '<span class="pcm-match-info">' +
+          '<span class="name">' + m.name + '</span><br>' +
+          '<span>' + m.code + ' &middot; ' + m.hex + '</span><br>' +
+          '<span class="pcm-match-quality ' + q.cls + '">' + q.label + ' (ΔE ' + m.de.toFixed(1) + ')</span>' +
+        '</span></button>';
     });
     html += "</div></div>";
-
-    summaryLines.push(brand.label + ":");
-    top3.forEach(function(m) {
-      summaryLines.push("  - " + m.name + " (" + m.code + ", " + m.hex + ") - dE " + m.de.toFixed(1));
-    });
   });
 
   resultsEl.innerHTML = html;
   resultsEl.classList.add("visible");
-
-  buildSummary(summaryLines);
+  refreshSummary();
 }
+
+resultsEl.addEventListener("click", function(e) {
+  var btn = e.target.closest(".pcm-match-card");
+  if (!btn) return;
+  var hex = btn.getAttribute("data-hex");
+  var chip = focusedChip();
+  chip.rgb = hexToRgb(hex);
+  chip.match = {
+    hex: hex,
+    name: btn.getAttribute("data-name"),
+    code: btn.getAttribute("data-code"),
+    brandLabel: btn.getAttribute("data-brand"),
+    de: parseFloat(btn.getAttribute("data-de"))
+  };
+  colorPicker.value = hex.toUpperCase();
+  hexInput.value = hex.toUpperCase();
+  renderCart();
+  runMatching();
+});
 
 // ---- Summary ----
 var summaryBox = document.getElementById("pcmSummaryBox");
@@ -1051,20 +1070,37 @@ var summaryText = document.getElementById("pcmSummaryText");
 var copyBtn = document.getElementById("pcmCopyBtn");
 var copyMsg = document.getElementById("pcmCopyMsg");
 
-function buildSummary(brandLines) {
-  var hex = colorPicker.value.toUpperCase();
-  var lines = [
-    "Paint color match request",
-    "",
-    "Target color:",
-    "  Hex: " + hex,
-    "  RGB: " + currentRgb[0] + ", " + currentRgb[1] + ", " + currentRgb[2],
-    "",
-    "Closest catalog matches (approximate, please verify against an in-store chip):",
-    ""
-  ].concat(brandLines);
-  var text = lines.join("\n");
-  summaryText.value = text;
+function refreshSummary() {
+  var activeBrands = getActiveBrands();
+  var lines = ["Paint color list", ""];
+  var any = false;
+
+  cart.forEach(function(chip, i) {
+    if (!chip.rgb) return;
+    any = true;
+    var hex = rgbToHex(chip.rgb[0], chip.rgb[1], chip.rgb[2]);
+    lines.push("Color " + (i + 1) + ":");
+    lines.push("  Hex: " + hex);
+    lines.push("  RGB: " + chip.rgb[0] + ", " + chip.rgb[1] + ", " + chip.rgb[2]);
+    if (chip.match) {
+      lines.push("  Matched to: " + chip.match.name + " (" + chip.match.code + ", " + chip.match.brandLabel + ")");
+    } else {
+      var matches = computeTopMatches(chip.rgb, activeBrands);
+      lines.push("  Closest matches (approximate, please verify against an in-store chip):");
+      activeBrands.forEach(function(brandKey) {
+        matches[brandKey].forEach(function(m) {
+          lines.push("    - " + PAINT_DB[brandKey].label + ": " + m.name + " (" + m.code + ", " + m.hex + ") - dE " + m.de.toFixed(1));
+        });
+      });
+    }
+    lines.push("");
+  });
+
+  if (!any) {
+    summaryBox.classList.remove("visible");
+    return;
+  }
+  summaryText.value = lines.join("\n").trim();
   summaryBox.classList.add("visible");
 }
 
@@ -1086,174 +1122,7 @@ copyBtn.addEventListener("click", function() {
   }
 });
 
-// ---- Combinations ----
-var comboBox = document.getElementById("pcmComboBox");
-var comboShuffleBtn = document.getElementById("pcmComboShuffleBtn");
-var comboResults = document.getElementById("pcmComboResults");
-var comboVariant = 0;
-var comboFixed = { trim: null, accent: null }; // null = suggested, else a locked [r,g,b]
-var COMBO_ACCENT_ROTATIONS = [180, 150, 210, 30, 330];
-var COMBO_TRIM_STYLES = [
-  { mode: "light", why: "Same undertone as the body, just much lighter — the classic light-trim look." },
-  { mode: "dark", why: "Same undertone as the body but much darker — a modern, high-contrast trim." },
-  { mode: "wood", why: "A warm stained-wood tone, independent of the body color — common on craftsman-style trim and fascia." }
-];
-var COMBO_FIXED_WHY = "Your pick — held fixed while the rest keep suggesting.";
-
-function resetCombo() {
-  comboVariant = 0;
-  comboFixed = { trim: null, accent: null };
-  comboResults.innerHTML = "";
-  comboResults.classList.remove("visible");
-  comboShuffleBtn.style.display = "none";
-}
-
-function findBestMatch(rgb) {
-  var lab = rgbToLab(rgb[0], rgb[1], rgb[2]);
-  var best = null;
-  brandCbs.forEach(function(cb) {
-    if (!cb.checked) return;
-    var brand = PAINT_DB[cb.value];
-    brand.colors.forEach(function(c) {
-      var crgb = hexToRgb(c[2]);
-      var clab = rgbToLab(crgb[0], crgb[1], crgb[2]);
-      var de = deltaE76(lab, clab);
-      if (!best || de < best.de) {
-        best = { brandLabel: brand.label, code: c[0], name: c[1], hex: c[2], de: de };
-      }
-    });
-  });
-  return best;
-}
-
-function generateCombo() {
-  if (!currentRgb) return null;
-  var hsl = rgbToHsl(currentRgb[0], currentRgb[1], currentRgb[2]);
-  var h = hsl[0], s = hsl[1], l = hsl[2];
-  var bodyLab = rgbToLab(currentRgb[0], currentRgb[1], currentRgb[2]);
-
-  // ---- Trim ----
-  var trimRgb, trimWhy;
-  if (comboFixed.trim) {
-    trimRgb = comboFixed.trim;
-    trimWhy = COMBO_FIXED_WHY;
-  } else {
-    var trimStyle = COMBO_TRIM_STYLES[comboVariant % COMBO_TRIM_STYLES.length];
-    if (trimStyle.mode === "light") {
-      trimRgb = hslToRgb(h, clampNum(s * 0.25, 4, 18), 92);
-    } else if (trimStyle.mode === "dark") {
-      trimRgb = hslToRgb(h, clampNum(s * 0.6, 10, 35), 18);
-    } else {
-      trimRgb = hslToRgb(28, 38, 30);
-    }
-    trimWhy = trimStyle.why;
-  }
-  var trimLab = rgbToLab(trimRgb[0], trimRgb[1], trimRgb[2]);
-
-  // ---- Accent ---- (checked against BOTH body and trim, whichever those currently are)
-  var accentRgb, accentWhy;
-  if (comboFixed.accent) {
-    accentRgb = comboFixed.accent;
-    accentWhy = COMBO_FIXED_WHY;
-  } else {
-    var primaryIdx = comboVariant % COMBO_ACCENT_ROTATIONS.length;
-    var best = null;
-    for (var k = 0; k < COMBO_ACCENT_ROTATIONS.length; k++) {
-      var rotation = COMBO_ACCENT_ROTATIONS[(primaryIdx + k) % COMBO_ACCENT_ROTATIONS.length];
-      var candRgb = hslToRgb(h + rotation, clampNum(s + 15, 40, 80), clampNum(l - 18, 22, 45));
-      var candLab = rgbToLab(candRgb[0], candRgb[1], candRgb[2]);
-      var minDist = Math.min(deltaE76(candLab, bodyLab), deltaE76(candLab, trimLab));
-      if (!best || minDist > best.minDist) best = { rgb: candRgb, minDist: minDist };
-      if (minDist >= 20) break;
-    }
-    accentRgb = best.rgb;
-    accentWhy = "Rotated across the color wheel from your body color, picked to stand out from both body and trim.";
-  }
-
-  return [
-    { role: "body", label: "Body", rgb: currentRgb, why: "Your matched color, unchanged.", fixable: false, fixed: false },
-    { role: "trim", label: "Trim", rgb: trimRgb, why: trimWhy, fixable: true, fixed: !!comboFixed.trim },
-    { role: "accent", label: "Accent (door)", rgb: accentRgb, why: accentWhy, fixable: true, fixed: !!comboFixed.accent }
-  ];
-}
-
-function comboRowHtml(item) {
-  var hex = rgbToHex(item.rgb[0], item.rgb[1], item.rgb[2]);
-  var match = findBestMatch(item.rgb);
-  var matchLine = match ? match.name + " &middot; " + match.code + " (" + match.brandLabel + ")" : "";
-  var controls = "";
-  if (item.fixable) {
-    controls = '<div class="pcm-combo-controls">' +
-      '<input type="color" class="pcm-combo-color-input" value="' + hex + '" data-role="' + item.role + '">' +
-      '<input type="text" class="pcm-combo-hex-input" value="' + hex + '" maxlength="7" data-role="' + item.role + '">' +
-      '<button type="button" class="pcm-combo-use-btn" data-role="' + item.role + '">Use</button>' +
-      (hasImage ? '<button type="button" class="pcm-combo-pick-photo-btn" data-role="' + item.role + '">Pick from photo</button>' : '') +
-      (item.fixed
-        ? '<button type="button" class="pcm-combo-unlock-btn" data-role="' + item.role + '">Suggest instead</button>'
-        : '<button type="button" class="pcm-combo-lock-btn" data-role="' + item.role + '">Lock this</button>') +
-      '</div>';
-  }
-  return '<div class="pcm-combo-row' + (item.fixed ? ' pcm-combo-row-fixed' : '') + '">' +
-    '<div class="pcm-combo-swatch" style="background:' + hex + ';"></div>' +
-    '<div class="pcm-combo-info">' +
-      '<div class="pcm-combo-role">' + item.label + (item.fixed ? ' <span class="pcm-combo-fixed-tag">LOCKED</span>' : '') + '</div>' +
-      '<div class="pcm-combo-match">' + matchLine + '</div>' +
-      '<div class="pcm-combo-hex">' + hex + '</div>' +
-      '<div class="pcm-combo-why">' + item.why + '</div>' +
-      controls +
-    '</div></div>';
-}
-
-function renderCombo() {
-  var combo = generateCombo();
-  if (!combo) return;
-  comboResults.innerHTML = combo.map(comboRowHtml).join("");
-  comboResults.classList.add("visible");
-  comboShuffleBtn.style.display = "inline-block";
-}
-
-comboShuffleBtn.addEventListener("click", function() {
-  comboVariant++;
-  renderCombo();
-});
-
-comboResults.addEventListener("click", function(e) {
-  var btn = e.target.closest("button");
-  if (!btn) return;
-  var role = btn.getAttribute("data-role");
-  if (!role) return;
-
-  if (btn.classList.contains("pcm-combo-lock-btn")) {
-    var combo = generateCombo();
-    var item = combo.filter(function(i) { return i.role === role; })[0];
-    if (item) comboFixed[role] = item.rgb;
-    renderCombo();
-  } else if (btn.classList.contains("pcm-combo-unlock-btn")) {
-    comboFixed[role] = null;
-    renderCombo();
-  } else if (btn.classList.contains("pcm-combo-use-btn")) {
-    var row = btn.closest(".pcm-combo-row");
-    var hexInputEl = row.querySelector(".pcm-combo-hex-input");
-    var hex = hexInputEl.value.trim();
-    if (!/^#?[0-9a-fA-F]{6}$/.test(hex)) {
-      alert("Enter a valid 6-digit hex code, like #8C9294.");
-      return;
-    }
-    if (hex[0] !== "#") hex = "#" + hex;
-    comboFixed[role] = hexToRgb(hex);
-    renderCombo();
-  } else if (btn.classList.contains("pcm-combo-pick-photo-btn")) {
-    enterPickMode(role, "Click the photo to set your " + (role === "trim" ? "Trim" : "Accent") + " color…");
-    document.getElementById("pcmCanvasWrap").scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-});
-
-comboResults.addEventListener("input", function(e) {
-  if (e.target.classList.contains("pcm-combo-color-input")) {
-    var row = e.target.closest(".pcm-combo-row");
-    row.querySelector(".pcm-combo-hex-input").value = e.target.value.toUpperCase();
-  }
-});
+renderCart();
 
 })();
 </script>
