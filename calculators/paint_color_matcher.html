@@ -359,7 +359,6 @@
   you like it, or choose your own color for it directly &mdash; the rest keep suggesting around whatever you've
   fixed. Trust your eye over this.</p>
   <div class="pcm-combo-actions">
-    <button type="button" id="pcmComboBtn">Suggest a combo</button>
     <button type="button" id="pcmComboShuffleBtn" style="display:none;">Try another combo</button>
   </div>
   <div class="pcm-combo-results" id="pcmComboResults"></div>
@@ -942,6 +941,7 @@ function setCurrentColor(rgb) {
   sampleBox.classList.add("visible");
   runMatching();
   resetCombo();
+  renderCombo();
 }
 
 // ---- Matching ----
@@ -1036,7 +1036,6 @@ copyBtn.addEventListener("click", function() {
 
 // ---- Combonations ----
 var comboBox = document.getElementById("pcmComboBox");
-var comboBtn = document.getElementById("pcmComboBtn");
 var comboShuffleBtn = document.getElementById("pcmComboShuffleBtn");
 var comboResults = document.getElementById("pcmComboResults");
 var comboVariant = 0;
@@ -1157,14 +1156,9 @@ function renderCombo() {
   if (!combo) return;
   comboResults.innerHTML = combo.map(comboRowHtml).join("");
   comboResults.classList.add("visible");
+  comboShuffleBtn.style.display = "inline-block";
 }
 
-comboBtn.addEventListener("click", function() {
-  comboVariant = 0;
-  comboFixed = { trim: null, accent: null };
-  renderCombo();
-  comboShuffleBtn.style.display = "inline-block";
-});
 comboShuffleBtn.addEventListener("click", function() {
   comboVariant++;
   renderCombo();
