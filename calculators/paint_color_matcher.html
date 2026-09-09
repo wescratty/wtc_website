@@ -56,6 +56,17 @@
 .calc-section + .calc-section { padding-top: 30px; border-top: 1px solid #ddd; }
 .calc-section h3 { margin-bottom: 4px; }
 .calc-section .section-note { color: #5c6270; font-size: 0.92rem; margin-top: 0; margin-bottom: 18px; }
+details.calc-section > summary {
+    cursor: pointer;
+    font-size: 1.28rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+    user-select: none;
+}
+details.calc-section > summary:hover { color: var(--gold-dark); }
+details.calc-section[open] > summary { margin-bottom: 4px; }
+details.calc-section:not([open]) { margin-bottom: 20px; }
 
 .pcm-input-label {
     margin: 0 0 10px;
@@ -341,8 +352,8 @@
   </div>
 </div>
 
-<div class="calc-section">
-  <h3>2. Closest paint matches</h3>
+<details class="calc-section" id="pcmMatchesSection" open>
+  <summary>2. Closest paint matches</summary>
   <p class="section-note">Ranked by color-space distance (&Delta;E), not just eyeballed RGB &mdash; closer to 0 is a tighter match.</p>
   <div class="pcm-brand-filters">
     <label><input type="checkbox" class="pcm-brand-cb" value="sw" checked> Sherwin-Williams</label>
@@ -350,10 +361,10 @@
     <label><input type="checkbox" class="pcm-brand-cb" value="bm" checked> Benjamin Moore</label>
   </div>
   <div class="pcm-results" id="pcmResults"></div>
-</div>
+</details>
 
-<div class="calc-section" id="pcmComboBox">
-  <h3>3. Combonations</h3>
+<details class="calc-section" id="pcmComboBox" open>
+  <summary>3. Combonations</summary>
   <p class="section-note">A starting point, not gospel &mdash; trim and accent are generated from your body color
   (and each other) using basic color-wheel relationships, then matched back to real paint chips. Lock a row once
   you like it, or choose your own color for it directly &mdash; the rest keep suggesting around whatever you've
@@ -362,7 +373,7 @@
     <button type="button" id="pcmComboShuffleBtn" style="display:none;">Try another combo</button>
   </div>
   <div class="pcm-combo-results" id="pcmComboResults"></div>
-</div>
+</details>
 
 <div class="calc-section pcm-summary-box" id="pcmSummaryBox">
   <h3>4. Take it to the store</h3>
@@ -684,6 +695,20 @@ function hslToRgb(h, s, l) {
   }
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
+
+// ---- Remember collapsed/open state of collapsible sections ----
+["pcmMatchesSection", "pcmComboBox"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var storageKey = "pcm-section-open-" + id;
+  try {
+    var saved = localStorage.getItem(storageKey);
+    if (saved !== null) el.open = saved === "true";
+  } catch (e) {}
+  el.addEventListener("toggle", function() {
+    try { localStorage.setItem(storageKey, el.open); } catch (e) {}
+  });
+});
 
 // ---- State ----
 var currentRgb = null; // [r,g,b]
