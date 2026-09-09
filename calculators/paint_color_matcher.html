@@ -56,6 +56,17 @@
 .calc-section + .calc-section { padding-top: 30px; border-top: 1px solid #ddd; }
 .calc-section h3 { margin-bottom: 4px; }
 .calc-section .section-note { color: #5c6270; font-size: 0.92rem; margin-top: 0; margin-bottom: 18px; }
+details.calc-section > summary {
+    cursor: pointer;
+    font-size: 1.28rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+    user-select: none;
+}
+details.calc-section > summary:hover { color: var(--gold-dark); }
+details.calc-section[open] > summary { margin-bottom: 4px; }
+details.calc-section:not([open]) { margin-bottom: 20px; }
 
 .pcm-input-label {
     margin: 0 0 10px;
@@ -119,7 +130,15 @@
 
 .pcm-wb-section { display: none; margin-top: 22px; padding-top: 18px; border-top: 1px dashed var(--border); }
 .pcm-wb-section.visible { display: block; }
-.pcm-wb-section h4 { margin: 0 0 4px; color: var(--navy); font-size: 1rem; }
+.pcm-wb-section > summary {
+    margin: 0 0 4px;
+    color: var(--navy);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+}
+.pcm-wb-section > summary:hover { color: var(--gold-dark); }
 .pcm-wb-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .pcm-wb-row button { padding: 8px 14px; border: 1px solid var(--border); background: #fff; border-radius: 4px; cursor: pointer; font-size: 0.88rem; font-weight: 600; }
 .pcm-wb-row button.active { background: var(--gold); color: #fff; border-color: var(--gold); }
@@ -291,8 +310,8 @@
       </div>
     </div>
 
-    <div class="pcm-wb-section" id="pcmWbSection">
-      <h4>White balance (optional)</h4>
+    <details class="pcm-wb-section" id="pcmWbSection">
+      <summary>White balance (optional)</summary>
       <p class="section-note">Phone photos often pick up a color cast from the light &mdash; overcast skies skew blue,
       golden hour skews orange. Set a neutral point for a starting correction, then fine-tune with the sliders
       against what you know the real color should look like.</p>
@@ -311,7 +330,7 @@
         <label>Green <input type="range" id="pcmGSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmGVal">0</span></label>
         <label>Blue <input type="range" id="pcmBSlider" min="-100" max="100" value="0"><span class="pcm-wb-val" id="pcmBVal">0</span></label>
       </div>
-    </div>
+    </details>
   </div>
   </div>
 
@@ -341,8 +360,8 @@
   </div>
 </div>
 
-<div class="calc-section">
-  <h3>2. Closest paint matches</h3>
+<details class="calc-section" id="pcmMatchesSection" open>
+  <summary>2. Closest paint matches</summary>
   <p class="section-note">Ranked by color-space distance (&Delta;E), not just eyeballed RGB &mdash; closer to 0 is a tighter match.</p>
   <div class="pcm-brand-filters">
     <label><input type="checkbox" class="pcm-brand-cb" value="sw" checked> Sherwin-Williams</label>
@@ -350,10 +369,10 @@
     <label><input type="checkbox" class="pcm-brand-cb" value="bm" checked> Benjamin Moore</label>
   </div>
   <div class="pcm-results" id="pcmResults"></div>
-</div>
+</details>
 
-<div class="calc-section" id="pcmComboBox">
-  <h3>3. Combonations</h3>
+<details class="calc-section" id="pcmComboBox" open>
+  <summary>3. Combinations</summary>
   <p class="section-note">A starting point, not gospel &mdash; trim and accent are generated from your body color
   (and each other) using basic color-wheel relationships, then matched back to real paint chips. Lock a row once
   you like it, or choose your own color for it directly &mdash; the rest keep suggesting around whatever you've
@@ -362,7 +381,7 @@
     <button type="button" id="pcmComboShuffleBtn" style="display:none;">Try another combo</button>
   </div>
   <div class="pcm-combo-results" id="pcmComboResults"></div>
-</div>
+</details>
 
 <div class="calc-section pcm-summary-box" id="pcmSummaryBox">
   <h3>4. Take it to the store</h3>
@@ -685,6 +704,20 @@ function hslToRgb(h, s, l) {
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
+// ---- Remember collapsed/open state of collapsible sections ----
+["pcmMatchesSection", "pcmComboBox", "pcmWbSection"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var storageKey = "pcm-section-open-" + id;
+  try {
+    var saved = localStorage.getItem(storageKey);
+    if (saved !== null) el.open = saved === "true";
+  } catch (e) {}
+  el.addEventListener("toggle", function() {
+    try { localStorage.setItem(storageKey, el.open); } catch (e) {}
+  });
+});
+
 // ---- State ----
 var currentRgb = null; // [r,g,b]
 
@@ -713,7 +746,7 @@ var gVal = document.getElementById("pcmGVal");
 var bVal = document.getElementById("pcmBVal");
 var originalImageData = null;
 var baseGain = { r: 1, g: 1, b: 1 };
-var pickingNeutral = false;
+var pickMode = null; // null | "neutral" | "trim" | "accent"
 var lastSamplePoint = null;
 var wbRaf = null;
 
@@ -813,12 +846,29 @@ function scheduleApply() {
   wbRaf = requestAnimationFrame(function() { wbRaf = null; applyAdjustment(); });
 }
 
+function exitPickMode() {
+  pickMode = null;
+  pickNeutralBtn.classList.remove("active");
+  canvas.classList.remove("picking-neutral");
+  document.getElementById("pcmPhotoHint").textContent =
+    "Click (or tap) anywhere on the photo to sample that pixel's color.";
+}
+
+function enterPickMode(mode, hintText) {
+  pickMode = mode;
+  canvas.classList.add("picking-neutral");
+  pickNeutralBtn.classList.toggle("active", mode === "neutral");
+  document.getElementById("pcmPhotoHint").textContent = hintText;
+}
+
 pickNeutralBtn.addEventListener("click", function() {
   if (!hasImage) return;
-  pickingNeutral = !pickingNeutral;
-  pickNeutralBtn.classList.toggle("active", pickingNeutral);
-  canvas.classList.toggle("picking-neutral", pickingNeutral);
-  if (pickingNeutral) neutralStatus.textContent = "Click a white/gray spot in the photo…";
+  if (pickMode === "neutral") {
+    exitPickMode();
+  } else {
+    enterPickMode("neutral", "Click a white/gray spot in the photo…");
+    neutralStatus.textContent = "Click a white/gray spot in the photo…";
+  }
 });
 
 wbResetBtn.addEventListener("click", function() {
@@ -895,13 +945,15 @@ canvas.addEventListener("touchend", function(evt) {
 }, { passive: true });
 
 function handleCanvasPick(pt) {
-  if (pickingNeutral) {
+  if (pickMode === "neutral") {
     var ok = setNeutralFromPoint(pt);
-    if (ok) {
-      pickingNeutral = false;
-      pickNeutralBtn.classList.remove("active");
-      canvas.classList.remove("picking-neutral");
-    }
+    if (ok) exitPickMode();
+  } else if (pickMode === "trim" || pickMode === "accent") {
+    var data = ctx.getImageData(pt.x, pt.y, 1, 1).data;
+    comboFixed[pickMode] = [data[0], data[1], data[2]];
+    exitPickMode();
+    renderCombo();
+    document.getElementById("pcmComboBox").scrollIntoView({ behavior: "smooth", block: "start" });
   } else {
     lastSamplePoint = pt;
     sampleAt(pt);
@@ -1034,7 +1086,7 @@ copyBtn.addEventListener("click", function() {
   }
 });
 
-// ---- Combonations ----
+// ---- Combinations ----
 var comboBox = document.getElementById("pcmComboBox");
 var comboShuffleBtn = document.getElementById("pcmComboShuffleBtn");
 var comboResults = document.getElementById("pcmComboResults");
@@ -1135,6 +1187,7 @@ function comboRowHtml(item) {
       '<input type="color" class="pcm-combo-color-input" value="' + hex + '" data-role="' + item.role + '">' +
       '<input type="text" class="pcm-combo-hex-input" value="' + hex + '" maxlength="7" data-role="' + item.role + '">' +
       '<button type="button" class="pcm-combo-use-btn" data-role="' + item.role + '">Use</button>' +
+      (hasImage ? '<button type="button" class="pcm-combo-pick-photo-btn" data-role="' + item.role + '">Pick from photo</button>' : '') +
       (item.fixed
         ? '<button type="button" class="pcm-combo-unlock-btn" data-role="' + item.role + '">Suggest instead</button>'
         : '<button type="button" class="pcm-combo-lock-btn" data-role="' + item.role + '">Lock this</button>') +
@@ -1189,6 +1242,9 @@ comboResults.addEventListener("click", function(e) {
     if (hex[0] !== "#") hex = "#" + hex;
     comboFixed[role] = hexToRgb(hex);
     renderCombo();
+  } else if (btn.classList.contains("pcm-combo-pick-photo-btn")) {
+    enterPickMode(role, "Click the photo to set your " + (role === "trim" ? "Trim" : "Accent") + " color…");
+    document.getElementById("pcmCanvasWrap").scrollIntoView({ behavior: "smooth", block: "center" });
   }
 });
 
