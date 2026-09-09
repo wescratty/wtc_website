@@ -219,6 +219,28 @@
 .pcm-combo-match { font-weight: 600; }
 .pcm-combo-hex { font-family: "Courier New", monospace; color: #5c6270; font-size: 0.82rem; margin-top: 1px; }
 .pcm-combo-why { color: #5c6270; font-size: 0.85rem; margin-top: 4px; }
+.pcm-combo-row-fixed { border-color: var(--gold); background: #fffaf0; }
+.pcm-combo-fixed-tag {
+    background: var(--gold);
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    margin-left: 4px;
+}
+.pcm-combo-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.pcm-combo-controls input[type="color"] { width: 34px; height: 30px; padding: 1px; cursor: pointer; }
+.pcm-combo-controls input[type="text"] { width: 90px; padding: 5px 7px; font-size: 0.82rem; }
+.pcm-combo-controls button {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
 
 .pcm-summary-box { display: none; }
 .pcm-summary-box.visible { display: block; }
@@ -331,9 +353,11 @@
 </div>
 
 <div class="calc-section" id="pcmComboBox">
-  <h3>3. Suggested color combo</h3>
-  <p class="section-note">A starting point, not gospel &mdash; body, trim, and accent generated from your matched
-  color using basic color-wheel relationships, then matched back to real paint chips. Trust your eye over this.</p>
+  <h3>3. Combonations</h3>
+  <p class="section-note">A starting point, not gospel &mdash; trim and accent are generated from your body color
+  (and each other) using basic color-wheel relationships, then matched back to real paint chips. Lock a row once
+  you like it, or choose your own color for it directly &mdash; the rest keep suggesting around whatever you've
+  fixed. Trust your eye over this.</p>
   <div class="pcm-combo-actions">
     <button type="button" id="pcmComboBtn">Suggest a combo</button>
     <button type="button" id="pcmComboShuffleBtn" style="display:none;">Try another combo</button>
@@ -1010,21 +1034,24 @@ copyBtn.addEventListener("click", function() {
   }
 });
 
-// ---- Suggested color combo ----
+// ---- Combonations ----
 var comboBox = document.getElementById("pcmComboBox");
 var comboBtn = document.getElementById("pcmComboBtn");
 var comboShuffleBtn = document.getElementById("pcmComboShuffleBtn");
 var comboResults = document.getElementById("pcmComboResults");
 var comboVariant = 0;
+var comboFixed = { trim: null, accent: null }; // null = suggested, else a locked [r,g,b]
 var COMBO_ACCENT_ROTATIONS = [180, 150, 210, 30, 330];
 var COMBO_TRIM_STYLES = [
   { mode: "light", why: "Same undertone as the body, just much lighter — the classic light-trim look." },
   { mode: "dark", why: "Same undertone as the body but much darker — a modern, high-contrast trim." },
   { mode: "wood", why: "A warm stained-wood tone, independent of the body color — common on craftsman-style trim and fascia." }
 ];
+var COMBO_FIXED_WHY = "Your pick — held fixed while the rest keep suggesting.";
 
 function resetCombo() {
   comboVariant = 0;
+  comboFixed = { trim: null, accent: null };
   comboResults.innerHTML = "";
   comboResults.classList.remove("visible");
   comboShuffleBtn.style.display = "none";
@@ -1052,57 +1079,130 @@ function generateCombo() {
   if (!currentRgb) return null;
   var hsl = rgbToHsl(currentRgb[0], currentRgb[1], currentRgb[2]);
   var h = hsl[0], s = hsl[1], l = hsl[2];
+  var bodyLab = rgbToLab(currentRgb[0], currentRgb[1], currentRgb[2]);
 
-  var rotation = COMBO_ACCENT_ROTATIONS[comboVariant % COMBO_ACCENT_ROTATIONS.length];
-  var accentRgb = hslToRgb(h + rotation, clampNum(s + 15, 40, 80), clampNum(l - 18, 22, 45));
-
-  var trimStyle = COMBO_TRIM_STYLES[comboVariant % COMBO_TRIM_STYLES.length];
-  var trimRgb;
-  if (trimStyle.mode === "light") {
-    trimRgb = hslToRgb(h, clampNum(s * 0.25, 4, 18), 92);
-  } else if (trimStyle.mode === "dark") {
-    trimRgb = hslToRgb(h, clampNum(s * 0.6, 10, 35), 18);
+  // ---- Trim ----
+  var trimRgb, trimWhy;
+  if (comboFixed.trim) {
+    trimRgb = comboFixed.trim;
+    trimWhy = COMBO_FIXED_WHY;
   } else {
-    trimRgb = hslToRgb(28, 38, 30);
+    var trimStyle = COMBO_TRIM_STYLES[comboVariant % COMBO_TRIM_STYLES.length];
+    if (trimStyle.mode === "light") {
+      trimRgb = hslToRgb(h, clampNum(s * 0.25, 4, 18), 92);
+    } else if (trimStyle.mode === "dark") {
+      trimRgb = hslToRgb(h, clampNum(s * 0.6, 10, 35), 18);
+    } else {
+      trimRgb = hslToRgb(28, 38, 30);
+    }
+    trimWhy = trimStyle.why;
+  }
+  var trimLab = rgbToLab(trimRgb[0], trimRgb[1], trimRgb[2]);
+
+  // ---- Accent ---- (checked against BOTH body and trim, whichever those currently are)
+  var accentRgb, accentWhy;
+  if (comboFixed.accent) {
+    accentRgb = comboFixed.accent;
+    accentWhy = COMBO_FIXED_WHY;
+  } else {
+    var primaryIdx = comboVariant % COMBO_ACCENT_ROTATIONS.length;
+    var best = null;
+    for (var k = 0; k < COMBO_ACCENT_ROTATIONS.length; k++) {
+      var rotation = COMBO_ACCENT_ROTATIONS[(primaryIdx + k) % COMBO_ACCENT_ROTATIONS.length];
+      var candRgb = hslToRgb(h + rotation, clampNum(s + 15, 40, 80), clampNum(l - 18, 22, 45));
+      var candLab = rgbToLab(candRgb[0], candRgb[1], candRgb[2]);
+      var minDist = Math.min(deltaE76(candLab, bodyLab), deltaE76(candLab, trimLab));
+      if (!best || minDist > best.minDist) best = { rgb: candRgb, minDist: minDist };
+      if (minDist >= 20) break;
+    }
+    accentRgb = best.rgb;
+    accentWhy = "Rotated across the color wheel from your body color, picked to stand out from both body and trim.";
   }
 
   return [
-    { role: "Body", rgb: currentRgb, why: "Your matched color, unchanged." },
-    { role: "Trim", rgb: trimRgb, why: trimStyle.why },
-    { role: "Accent (door)", rgb: accentRgb, why: "Rotated across the color wheel for a deliberate pop, then darkened so it reads as a door color, not a wall color." }
+    { role: "body", label: "Body", rgb: currentRgb, why: "Your matched color, unchanged.", fixable: false, fixed: false },
+    { role: "trim", label: "Trim", rgb: trimRgb, why: trimWhy, fixable: true, fixed: !!comboFixed.trim },
+    { role: "accent", label: "Accent (door)", rgb: accentRgb, why: accentWhy, fixable: true, fixed: !!comboFixed.accent }
   ];
+}
+
+function comboRowHtml(item) {
+  var hex = rgbToHex(item.rgb[0], item.rgb[1], item.rgb[2]);
+  var match = findBestMatch(item.rgb);
+  var matchLine = match ? match.name + " &middot; " + match.code + " (" + match.brandLabel + ")" : "";
+  var controls = "";
+  if (item.fixable) {
+    controls = '<div class="pcm-combo-controls">' +
+      '<input type="color" class="pcm-combo-color-input" value="' + hex + '" data-role="' + item.role + '">' +
+      '<input type="text" class="pcm-combo-hex-input" value="' + hex + '" maxlength="7" data-role="' + item.role + '">' +
+      '<button type="button" class="pcm-combo-use-btn" data-role="' + item.role + '">Use</button>' +
+      (item.fixed
+        ? '<button type="button" class="pcm-combo-unlock-btn" data-role="' + item.role + '">Suggest instead</button>'
+        : '<button type="button" class="pcm-combo-lock-btn" data-role="' + item.role + '">Lock this</button>') +
+      '</div>';
+  }
+  return '<div class="pcm-combo-row' + (item.fixed ? ' pcm-combo-row-fixed' : '') + '">' +
+    '<div class="pcm-combo-swatch" style="background:' + hex + ';"></div>' +
+    '<div class="pcm-combo-info">' +
+      '<div class="pcm-combo-role">' + item.label + (item.fixed ? ' <span class="pcm-combo-fixed-tag">LOCKED</span>' : '') + '</div>' +
+      '<div class="pcm-combo-match">' + matchLine + '</div>' +
+      '<div class="pcm-combo-hex">' + hex + '</div>' +
+      '<div class="pcm-combo-why">' + item.why + '</div>' +
+      controls +
+    '</div></div>';
 }
 
 function renderCombo() {
   var combo = generateCombo();
   if (!combo) return;
-  var html = "";
-  combo.forEach(function(item) {
-    var hex = rgbToHex(item.rgb[0], item.rgb[1], item.rgb[2]);
-    var match = findBestMatch(item.rgb);
-    html += '<div class="pcm-combo-row">' +
-      '<div class="pcm-combo-swatch" style="background:' + hex + ';"></div>' +
-      '<div class="pcm-combo-info">' +
-        '<div class="pcm-combo-role">' + item.role + '</div>' +
-        '<div class="pcm-combo-match">' +
-          (match ? match.name + " &middot; " + match.code + " (" + match.brandLabel + ")" : "") +
-        '</div>' +
-        '<div class="pcm-combo-hex">' + hex + '</div>' +
-        '<div class="pcm-combo-why">' + item.why + '</div>' +
-      '</div></div>';
-  });
-  comboResults.innerHTML = html;
+  comboResults.innerHTML = combo.map(comboRowHtml).join("");
   comboResults.classList.add("visible");
 }
 
 comboBtn.addEventListener("click", function() {
   comboVariant = 0;
+  comboFixed = { trim: null, accent: null };
   renderCombo();
   comboShuffleBtn.style.display = "inline-block";
 });
 comboShuffleBtn.addEventListener("click", function() {
   comboVariant++;
   renderCombo();
+});
+
+comboResults.addEventListener("click", function(e) {
+  var btn = e.target.closest("button");
+  if (!btn) return;
+  var role = btn.getAttribute("data-role");
+  if (!role) return;
+
+  if (btn.classList.contains("pcm-combo-lock-btn")) {
+    var combo = generateCombo();
+    var item = combo.filter(function(i) { return i.role === role; })[0];
+    if (item) comboFixed[role] = item.rgb;
+    renderCombo();
+  } else if (btn.classList.contains("pcm-combo-unlock-btn")) {
+    comboFixed[role] = null;
+    renderCombo();
+  } else if (btn.classList.contains("pcm-combo-use-btn")) {
+    var row = btn.closest(".pcm-combo-row");
+    var hexInputEl = row.querySelector(".pcm-combo-hex-input");
+    var hex = hexInputEl.value.trim();
+    if (!/^#?[0-9a-fA-F]{6}$/.test(hex)) {
+      alert("Enter a valid 6-digit hex code, like #8C9294.");
+      return;
+    }
+    if (hex[0] !== "#") hex = "#" + hex;
+    comboFixed[role] = hexToRgb(hex);
+    renderCombo();
+  }
+});
+
+comboResults.addEventListener("input", function(e) {
+  if (e.target.classList.contains("pcm-combo-color-input")) {
+    var row = e.target.closest(".pcm-combo-row");
+    row.querySelector(".pcm-combo-hex-input").value = e.target.value.toUpperCase();
+  }
 });
 
 })();
