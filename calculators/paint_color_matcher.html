@@ -1042,7 +1042,8 @@ function runMatching() {
   resultsEl.innerHTML = html;
   resultsEl.classList.add("visible");
 
-  buildSummary(summaryLines);
+  lastMatchLines = summaryLines;
+  refreshSummary();
 }
 
 // ---- Summary ----
@@ -1050,6 +1051,25 @@ var summaryBox = document.getElementById("pcmSummaryBox");
 var summaryText = document.getElementById("pcmSummaryText");
 var copyBtn = document.getElementById("pcmCopyBtn");
 var copyMsg = document.getElementById("pcmCopyMsg");
+var lastMatchLines = [];
+
+function comboSummaryLines() {
+  var combo = generateCombo();
+  if (!combo) return [];
+  var lines = ["", "Suggested combo:"];
+  combo.forEach(function(item) {
+    var hex = rgbToHex(item.rgb[0], item.rgb[1], item.rgb[2]);
+    var match = findBestMatch(item.rgb);
+    var desc = match ? match.name + " (" + match.code + ", " + match.brandLabel + ")" : hex;
+    lines.push("  - " + item.label + ": " + desc + " - " + hex + (item.fixed ? " [locked]" : ""));
+  });
+  return lines;
+}
+
+function refreshSummary() {
+  if (!currentRgb) return;
+  buildSummary(lastMatchLines.concat(comboSummaryLines()));
+}
 
 function buildSummary(brandLines) {
   var hex = colorPicker.value.toUpperCase();
@@ -1210,6 +1230,7 @@ function renderCombo() {
   comboResults.innerHTML = combo.map(comboRowHtml).join("");
   comboResults.classList.add("visible");
   comboShuffleBtn.style.display = "inline-block";
+  refreshSummary();
 }
 
 comboShuffleBtn.addEventListener("click", function() {
