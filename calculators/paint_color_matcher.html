@@ -216,7 +216,7 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
     padding: 0;
 }
 .pcm-cart-remove:hover { background: #fdecec; border-color: #d64545; color: #d64545; }
-#pcmAddColorBtn {
+#pcmAddColorBtn, #pcmFullscreenBtn {
     padding: 8px 16px;
     border: 1px solid var(--border);
     background: #fff;
@@ -224,6 +224,45 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9rem;
+    margin-right: 10px;
+}
+
+.pcm-fs-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+}
+.pcm-fs-overlay.active { display: block; }
+.pcm-fs-tap { position: absolute; top: 0; bottom: 0; width: 35%; cursor: pointer; }
+.pcm-fs-tap-prev { left: 0; }
+.pcm-fs-tap-next { right: 0; }
+.pcm-fs-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    mix-blend-mode: difference;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+.pcm-fs-label {
+    position: absolute;
+    bottom: 18px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #fff;
+    mix-blend-mode: difference;
+    font-family: "Courier New", monospace;
+    font-size: 0.95rem;
+    pointer-events: none;
 }
 
 .pcm-brand-filters { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -358,6 +397,14 @@ details.calc-section:not([open]) { margin-bottom: 20px; }
   <div class="pcm-cart-box" id="pcmCartBox">
     <div class="pcm-cart-row" id="pcmCartRow"></div>
     <button type="button" id="pcmAddColorBtn">+ Add a color</button>
+    <button type="button" id="pcmFullscreenBtn">&#x26F6; Fullscreen</button>
+  </div>
+
+  <div class="pcm-fs-overlay" id="pcmFsOverlay">
+    <div class="pcm-fs-tap pcm-fs-tap-prev" id="pcmFsPrev"></div>
+    <div class="pcm-fs-tap pcm-fs-tap-next" id="pcmFsNext"></div>
+    <button type="button" class="pcm-fs-close" id="pcmFsClose">&times;</button>
+    <div class="pcm-fs-label" id="pcmFsLabel"></div>
   </div>
 </div>
 
@@ -1120,6 +1167,61 @@ copyBtn.addEventListener("click", function() {
     copyMsg.style.display = "inline";
     setTimeout(function() { copyMsg.style.display = "none"; }, 1800);
   }
+});
+
+// ---- Fullscreen swatch ----
+var fsOverlay = document.getElementById("pcmFsOverlay");
+var fsLabel = document.getElementById("pcmFsLabel");
+var fsIndex = 0;
+
+function coloredIndexes() {
+  var out = [];
+  cart.forEach(function(c, i) { if (c.rgb) out.push(i); });
+  return out;
+}
+
+function renderFsSwatch() {
+  var chip = cart[fsIndex];
+  var hex = rgbToHex(chip.rgb[0], chip.rgb[1], chip.rgb[2]);
+  fsOverlay.style.background = hex;
+  fsLabel.textContent = (chip.match ? chip.match.name + " · " : "") + hex;
+}
+
+function openFullscreenSwatch() {
+  var withColor = coloredIndexes();
+  if (!withColor.length) return;
+  fsIndex = withColor.indexOf(focusedIndex) >= 0 ? focusedIndex : withColor[0];
+  renderFsSwatch();
+  fsOverlay.classList.add("active");
+  if (fsOverlay.requestFullscreen) fsOverlay.requestFullscreen().catch(function() {});
+}
+
+function closeFullscreenSwatch() {
+  fsOverlay.classList.remove("active");
+  if (document.fullscreenElement) document.exitFullscreen().catch(function() {});
+}
+
+function fsStep(dir) {
+  var withColor = coloredIndexes();
+  if (withColor.length < 2) return;
+  var pos = withColor.indexOf(fsIndex);
+  pos = (pos + dir + withColor.length) % withColor.length;
+  fsIndex = withColor[pos];
+  renderFsSwatch();
+}
+
+document.getElementById("pcmFullscreenBtn").addEventListener("click", openFullscreenSwatch);
+document.getElementById("pcmFsPrev").addEventListener("click", function() { fsStep(-1); });
+document.getElementById("pcmFsNext").addEventListener("click", function() { fsStep(1); });
+document.getElementById("pcmFsClose").addEventListener("click", closeFullscreenSwatch);
+document.addEventListener("fullscreenchange", function() {
+  if (!document.fullscreenElement) fsOverlay.classList.remove("active");
+});
+document.addEventListener("keydown", function(e) {
+  if (!fsOverlay.classList.contains("active")) return;
+  if (e.key === "Escape") closeFullscreenSwatch();
+  else if (e.key === "ArrowLeft") fsStep(-1);
+  else if (e.key === "ArrowRight") fsStep(1);
 });
 
 renderCart();
