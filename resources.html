@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resources &amp; Guides | WTC Montana Construction</title>
+<meta name="description" content="Helpful guides and references for homeowners planning a build or remodel in the Bitterroot Valley, from WTC Montana Construction.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/resources.html">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/logo/favicon-192.png">
+<link rel="stylesheet" href="css/style.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "GeneralContractor",
+  "name": "WTC Montana Construction",
+  "url": "https://www.wtcmontanaconstruction.com/",
+  "telephone": "+14063605446",
+  "areaServed": [
+    {"@type": "City", "name": "Hamilton, MT"},
+    {"@type": "City", "name": "Stevensville, MT"},
+    {"@type": "City", "name": "Corvallis, MT"},
+    {"@type": "City", "name": "Victor, MT"},
+    {"@type": "City", "name": "Darby, MT"}
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "addressRegion": "MT",
+    "addressCountry": "US"
+  },
+  "priceRange": "$$",
+  "description": "Custom home building, remodeling, additions, and concrete flatwork serving the Bitterroot Valley, Montana for over 30 years."
+}
+</script>
+<style>
+  .cs-diagram {
+    position: relative;
+    --ink: #1b2a4a;
+    --paper: #f7f5f0;
+    --line: #94a3b8;
+    --step: #eef2f9;
+    --step-border: #3d5a8a;
+    --rough: #dbe7f5;
+    --rough-border: #2f5aa8;
+    --finish: #e3efe0;
+    --finish-border: #4a7a45;
+    --warn: #fbf0d9;
+    --warn-border: #b9862c;
+    --final: #f6e1df;
+    --final-border: #a8433a;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 16px 48px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .cs-diagram h2 {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 28px;
+  }
+  .cs-diagram .cs-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cs-diagram .cs-step {
+    width: 100%;
+    max-width: 380px;
+    background: var(--step);
+    border: 1.5px solid var(--step-border);
+    border-radius: 6px;
+    padding: 12px 18px;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .cs-diagram .cs-step .cs-title {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .cs-diagram .cs-step .cs-note {
+    font-size: 12.5px;
+    color: #445;
+    margin-top: 3px;
+    line-height: 1.35;
+  }
+  .cs-diagram .cs-arrow {
+    width: 2px;
+    height: 26px;
+    background: var(--line);
+    position: relative;
+  }
+  .cs-diagram .cs-arrow::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--line);
+  }
+  .cs-diagram .cs-group {
+    width: 100%;
+    max-width: 420px;
+    border: 1.5px dashed #9aa3af;
+    border-radius: 10px;
+    padding: 20px 16px 16px;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .cs-diagram .cs-group-label {
+    position: absolute;
+    top: -11px;
+    left: 16px;
+    background: var(--paper);
+    padding: 0 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #556;
+  }
+  .cs-diagram .cs-group .cs-flow {
+    gap: 0;
+  }
+  .cs-diagram .cs-step.cs-rough {
+    background: var(--rough);
+    border-color: var(--rough-border);
+  }
+  .cs-diagram .cs-step.cs-finish {
+    background: var(--finish);
+    border-color: var(--finish-border);
+  }
+  .cs-diagram .cs-step.cs-final {
+    background: var(--final);
+    border-color: var(--final-border);
+  }
+  .cs-diagram .cs-warning {
+    max-width: 420px;
+    width: 100%;
+    background: var(--warn);
+    border: 1.5px solid var(--warn-border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 12.5px;
+    color: #5c4008;
+    margin-top: 10px;
+    box-sizing: border-box;
+  }
+  .cs-diagram .cs-warning strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+  .cs-diagram .cs-loop-line {
+    position: absolute;
+    top: 78px;
+    bottom: 60px;
+    right: 2px;
+    width: 26px;
+    border: 2px solid #b06a2e;
+    border-left: none;
+    border-radius: 0 14px 14px 0;
+  }
+  .cs-diagram .cs-loop-line::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: -1px;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-right: 9px solid #b06a2e;
+  }
+  .cs-diagram .cs-step.cs-remodel {
+    background: #f3e4d3;
+    border-color: #b06a2e;
+  }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="logo" src="assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction">
+      <span class="brand-tagline">Bitterroot Valley, MT</span>
+    </a>
+    <nav class="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services/index.html">Services</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="tools.html">Tools</a>
+      <a href="resources.html" class="current">Resources</a>
+      <a href="contact.html">Contact</a>
+      <a href="tel:+14063605446" class="header-phone">(406) 360-5446</a>
+    </nav>
+  </div>
+</header>
+<div class="page-intro">
+  <div class="container">
+    <h1>Resources &amp; Guides</h1>
+    <p>Reference material we put together to help you understand how a project comes together, from planning through the final walkthrough.</p>
+  </div>
+</div>
+<section>
+  <div class="container">
+    <h2 class="section-title">Home Building Process, Step by Step</h2>
+    <div class="cs-diagram">
+  <div class="cs-flow">
+
+    <div class="cs-group">
+      <div class="cs-group-label">PRE-CONSTRUCTION</div>
+      <div class="cs-flow">
+        <div class="cs-step">
+          <div class="cs-title">Design</div>
+          <div class="cs-note">Concept &amp; layout — often iterates with budget</div>
+        </div>
+        <div class="cs-arrow"></div>
+        <div class="cs-step">
+          <div class="cs-title">Drawings</div>
+          <div class="cs-note">Construction documents used to build, price &amp; permit the job</div>
+        </div>
+        <div class="cs-arrow"></div>
+        <div class="cs-step">
+          <div class="cs-title">Budget</div>
+          <div class="cs-note">Finalized estimate — may send design back for revision if over</div>
+        </div>
+        <div class="cs-arrow"></div>
+        <div class="cs-step">
+          <div class="cs-title">Permitting</div>
+          <div class="cs-note">Survey &amp; zoning setbacks review, permit application &amp; approval — required if within city limits; requirements vary in unincorporated areas</div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Site Prep</div>
+      <div class="cs-note">Relocate gas, electrical &amp; other utility lines out of the dig zone</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Excavation &amp; Foundation</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Framing</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Dry-In</div>
+      <div class="cs-note">Sheathing, house wrap &amp; windows/doors — walls weathertight, but roof deck stays bare for now</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-group">
+      <div class="cs-group-label">ROUGH-IN — least flexible material first</div>
+      <div class="cs-flow">
+        <div class="cs-step cs-rough">
+          <div class="cs-title">1. Plumbing</div>
+          <div class="cs-note">Drain lines need gravity slope — hardest to reroute later</div>
+        </div>
+        <div class="cs-arrow"></div>
+        <div class="cs-step cs-rough">
+          <div class="cs-title">2. HVAC Ductwork</div>
+          <div class="cs-note">Bulky — needs straight, direct runs</div>
+        </div>
+        <div class="cs-arrow"></div>
+        <div class="cs-step cs-rough">
+          <div class="cs-title">3. Electrical</div>
+          <div class="cs-note">Flexible wire — easiest to route around the other two trades</div>
+        </div>
+      </div>
+      <div class="cs-warning">
+        <strong>⚠ Common mistake</strong>
+        Electrical rough-in before HVAC forces HVAC to cut wires out of duct paths.
+      </div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Roofing</div>
+      <div class="cs-note">Shingles/membrane go on now — flashing is sealed around penetrations that already exist, instead of guessing early or cutting finished roofing later</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Insulation</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Drywall</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-group">
+      <div class="cs-group-label">FINISH TRADES — same order as rough-in</div>
+      <div class="cs-flow">
+        <div class="cs-step cs-finish">
+          <div class="cs-title">Plumbing Finish</div>
+          <div class="cs-note">Fixtures, faucets</div>
+        </div>
+        <div class="cs-arrow"></div>
+        <div class="cs-step cs-finish">
+          <div class="cs-title">HVAC Finish</div>
+          <div class="cs-note">Registers, thermostat</div>
+        </div>
+        <div class="cs-arrow"></div>
+        <div class="cs-step cs-finish">
+          <div class="cs-title">Electrical Finish</div>
+          <div class="cs-note">Outlets, switches, fixtures</div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Flooring</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step">
+      <div class="cs-title">Paint &amp; Trim</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step cs-final">
+      <div class="cs-title">Final Inspection</div>
+    </div>
+    <div class="cs-arrow"></div>
+
+    <div class="cs-step cs-remodel">
+      <div class="cs-title">Remodel</div>
+      <div class="cs-note">...and it starts over 🔁</div>
+    </div>
+
+    <div class="cs-loop-line"></div>
+
+  </div>
+</div>
+  </div>
+</section>
+<div class="cta-band">
+  <div class="container">
+    <h2>Let's talk about your project</h2>
+    <div class="contact-details">
+      <a href="tel:+14063605446">(406) 360-5446</a>
+      <a href="contact.html">Send a message &rarr;</a>
+    </div>
+  </div>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">
+      <img src="assets/logo/wtc-montana-logo-white.png" alt="WTC Montana LLC Construction" style="height:28px;">
+      <p>Building in the Bitterroot Valley for over 30 years.<br>Serving Hamilton to Stevensville, south to Darby, MT (Bitterroot Valley).</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+14063605446">(406) 360-5446</a></li>
+        <li><a href="contact.html">Let's talk</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="services/drafting-design.html">Drafting &amp; Design</a></li>
+        <li><a href="services/new-build.html">New Build</a></li>
+        <li><a href="services/remodels-additions.html">Remodels &amp; Additions</a></li>
+        <li><a href="services/maintenance-handyman.html">Maintenance / Handyman</a></li>
+        <li><a href="services/foundations-flatwork.html">Foundations &amp; Flatwork</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Site</h4>
+      <ul>
+        <li><a href="portfolio.html">Portfolio</a></li>
+        <li><a href="tools.html">Free Tools &amp; Calculators</a></li>
+        <li><a href="resources.html">Resources</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Local Partners</h4>
+      <ul>
+        <li>
+          <a href="https://twinflowerscleaning.squarespace.com/" target="_blank" rel="noopener noreferrer" class="footer-partner-link">
+            <img src="assets/partners/twinflowers-cleaning-logo.png" alt="Twin Flowers Cleaning Co. logo" class="footer-partner-logo">
+            <span>Twin Flowers Cleaning &#8599;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; WTC Montana LLC Construction &mdash; Serving the Bitterroot Valley, Montana</div>
+</footer>
+</body>
+</html>
