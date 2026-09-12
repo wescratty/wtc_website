@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bow Shot Average Tracker | WTC Montana Construction</title>
+<meta name="description" content="Plot your bow shots on a Cartesian plane, watch your group average, and get plain-language sight adjustment guidance every 20 arrows.">
+<link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/bow_shot_tracker.html">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="../assets/logo/favicon-192.png">
+<style>
+  .back-to-fun-tools{
+    display:block;
+    max-width:900px;
+    margin:0 auto;
+    padding:10px 16px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size:0.85rem;
+  }
+  .back-to-fun-tools a{ color:#3b5bfd; text-decoration:none; font-weight:600; }
+  .back-to-fun-tools a:hover{ text-decoration:underline; }
+  :root{
+    --bg:#f6f7fb;
+    --card:#ffffff;
+    --card-border:#e2e5ec;
+    --text:#1f2430;
+    --text-muted:#6b7280;
+    --accent:#3b5bfd;
+    --accent-soft:#eef1ff;
+    --green:#1a9c6d;
+    --green-soft:#e7f7f0;
+    --amber:#b9863f;
+    --amber-soft:#fbf1e2;
+    --red:#d64545;
+  }
+  *{ box-sizing:border-box; }
+  html, body{ height:100%; }
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+  }
+  .wrap{
+    max-width:900px;
+    width:100%;
+    margin:0 auto;
+    padding:14px 16px 30px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  h1{ font-size:1.3rem; margin:0 0 4px; }
+  .subtitle{ color:var(--text-muted); font-size:0.88rem; margin:0 0 14px; line-height:1.5; max-width:70ch; }
+
+  .stat-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:stretch;
+    margin-bottom:12px;
+  }
+  .stat-tile{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:8px 14px;
+    flex:1;
+    min-width:120px;
+  }
+  .stat-label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+  .stat-value{ font-size:1.15rem; font-weight:700; margin-top:1px; }
+
+  .guidance-card{
+    background:var(--accent-soft);
+    border:1px solid #c7d1fb;
+    border-radius:10px;
+    padding:12px 16px;
+    margin-bottom:12px;
+    font-size:0.94rem;
+    line-height:1.5;
+  }
+  .guidance-card.dialed{ background:var(--green-soft); border-color:#a9e0c6; }
+  .guidance-card b{ color:var(--text); }
+
+  .reminder-banner{
+    background:var(--amber-soft);
+    border:1px solid #e8cfa1;
+    border-radius:10px;
+    padding:10px 16px;
+    margin-bottom:12px;
+    font-size:0.9rem;
+    color:#6b4a1f;
+    display:none;
+  }
+  .reminder-banner.show{ display:block; }
+
+  .toolbar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .btn{
+    border:1px solid var(--card-border);
+    background:var(--card);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 14px;
+    font-size:0.83rem;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+  }
+  .btn:hover{ background:#f0f1f6; }
+  .btn.primary{ border-color:var(--green); color:var(--green); font-weight:700; }
+  .btn.primary:hover{ background:var(--green-soft); }
+  .btn.danger{ border-color:var(--red); color:var(--red); }
+  .btn.danger:hover{ background:#fdecec; }
+  .btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .btn:disabled:hover{ background:var(--card); }
+
+  .plane-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:12px;
+    padding:8px;
+    flex:1;
+    display:flex;
+    min-height:320px;
+  }
+  .plane-svg{
+    width:100%;
+    aspect-ratio:1/1;
+    max-height:70vh;
+    margin:auto;
+    display:block;
+    touch-action:manipulation;
+    cursor:crosshair;
+  }
+  .grid-line{ stroke:#e6e8f0; stroke-width:1; }
+  .grid-line.major{ stroke:#d3d7e3; }
+  .axis-line{ stroke:#9aa2b6; stroke-width:1.5; }
+  .axis-label{ font-size:11px; fill:#9aa2b6; }
+  .shot-dot{ fill:#151719; stroke:#fff; stroke-width:1; }
+  .shot-hit{ fill:transparent; cursor:pointer; }
+  .avg-dot{ fill:var(--red); stroke:#fff; stroke-width:2; pointer-events:none; }
+  .avg-cross{ stroke:var(--red); stroke-width:1; stroke-dasharray:3 3; pointer-events:none; opacity:0.7; }
+  .plane-hint{ fill:#b7bccb; font-size:12px; text-anchor:middle; }
+
+  .legend-row{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    font-size:0.8rem;
+    color:var(--text-muted);
+    margin:10px 0 0;
+  }
+  .legend-item{ display:flex; align-items:center; gap:6px; }
+  .legend-swatch{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+  .legend-swatch.black{ background:#151719; }
+  .legend-swatch.red{ background:var(--red); }
+
+  details.history{
+    margin-top:16px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:10px 14px;
+  }
+  details.history summary{ cursor:pointer; font-weight:600; font-size:0.9rem; }
+  .history-item{
+    border-top:1px solid var(--card-border);
+    padding:8px 0;
+    font-size:0.85rem;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .history-item .hi-meta{ color:var(--text-muted); }
+  .history-empty{ color:var(--text-muted); font-size:0.85rem; padding:6px 0 2px; }
+
+  .privacy-note{
+    font-size:0.78rem;
+    color:var(--text-muted);
+    margin:14px 0 0;
+    line-height:1.5;
+  }
+  .reset-all{
+    font-size:0.78rem;
+    color:var(--red);
+    cursor:pointer;
+    background:none;
+    border:none;
+    padding:0;
+    text-decoration:underline;
+  }
+
+  @media (max-width: 560px){
+    h1{ font-size:1.15rem; }
+    .subtitle{ font-size:0.82rem; }
+    .stat-tile{ min-width:100px; padding:7px 10px; }
+    .stat-value{ font-size:1rem; }
+  }
+</style>
+</head>
+<body>
+<p class="back-to-fun-tools">&larr; <a href="../fun-tools.html">Back to fun tools</a></p>
+<div class="wrap">
+  <h1>🏹 Bow Shot Average Tracker</h1>
+  <p class="subtitle">
+    Click the plane where each arrow lands relative to your point of aim (center). Your shots plot black;
+    once you've got a few down, the red dot is your group average &mdash; that's what tells you how to move
+    your sight.
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat-tile">
+      <div class="stat-label">Shots this group</div>
+      <div class="stat-value" id="shotCount">0</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Average</div>
+      <div class="stat-value" id="avgValue">&mdash;</div>
+    </div>
+  </div>
+
+  <div class="reminder-banner" id="reminderBanner">
+    🎯 <b>20+ shots down</b> &mdash; that's a solid sample. Adjust your sight per the guidance above, then hit
+    <b>Sights Adjusted &mdash; New Group</b> to start a fresh group and confirm the fix.
+  </div>
+
+  <div class="guidance-card" id="guidanceCard">
+    Click the plane below to log your first shot.
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" id="undoBtn" disabled>Undo last shot</button>
+    <button class="btn danger" id="clearBtn" disabled>Clear group</button>
+    <button class="btn primary" id="adjustedBtn" disabled>Sights Adjusted &mdash; New Group</button>
+  </div>
+
+  <div class="plane-card">
+    <svg class="plane-svg" id="plane" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+      <g id="gridLayer"></g>
+      <g id="shotsLayer"></g>
+      <g id="avgLayer"></g>
+    </svg>
+  </div>
+
+  <div class="legend-row">
+    <span class="legend-item"><span class="legend-swatch black"></span> Each shot</span>
+    <span class="legend-item"><span class="legend-swatch red"></span> Group average</span>
+    <span class="legend-item">Tap a dot to remove that shot</span>
+  </div>
+
+  <details class="history" id="historyDetails">
+    <summary>Past groups</summary>
+    <div id="historyList" class="history-empty">No adjusted groups yet &mdash; they'll show up here after you tap "Sights Adjusted".</div>
+  </details>
+
+  <p class="privacy-note">
+    🔒 Shots and history are saved only in this browser, on this device &mdash; nothing is sent anywhere.
+    <button type="button" class="reset-all" id="resetAllBtn">Reset all data</button>
+  </p>
+
+  <p class="privacy-note" style="margin-top:8px;">
+    <b>Chasing the arrow:</b> bow sights are backwards from what feels natural. If your group is landing
+    high, you move the sight pin <i>up</i> &mdash; you chase the arrow, and the pin moving toward the group
+    pulls your next shots back toward center. Same logic left and right. It feels wrong the first time; it's right.
+  </p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "bowShotTracker_v1";
+  const VB = 600;
+  const CENTER = VB / 2;
+  const UNIT_RANGE = 10;   // gridlines/labels from -10..10
+  const PAD_UNITS = 1;     // extra room beyond the labeled range
+  const SCALE = VB / (2 * (UNIT_RANGE + PAD_UNITS));
+  const DEAD_CENTER_TOL = 0.3;
+  const ADJUST_THRESHOLD = 20;
+
+  let shots = [];       // {id, x, y}
+  let history = [];     // {shots, avg:{x,y}, count, endedAt, guidance}
+  let idCounter = 1;
+
+  const svg = document.getElementById("plane");
+  const gridLayer = document.getElementById("gridLayer");
+  const shotsLayer = document.getElementById("shotsLayer");
+  const avgLayer = document.getElementById("avgLayer");
+  const shotCountEl = document.getElementById("shotCount");
+  const avgValueEl = document.getElementById("avgValue");
+  const guidanceCard = document.getElementById("guidanceCard");
+  const reminderBanner = document.getElementById("reminderBanner");
+  const undoBtn = document.getElementById("undoBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const adjustedBtn = document.getElementById("adjustedBtn");
+  const historyList = document.getElementById("historyList");
+  const resetAllBtn = document.getElementById("resetAllBtn");
+
+  function ns(tag){ return document.createElementNS("http://www.w3.org/2000/svg", tag); }
+
+  function buildGrid(){
+    gridLayer.innerHTML = "";
+    const extent = (UNIT_RANGE + PAD_UNITS) * SCALE;
+
+    for(let u = -UNIT_RANGE; u <= UNIT_RANGE; u++){
+      const isMajor = u % 5 === 0;
+      const px = CENTER + u * SCALE;
+      const py = CENTER - u * SCALE;
+
+      const vLine = ns("line");
+      vLine.setAttribute("x1", px); vLine.setAttribute("y1", CENTER - extent);
+      vLine.setAttribute("x2", px); vLine.setAttribute("y2", CENTER + extent);
+      vLine.setAttribute("class", "grid-line" + (isMajor ? " major" : ""));
+      gridLayer.appendChild(vLine);
+
+      const hLine = ns("line");
+      hLine.setAttribute("x1", CENTER - extent); hLine.setAttribute("y1", py);
+      hLine.setAttribute("x2", CENTER + extent); hLine.setAttribute("y2", py);
+      hLine.setAttribute("class", "grid-line" + (isMajor ? " major" : ""));
+      gridLayer.appendChild(hLine);
+
+      if(isMajor && u !== 0){
+        const xLabel = ns("text");
+        xLabel.setAttribute("x", px + 3);
+        xLabel.setAttribute("y", CENTER - 4);
+        xLabel.setAttribute("class", "axis-label");
+        xLabel.textContent = u;
+        gridLayer.appendChild(xLabel);
+
+        const yLabel = ns("text");
+        yLabel.setAttribute("x", CENTER + 4);
+        yLabel.setAttribute("y", py - 3);
+        yLabel.setAttribute("class", "axis-label");
+        yLabel.textContent = u;
+        gridLayer.appendChild(yLabel);
+      }
+    }
+
+    const xAxis = ns("line");
+    xAxis.setAttribute("x1", CENTER - extent); xAxis.setAttribute("y1", CENTER);
+    xAxis.setAttribute("x2", CENTER + extent); xAxis.setAttribute("y2", CENTER);
+    xAxis.setAttribute("class", "axis-line");
+    gridLayer.appendChild(xAxis);
+
+    const yAxis = ns("line");
+    yAxis.setAttribute("x1", CENTER); yAxis.setAttribute("y1", CENTER - extent);
+    yAxis.setAttribute("x2", CENTER); yAxis.setAttribute("y2", CENTER + extent);
+    yAxis.setAttribute("class", "axis-line");
+    gridLayer.appendChild(yAxis);
+
+    const zeroLabel = ns("text");
+    zeroLabel.setAttribute("x", CENTER + 4);
+    zeroLabel.setAttribute("y", CENTER - 4);
+    zeroLabel.setAttribute("class", "axis-label");
+    zeroLabel.textContent = "0";
+    gridLayer.appendChild(zeroLabel);
+  }
+
+  function pointFromEvent(evt){
+    const rect = svg.getBoundingClientRect();
+    const clientX = (evt.touches && evt.touches[0]) ? evt.touches[0].clientX : evt.clientX;
+    const clientY = (evt.touches && evt.touches[0]) ? evt.touches[0].clientY : evt.clientY;
+    const px = (clientX - rect.left) / rect.width * VB;
+    const py = (clientY - rect.top) / rect.height * VB;
+    const ux = (px - CENTER) / SCALE;
+    const uy = (CENTER - py) / SCALE;
+    return { x: Math.round(ux * 10) / 10, y: Math.round(uy * 10) / 10 };
+  }
+
+  function addShot(x, y){
+    shots.push({ id: idCounter++, x: x, y: y });
+    save();
+    render();
+  }
+
+  function removeShot(id){
+    shots = shots.filter(s => s.id !== id);
+    save();
+    render();
+  }
+
+  function undoLast(){
+    shots.pop();
+    save();
+    render();
+  }
+
+  function clearGroup(){
+    if(shots.length === 0) return;
+    if(!confirm("Clear all shots in this group? This does not save it to history.")) return;
+    shots = [];
+    save();
+    render();
+  }
+
+  function computeAverage(){
+    if(shots.length === 0) return null;
+    let sx = 0, sy = 0;
+    shots.forEach(s => { sx += s.x; sy += s.y; });
+    return { x: sx / shots.length, y: sy / shots.length };
+  }
+
+  function buildGuidance(avg){
+    if(!avg){
+      return { text: "Click the plane below to log your first shot.", dialed: false };
+    }
+    const vertical = avg.y > DEAD_CENTER_TOL ? "up" : (avg.y < -DEAD_CENTER_TOL ? "down" : null);
+    const horizontal = avg.x < -DEAD_CENTER_TOL ? "left" : (avg.x > DEAD_CENTER_TOL ? "right" : null);
+
+    if(!vertical && !horizontal){
+      return { text: "Dialed in &mdash; your average is dead center. No sight adjustment needed.", dialed: true };
+    }
+
+    const dirWords = [vertical, horizontal].filter(Boolean).join(" and ");
+    const highLow = vertical === "up" ? "high" : (vertical === "down" ? "low" : "");
+    const leftRight = horizontal === "left" ? "left" : (horizontal === "right" ? "right" : "");
+    const missDesc = [highLow, leftRight].filter(Boolean).join(" and ");
+
+    return {
+      text: "You're shooting <b>" + missDesc + "</b> of center. Chase your arrow &mdash; move your sight pin <b>" +
+        dirWords + "</b> to bring your next group to center.",
+      dialed: false
+    };
+  }
+
+  function render(){
+    shotsLayer.innerHTML = "";
+    shots.forEach(s => {
+      const px = CENTER + s.x * SCALE;
+      const py = CENTER - s.y * SCALE;
+
+      const hit = ns("circle");
+      hit.setAttribute("cx", px); hit.setAttribute("cy", py); hit.setAttribute("r", 12);
+      hit.setAttribute("class", "shot-hit");
+      hit.addEventListener("click", (e) => { e.stopPropagation(); removeShot(s.id); });
+      shotsLayer.appendChild(hit);
+
+      const dot = ns("circle");
+      dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.setAttribute("r", 4.5);
+      dot.setAttribute("class", "shot-dot");
+      dot.style.pointerEvents = "none";
+      shotsLayer.appendChild(dot);
+    });
+
+    const avg = computeAverage();
+    avgLayer.innerHTML = "";
+    if(avg){
+      const apx = CENTER + avg.x * SCALE;
+      const apy = CENTER - avg.y * SCALE;
+
+      const hLine = ns("line");
+      hLine.setAttribute("x1", apx - 10); hLine.setAttribute("y1", apy);
+      hLine.setAttribute("x2", apx + 10); hLine.setAttribute("y2", apy);
+      hLine.setAttribute("class", "avg-cross");
+      avgLayer.appendChild(hLine);
+
+      const vLine = ns("line");
+      vLine.setAttribute("x1", apx); vLine.setAttribute("y1", apy - 10);
+      vLine.setAttribute("x2", apx); vLine.setAttribute("y2", apy + 10);
+      vLine.setAttribute("class", "avg-cross");
+      avgLayer.appendChild(vLine);
+
+      const avgDot = ns("circle");
+      avgDot.setAttribute("cx", apx); avgDot.setAttribute("cy", apy); avgDot.setAttribute("r", 7);
+      avgDot.setAttribute("class", "avg-dot");
+      avgLayer.appendChild(avgDot);
+    }
+
+    shotCountEl.textContent = shots.length;
+    avgValueEl.textContent = avg ? ("(" + avg.x.toFixed(1) + ", " + avg.y.toFixed(1) + ")") : "—";
+
+    const guidance = buildGuidance(avg);
+    guidanceCard.innerHTML = guidance.text;
+    guidanceCard.classList.toggle("dialed", guidance.dialed);
+
+    reminderBanner.classList.toggle("show", shots.length >= ADJUST_THRESHOLD);
+
+    undoBtn.disabled = shots.length === 0;
+    clearBtn.disabled = shots.length === 0;
+    adjustedBtn.disabled = shots.length === 0;
+
+    renderHistory();
+  }
+
+  function renderHistory(){
+    if(history.length === 0){
+      historyList.className = "history-empty";
+      historyList.textContent = "No adjusted groups yet — they'll show up here after you tap \"Sights Adjusted\".";
+      return;
+    }
+    historyList.className = "";
+    historyList.innerHTML = "";
+    history.slice().reverse().forEach(h => {
+      const row = document.createElement("div");
+      row.className = "history-item";
+      const date = new Date(h.endedAt);
+      const dateStr = isNaN(date.getTime()) ? "" : date.toLocaleDateString() + " " + date.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      row.innerHTML = "<span>" + h.count + " shots, avg (" + h.avg.x.toFixed(1) + ", " + h.avg.y.toFixed(1) + ")</span>" +
+        "<span class=\"hi-meta\">" + dateStr + "</span>";
+      historyList.appendChild(row);
+    });
+  }
+
+  function markAdjusted(){
+    if(shots.length === 0) return;
+    const avg = computeAverage();
+    if(!confirm("Log this group of " + shots.length + " shots to history and start a fresh group?")) return;
+    history.push({
+      shots: shots.slice(),
+      avg: avg,
+      count: shots.length,
+      endedAt: Date.now()
+    });
+    shots = [];
+    save();
+    render();
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ shots: shots, history: history, idCounter: idCounter }));
+    }catch(e){ /* storage unavailable — tracker still works for this page load */ }
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      const data = JSON.parse(raw);
+      if(Array.isArray(data.shots)) shots = data.shots;
+      if(Array.isArray(data.history)) history = data.history;
+      if(typeof data.idCounter === "number") idCounter = data.idCounter;
+    }catch(e){ /* ignore corrupt storage */ }
+  }
+
+  svg.addEventListener("click", (e) => {
+    const p = pointFromEvent(e);
+    addShot(p.x, p.y);
+  });
+
+  undoBtn.addEventListener("click", undoLast);
+  clearBtn.addEventListener("click", clearGroup);
+  adjustedBtn.addEventListener("click", markAdjusted);
+
+  resetAllBtn.addEventListener("click", () => {
+    if(!confirm("Reset all shots and past group history? This can't be undone.")) return;
+    shots = [];
+    history = [];
+    idCounter = 1;
+    save();
+    render();
+  });
+
+  buildGrid();
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
