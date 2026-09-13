@@ -210,7 +210,8 @@
   .grid-line.major{ stroke:#d3d7e3; }
   .axis-line{ stroke:#9aa2b6; stroke-width:1.5; }
   .axis-label{ font-size:11px; fill:#9aa2b6; }
-  .shot-dot{ fill:#151719; stroke:#fff; stroke-width:1; }
+  .shot-marker{ fill:#fff; stroke:#151719; stroke-width:1.3; }
+  .shot-num{ font-size:10px; font-weight:700; fill:#151719; text-anchor:middle; pointer-events:none; }
   .shot-hit{ fill:transparent; cursor:pointer; }
   .avg-dot{ fill:var(--red); stroke:#fff; stroke-width:2; pointer-events:none; }
   .avg-cross{ stroke:var(--red); stroke-width:1; stroke-dasharray:3 3; pointer-events:none; opacity:0.7; }
@@ -302,9 +303,10 @@
 <div class="wrap">
   <h1>🏹 Bow Shot Average Tracker</h1>
   <p class="subtitle instr-optional">
-    Click the plane where each arrow lands relative to your point of aim (center). Your shots plot black;
-    once you've got a few down, the red dot is your group average &mdash; that's what tells you how to move
-    your sight. Use separate tabs for multiple shooters or ranges.
+    Click the plane where each arrow lands relative to your point of aim (center). Shots are numbered
+    1 through your arrow count, repeating in the order you shoot them, so you can spot patterns like
+    arrow 5 always drifting right. The red dot is your group average &mdash; that's what tells you how
+    to move your sight. Use separate tabs for multiple shooters or ranges.
   </p>
 
   <div class="hide-instr-row">
@@ -332,6 +334,10 @@
       <div class="stat-label">Set size</div>
       <input type="number" id="setSizeInput" class="set-size-input" min="1" max="999" value="20" inputmode="numeric">
     </div>
+    <div class="stat-tile">
+      <div class="stat-label">Num arrows</div>
+      <input type="number" id="numArrowsInput" class="set-size-input" min="1" max="99" value="6" inputmode="numeric">
+    </div>
   </div>
 
   <div class="toolbar">
@@ -349,9 +355,9 @@
   </div>
 
   <div class="legend-row instr-optional">
-    <span class="legend-item"><span class="legend-swatch black"></span> Each shot</span>
+    <span class="legend-item"><span class="legend-swatch black"></span> Each shot, numbered by arrow</span>
     <span class="legend-item"><span class="legend-swatch red"></span> Group average</span>
-    <span class="legend-item">Tap a dot to remove that shot</span>
+    <span class="legend-item">Tap a shot to remove it</span>
   </div>
 
   <details class="history" id="historyDetails">
@@ -395,8 +401,9 @@
   const PAD_UNITS = 1;     // extra room beyond the labeled range
   const SCALE = VB / (2 * (UNIT_RANGE + PAD_UNITS));
   const DEFAULT_SET_SIZE = 20;
+  const DEFAULT_NUM_ARROWS = 6;
 
-  let targets = [];        // {id, name, shots:[{id,x,y}], history:[{shots,avg,count,endedAt}], shotIdCounter}
+  let targets = [];        // {id, name, shots:[{id,x,y,num}], history:[{shots,avg,count,endedAt}], shotIdCounter, numArrows}
   let activeTargetId = null;
   let targetIdSeq = 1;
   let nextTargetNum = 1;
@@ -411,6 +418,7 @@
   const shotCountEl = document.getElementById("shotCount");
   const avgValueEl = document.getElementById("avgValue");
   const setSizeInput = document.getElementById("setSizeInput");
+  const numArrowsInput = document.getElementById("numArrowsInput");
   const undoBtn = document.getElementById("undoBtn");
   const clearBtn = document.getElementById("clearBtn");
   const adjustedBtn = document.getElementById("adjustedBtn");
@@ -454,7 +462,7 @@
   }
 
   function makeTarget(name){
-    return { id: targetIdSeq++, name: name, shots: [], history: [], shotIdCounter: 1 };
+    return { id: targetIdSeq++, name: name, shots: [], history: [], shotIdCounter: 1, numArrows: DEFAULT_NUM_ARROWS };
   }
 
   function buildGrid(){
@@ -528,7 +536,9 @@
 
   function addShot(x, y){
     const t = getActiveTarget();
-    t.shots.push({ id: t.shotIdCounter++, x: x, y: y });
+    const arrows = Math.max(1, t.numArrows || DEFAULT_NUM_ARROWS);
+    const num = (t.shots.length % arrows) + 1;
+    t.shots.push({ id: t.shotIdCounter++, x: x, y: y, num: num });
     save();
     render();
   }
@@ -650,10 +660,12 @@
 
     const t = getActiveTarget();
 
+    const arrowsForFallback = Math.max(1, t.numArrows || DEFAULT_NUM_ARROWS);
     shotsLayer.innerHTML = "";
-    t.shots.forEach(s => {
+    t.shots.forEach((s, idx) => {
       const px = CENTER + s.x * SCALE;
       const py = CENTER - s.y * SCALE;
+      const num = (typeof s.num === "number") ? s.num : ((idx % arrowsForFallback) + 1);
 
       const hit = ns("circle");
       hit.setAttribute("cx", px); hit.setAttribute("cy", py); hit.setAttribute("r", 12);
@@ -661,11 +673,19 @@
       hit.addEventListener("click", (e) => { e.stopPropagation(); removeShot(s.id); });
       shotsLayer.appendChild(hit);
 
-      const dot = ns("circle");
-      dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.setAttribute("r", 4.5);
-      dot.setAttribute("class", "shot-dot");
-      dot.style.pointerEvents = "none";
-      shotsLayer.appendChild(dot);
+      const marker = ns("circle");
+      marker.setAttribute("cx", px); marker.setAttribute("cy", py);
+      marker.setAttribute("r", num >= 10 ? 10.5 : 9);
+      marker.setAttribute("class", "shot-marker");
+      marker.style.pointerEvents = "none";
+      shotsLayer.appendChild(marker);
+
+      const label = ns("text");
+      label.setAttribute("x", px); label.setAttribute("y", py);
+      label.setAttribute("dy", "0.35em");
+      label.setAttribute("class", "shot-num");
+      label.textContent = num;
+      shotsLayer.appendChild(label);
     });
 
     const avg = computeAverage(t.shots);
@@ -695,6 +715,7 @@
     shotCountEl.textContent = t.shots.length;
     shotCountEl.classList.toggle("ready", setSize > 0 && t.shots.length >= setSize);
     avgValueEl.textContent = avg ? (avg.x.toFixed(1) + ", " + avg.y.toFixed(1)) : "—";
+    numArrowsInput.value = t.numArrows || DEFAULT_NUM_ARROWS;
 
     undoBtn.disabled = t.shots.length === 0;
     clearBtn.disabled = t.shots.length === 0;
@@ -762,7 +783,8 @@
           name: t.name || "Target",
           shots: Array.isArray(t.shots) ? t.shots : [],
           history: Array.isArray(t.history) ? t.history : [],
-          shotIdCounter: typeof t.shotIdCounter === "number" ? t.shotIdCounter : 1
+          shotIdCounter: typeof t.shotIdCounter === "number" ? t.shotIdCounter : 1,
+          numArrows: (typeof t.numArrows === "number" && t.numArrows > 0) ? t.numArrows : DEFAULT_NUM_ARROWS
         }));
         activeTargetId = targets.some(t => t.id === data.activeTargetId) ? data.activeTargetId : targets[0].id;
         targetIdSeq = typeof data.targetIdSeq === "number" ? data.targetIdSeq : (Math.max(...targets.map(t => t.id)) + 1);
@@ -802,6 +824,14 @@
   setSizeInput.addEventListener("input", () => {
     const v = parseInt(setSizeInput.value, 10);
     setSize = (Number.isFinite(v) && v > 0) ? v : DEFAULT_SET_SIZE;
+    save();
+    render();
+  });
+
+  numArrowsInput.addEventListener("input", () => {
+    const t = getActiveTarget();
+    const v = parseInt(numArrowsInput.value, 10);
+    t.numArrows = (Number.isFinite(v) && v > 0) ? v : DEFAULT_NUM_ARROWS;
     save();
     render();
   });
