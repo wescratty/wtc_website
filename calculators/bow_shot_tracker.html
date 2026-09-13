@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Bow Shot Average Tracker | WTC Montana Construction</title>
-<meta name="description" content="Plot your bow shots on a Cartesian plane, watch your group average, and get plain-language sight adjustment guidance every 20 arrows.">
+<meta name="description" content="Plot your bow shots on a Cartesian plane per target, watch each group average, and get plain-language sight adjustment guidance every 20 arrows.">
 <link rel="canonical" href="https://www.wtcmontanaconstruction.com/calculators/bow_shot_tracker.html">
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/logo/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/favicon-192.png">
@@ -56,6 +56,71 @@
   }
   h1{ font-size:1.3rem; margin:0 0 4px; }
   .subtitle{ color:var(--text-muted); font-size:0.88rem; margin:0 0 14px; line-height:1.5; max-width:70ch; }
+
+  /* --- target tabs --- */
+  .tabs-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    overflow-x:auto;
+    padding:2px 2px 8px;
+    margin-bottom:10px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tab{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:7px 8px 7px 14px;
+    border-radius:999px;
+    border:1px solid var(--card-border);
+    background:var(--card);
+    font-size:0.85rem;
+    font-weight:600;
+    color:var(--text-muted);
+    white-space:nowrap;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .tab.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .tab-name-input{
+    border:none;
+    background:transparent;
+    font:inherit;
+    font-weight:600;
+    color:inherit;
+    width:9ch;
+    padding:0;
+  }
+  .tab-name-input:focus{ outline:none; }
+  .tab-edit-btn, .tab-remove-btn{
+    border:none;
+    background:none;
+    cursor:pointer;
+    color:inherit;
+    opacity:0.55;
+    font-size:0.8em;
+    padding:2px;
+    line-height:1;
+    border-radius:4px;
+  }
+  .tab-edit-btn:hover, .tab-remove-btn:hover{ opacity:1; background:rgba(0,0,0,0.05); }
+  .tab-add-btn{
+    flex-shrink:0;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    border:1px dashed #b9c2e0;
+    background:var(--card);
+    color:var(--accent);
+    font-size:1.15rem;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .tab-add-btn:hover{ background:var(--accent-soft); border-color:var(--accent); }
 
   .stat-bar{
     display:flex;
@@ -195,6 +260,30 @@
     text-decoration:underline;
   }
 
+  /* --- confirm modal (native confirm() is unreliable inside sandboxed
+     viewers, so this dialog does the confirming instead) --- */
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(15,18,30,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:100;
+  }
+  .modal-backdrop[hidden]{ display:none; }
+  .modal-card{
+    background:var(--card);
+    border-radius:12px;
+    padding:20px;
+    max-width:360px;
+    width:100%;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+  }
+  .modal-card p{ margin:0 0 18px; font-size:0.92rem; line-height:1.5; color:var(--text); }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; }
+
   @media (max-width: 560px){
     h1{ font-size:1.15rem; }
     .subtitle{ font-size:0.82rem; }
@@ -210,8 +299,13 @@
   <p class="subtitle">
     Click the plane where each arrow lands relative to your point of aim (center). Your shots plot black;
     once you've got a few down, the red dot is your group average &mdash; that's what tells you how to move
-    your sight.
+    your sight. Use separate tabs for multiple shooters or ranges.
   </p>
+
+  <div class="tabs-row" id="tabsRow">
+    <div id="tabsList" style="display:flex; gap:6px;"></div>
+    <button type="button" class="tab-add-btn" id="addTargetBtn" aria-label="Add target">+</button>
+  </div>
 
   <div class="stat-bar">
     <div class="stat-tile">
@@ -259,7 +353,7 @@
   </details>
 
   <p class="privacy-note">
-    🔒 Shots and history are saved only in this browser, on this device &mdash; nothing is sent anywhere.
+    🔒 Targets, shots, and history are saved only in this browser, on this device &mdash; nothing is sent anywhere.
     <button type="button" class="reset-all" id="resetAllBtn">Reset all data</button>
   </p>
 
@@ -268,6 +362,16 @@
     high, you move the sight pin <i>up</i> &mdash; you chase the arrow, and the pin moving toward the group
     pulls your next shots back toward center. Same logic left and right. It feels wrong the first time; it's right.
   </p>
+</div>
+
+<div class="modal-backdrop" id="confirmBackdrop" hidden>
+  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="confirmMessage">
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="confirmCancelBtn">Cancel</button>
+      <button type="button" class="btn danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -283,9 +387,11 @@
   const DEAD_CENTER_TOL = 0.3;
   const ADJUST_THRESHOLD = 20;
 
-  let shots = [];       // {id, x, y}
-  let history = [];     // {shots, avg:{x,y}, count, endedAt, guidance}
-  let idCounter = 1;
+  let targets = [];        // {id, name, shots:[{id,x,y}], history:[{shots,avg,count,endedAt}], shotIdCounter}
+  let activeTargetId = null;
+  let targetIdSeq = 1;
+  let nextTargetNum = 1;
+  let renamingId = null;
 
   const svg = document.getElementById("plane");
   const gridLayer = document.getElementById("gridLayer");
@@ -300,8 +406,45 @@
   const adjustedBtn = document.getElementById("adjustedBtn");
   const historyList = document.getElementById("historyList");
   const resetAllBtn = document.getElementById("resetAllBtn");
+  const tabsList = document.getElementById("tabsList");
+  const addTargetBtn = document.getElementById("addTargetBtn");
+
+  const confirmBackdrop = document.getElementById("confirmBackdrop");
+  const confirmMessage = document.getElementById("confirmMessage");
+  const confirmOkBtn = document.getElementById("confirmOkBtn");
+  const confirmCancelBtn = document.getElementById("confirmCancelBtn");
+  let confirmCallback = null;
+
+  function showConfirm(message, onConfirm){
+    confirmMessage.textContent = message;
+    confirmCallback = onConfirm;
+    confirmBackdrop.hidden = false;
+    confirmOkBtn.focus();
+  }
+  function hideConfirm(){
+    confirmBackdrop.hidden = true;
+    confirmCallback = null;
+  }
+  confirmOkBtn.addEventListener("click", () => {
+    const cb = confirmCallback;
+    hideConfirm();
+    if(cb) cb();
+  });
+  confirmCancelBtn.addEventListener("click", hideConfirm);
+  confirmBackdrop.addEventListener("click", (e) => { if(e.target === confirmBackdrop) hideConfirm(); });
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && !confirmBackdrop.hidden) hideConfirm();
+  });
 
   function ns(tag){ return document.createElementNS("http://www.w3.org/2000/svg", tag); }
+
+  function getActiveTarget(){
+    return targets.find(t => t.id === activeTargetId) || targets[0];
+  }
+
+  function makeTarget(name){
+    return { id: targetIdSeq++, name: name, shots: [], history: [], shotIdCounter: 1 };
+  }
 
   function buildGrid(){
     gridLayer.innerHTML = "";
@@ -373,32 +516,35 @@
   }
 
   function addShot(x, y){
-    shots.push({ id: idCounter++, x: x, y: y });
+    const t = getActiveTarget();
+    t.shots.push({ id: t.shotIdCounter++, x: x, y: y });
     save();
     render();
   }
 
   function removeShot(id){
-    shots = shots.filter(s => s.id !== id);
+    const t = getActiveTarget();
+    t.shots = t.shots.filter(s => s.id !== id);
     save();
     render();
   }
 
   function undoLast(){
-    shots.pop();
+    getActiveTarget().shots.pop();
     save();
     render();
   }
 
   function clearGroup(){
-    if(shots.length === 0) return;
-    if(!confirm("Are you sure you want to clear all " + shots.length + " shots? This does not save them to history.")) return;
-    shots = [];
-    save();
-    render();
+    const t = getActiveTarget();
+    if(t.shots.length === 0) return;
+    showConfirm(
+      "Are you sure you want to clear all " + t.shots.length + " shots on “" + t.name + "”? This does not save them to history.",
+      () => { t.shots = []; save(); render(); }
+    );
   }
 
-  function computeAverage(){
+  function computeAverage(shots){
     if(shots.length === 0) return null;
     let sx = 0, sy = 0;
     shots.forEach(s => { sx += s.x; sy += s.y; });
@@ -428,9 +574,96 @@
     };
   }
 
+  function renderTabs(){
+    tabsList.innerHTML = "";
+    targets.forEach(t => {
+      const tab = document.createElement("div");
+      tab.className = "tab" + (t.id === activeTargetId ? " active" : "");
+
+      if(renamingId === t.id){
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "tab-name-input";
+        input.value = t.name;
+        input.addEventListener("click", e => e.stopPropagation());
+        input.addEventListener("keydown", e => {
+          if(e.key === "Enter"){ commitRename(t, input.value); }
+          else if(e.key === "Escape"){ renamingId = null; renderTabs(); }
+        });
+        input.addEventListener("blur", () => commitRename(t, input.value));
+        tab.appendChild(input);
+        tabsList.appendChild(tab);
+        requestAnimationFrame(() => { input.focus(); input.select(); });
+        return;
+      }
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = t.name;
+      tab.appendChild(nameSpan);
+
+      if(t.id === activeTargetId){
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "tab-edit-btn";
+        editBtn.textContent = "✏️";
+        editBtn.setAttribute("aria-label", "Rename " + t.name);
+        editBtn.addEventListener("click", e => { e.stopPropagation(); renamingId = t.id; renderTabs(); });
+        tab.appendChild(editBtn);
+      }
+
+      if(targets.length > 1){
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "tab-remove-btn";
+        removeBtn.textContent = "✕";
+        removeBtn.setAttribute("aria-label", "Delete " + t.name);
+        removeBtn.addEventListener("click", e => { e.stopPropagation(); confirmDeleteTarget(t); });
+        tab.appendChild(removeBtn);
+      }
+
+      tab.addEventListener("click", () => {
+        if(activeTargetId !== t.id){ activeTargetId = t.id; save(); render(); }
+      });
+
+      tabsList.appendChild(tab);
+    });
+  }
+
+  function commitRename(t, value){
+    const trimmed = value.trim();
+    if(trimmed.length) t.name = trimmed;
+    renamingId = null;
+    save();
+    renderTabs();
+  }
+
+  function confirmDeleteTarget(t){
+    showConfirm(
+      "Delete “" + t.name + "”? This permanently removes its shots and history.",
+      () => {
+        targets = targets.filter(x => x.id !== t.id);
+        if(activeTargetId === t.id){ activeTargetId = targets[0].id; }
+        save();
+        render();
+      }
+    );
+  }
+
+  function addTarget(){
+    const t = makeTarget("Target " + nextTargetNum++);
+    targets.push(t);
+    activeTargetId = t.id;
+    save();
+    render();
+  }
+
   function render(){
+    renderTabs();
+
+    const t = getActiveTarget();
+
     shotsLayer.innerHTML = "";
-    shots.forEach(s => {
+    t.shots.forEach(s => {
       const px = CENTER + s.x * SCALE;
       const py = CENTER - s.y * SCALE;
 
@@ -447,7 +680,7 @@
       shotsLayer.appendChild(dot);
     });
 
-    const avg = computeAverage();
+    const avg = computeAverage(t.shots);
     avgLayer.innerHTML = "";
     if(avg){
       const apx = CENTER + avg.x * SCALE;
@@ -471,31 +704,31 @@
       avgLayer.appendChild(avgDot);
     }
 
-    shotCountEl.textContent = shots.length;
+    shotCountEl.textContent = t.shots.length;
     avgValueEl.textContent = avg ? ("(" + avg.x.toFixed(1) + ", " + avg.y.toFixed(1) + ")") : "—";
 
     const guidance = buildGuidance(avg);
     guidanceCard.innerHTML = guidance.text;
     guidanceCard.classList.toggle("dialed", guidance.dialed);
 
-    reminderBanner.classList.toggle("show", shots.length >= ADJUST_THRESHOLD);
+    reminderBanner.classList.toggle("show", t.shots.length >= ADJUST_THRESHOLD);
 
-    undoBtn.disabled = shots.length === 0;
-    clearBtn.disabled = shots.length === 0;
-    adjustedBtn.disabled = shots.length === 0;
+    undoBtn.disabled = t.shots.length === 0;
+    clearBtn.disabled = t.shots.length === 0;
+    adjustedBtn.disabled = t.shots.length === 0;
 
-    renderHistory();
+    renderHistory(t);
   }
 
-  function renderHistory(){
-    if(history.length === 0){
+  function renderHistory(t){
+    if(t.history.length === 0){
       historyList.className = "history-empty";
       historyList.textContent = "No adjusted groups yet — they'll show up here after you tap \"Sights Adjusted\".";
       return;
     }
     historyList.className = "";
     historyList.innerHTML = "";
-    history.slice().reverse().forEach(h => {
+    t.history.slice().reverse().forEach(h => {
       const row = document.createElement("div");
       row.className = "history-item";
       const date = new Date(h.endedAt);
@@ -507,23 +740,28 @@
   }
 
   function markAdjusted(){
-    if(shots.length === 0) return;
-    const avg = computeAverage();
-    if(!confirm("Log this group of " + shots.length + " shots to history and start a fresh group?")) return;
-    history.push({
-      shots: shots.slice(),
-      avg: avg,
-      count: shots.length,
-      endedAt: Date.now()
-    });
-    shots = [];
-    save();
-    render();
+    const t = getActiveTarget();
+    if(t.shots.length === 0) return;
+    const avg = computeAverage(t.shots);
+    showConfirm(
+      "Log this group of " + t.shots.length + " shots on “" + t.name + "” to history and start a fresh group?",
+      () => {
+        t.history.push({ shots: t.shots.slice(), avg: avg, count: t.shots.length, endedAt: Date.now() });
+        t.shots = [];
+        save();
+        render();
+      }
+    );
   }
 
   function save(){
     try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ shots: shots, history: history, idCounter: idCounter }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        targets: targets,
+        activeTargetId: activeTargetId,
+        targetIdSeq: targetIdSeq,
+        nextTargetNum: nextTargetNum
+      }));
     }catch(e){ /* storage unavailable — tracker still works for this page load */ }
   }
 
@@ -532,9 +770,28 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return;
       const data = JSON.parse(raw);
-      if(Array.isArray(data.shots)) shots = data.shots;
-      if(Array.isArray(data.history)) history = data.history;
-      if(typeof data.idCounter === "number") idCounter = data.idCounter;
+
+      if(Array.isArray(data.targets) && data.targets.length){
+        targets = data.targets.map(t => ({
+          id: t.id,
+          name: t.name || "Target",
+          shots: Array.isArray(t.shots) ? t.shots : [],
+          history: Array.isArray(t.history) ? t.history : [],
+          shotIdCounter: typeof t.shotIdCounter === "number" ? t.shotIdCounter : 1
+        }));
+        activeTargetId = targets.some(t => t.id === data.activeTargetId) ? data.activeTargetId : targets[0].id;
+        targetIdSeq = typeof data.targetIdSeq === "number" ? data.targetIdSeq : (Math.max(...targets.map(t => t.id)) + 1);
+        nextTargetNum = typeof data.nextTargetNum === "number" ? data.nextTargetNum : (targets.length + 1);
+      }else if(Array.isArray(data.shots)){
+        // migrate old single-group schema into the first target
+        const t = makeTarget("Target 1");
+        t.shots = data.shots;
+        t.history = Array.isArray(data.history) ? data.history : [];
+        t.shotIdCounter = typeof data.idCounter === "number" ? data.idCounter : (t.shots.length + 1);
+        targets = [t];
+        activeTargetId = t.id;
+        nextTargetNum = 2;
+      }
     }catch(e){ /* ignore corrupt storage */ }
   }
 
@@ -546,18 +803,28 @@
   undoBtn.addEventListener("click", undoLast);
   clearBtn.addEventListener("click", clearGroup);
   adjustedBtn.addEventListener("click", markAdjusted);
+  addTargetBtn.addEventListener("click", addTarget);
 
   resetAllBtn.addEventListener("click", () => {
-    if(!confirm("Reset all shots and past group history? This can't be undone.")) return;
-    shots = [];
-    history = [];
-    idCounter = 1;
-    save();
-    render();
+    showConfirm(
+      "Reset all targets, shots, and history? This can't be undone.",
+      () => {
+        targets = [makeTarget("Target 1")];
+        activeTargetId = targets[0].id;
+        nextTargetNum = 2;
+        save();
+        render();
+      }
+    );
   });
 
   buildGrid();
   load();
+  if(targets.length === 0){
+    targets = [makeTarget("Target 1")];
+    activeTargetId = targets[0].id;
+    nextTargetNum = 2;
+  }
   render();
 })();
 </script>
