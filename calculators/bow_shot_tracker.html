@@ -57,15 +57,31 @@
   h1{ font-size:1.3rem; margin:0 0 4px; }
   .subtitle{ color:var(--text-muted); font-size:0.88rem; margin:0 0 14px; line-height:1.5; max-width:70ch; }
 
-  /* --- target tabs --- */
-  .tabs-row{
+  .hide-instr-row{
+    display:flex;
+    justify-content:flex-end;
+    margin:-2px 0 8px;
+  }
+  .hide-instr-row label{
     display:flex;
     align-items:center;
     gap:6px;
-    overflow-x:auto;
+    font-size:0.78rem;
+    color:var(--text-muted);
+    cursor:pointer;
+  }
+  .hide-instr-row input{ width:15px; height:15px; cursor:pointer; }
+
+  body.hide-instructions .instr-optional{ display:none; }
+
+  /* --- target tabs --- */
+  .tabs-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
     padding:2px 2px 8px;
     margin-bottom:10px;
-    -webkit-overflow-scrolling:touch;
   }
   .tab{
     display:flex;
@@ -296,14 +312,21 @@
 <p class="back-to-fun-tools">&larr; <a href="../fun-tools.html">Back to fun tools</a></p>
 <div class="wrap">
   <h1>🏹 Bow Shot Average Tracker</h1>
-  <p class="subtitle">
+  <p class="subtitle instr-optional">
     Click the plane where each arrow lands relative to your point of aim (center). Your shots plot black;
     once you've got a few down, the red dot is your group average &mdash; that's what tells you how to move
     your sight. Use separate tabs for multiple shooters or ranges.
   </p>
 
+  <div class="hide-instr-row">
+    <label for="hideInstrCheck">
+      <input type="checkbox" id="hideInstrCheck">
+      Hide instructions
+    </label>
+  </div>
+
   <div class="tabs-row" id="tabsRow">
-    <div id="tabsList" style="display:flex; gap:6px;"></div>
+    <div id="tabsList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
     <button type="button" class="tab-add-btn" id="addTargetBtn" aria-label="Add target">+</button>
   </div>
 
@@ -341,7 +364,7 @@
     </svg>
   </div>
 
-  <div class="legend-row">
+  <div class="legend-row instr-optional">
     <span class="legend-item"><span class="legend-swatch black"></span> Each shot</span>
     <span class="legend-item"><span class="legend-swatch red"></span> Group average</span>
     <span class="legend-item">Tap a dot to remove that shot</span>
@@ -352,15 +375,18 @@
     <div id="historyList" class="history-empty">No adjusted groups yet &mdash; they'll show up here after you tap "Sights Adjusted".</div>
   </details>
 
-  <p class="privacy-note">
+  <p class="privacy-note instr-optional">
     🔒 Targets, shots, and history are saved only in this browser, on this device &mdash; nothing is sent anywhere.
-    <button type="button" class="reset-all" id="resetAllBtn">Reset all data</button>
   </p>
 
-  <p class="privacy-note" style="margin-top:8px;">
+  <p class="privacy-note instr-optional" style="margin-top:8px;">
     <b>Chasing the arrow:</b> bow sights are backwards from what feels natural. If your group is landing
     high, you move the sight pin <i>up</i> &mdash; you chase the arrow, and the pin moving toward the group
     pulls your next shots back toward center. Same logic left and right. It feels wrong the first time; it's right.
+  </p>
+
+  <p class="privacy-note" style="margin-top:8px;">
+    <button type="button" class="reset-all" id="resetAllBtn">Reset all data</button>
   </p>
 </div>
 
@@ -392,6 +418,7 @@
   let targetIdSeq = 1;
   let nextTargetNum = 1;
   let renamingId = null;
+  let hideInstructions = false;
 
   const svg = document.getElementById("plane");
   const gridLayer = document.getElementById("gridLayer");
@@ -408,6 +435,7 @@
   const resetAllBtn = document.getElementById("resetAllBtn");
   const tabsList = document.getElementById("tabsList");
   const addTargetBtn = document.getElementById("addTargetBtn");
+  const hideInstrCheck = document.getElementById("hideInstrCheck");
 
   const confirmBackdrop = document.getElementById("confirmBackdrop");
   const confirmMessage = document.getElementById("confirmMessage");
@@ -760,7 +788,8 @@
         targets: targets,
         activeTargetId: activeTargetId,
         targetIdSeq: targetIdSeq,
-        nextTargetNum: nextTargetNum
+        nextTargetNum: nextTargetNum,
+        hideInstructions: hideInstructions
       }));
     }catch(e){ /* storage unavailable — tracker still works for this page load */ }
   }
@@ -792,6 +821,8 @@
         activeTargetId = t.id;
         nextTargetNum = 2;
       }
+
+      hideInstructions = !!data.hideInstructions;
     }catch(e){ /* ignore corrupt storage */ }
   }
 
@@ -804,6 +835,12 @@
   clearBtn.addEventListener("click", clearGroup);
   adjustedBtn.addEventListener("click", markAdjusted);
   addTargetBtn.addEventListener("click", addTarget);
+
+  hideInstrCheck.addEventListener("change", () => {
+    hideInstructions = hideInstrCheck.checked;
+    document.body.classList.toggle("hide-instructions", hideInstructions);
+    save();
+  });
 
   resetAllBtn.addEventListener("click", () => {
     showConfirm(
@@ -825,6 +862,8 @@
     activeTargetId = targets[0].id;
     nextTargetNum = 2;
   }
+  hideInstrCheck.checked = hideInstructions;
+  document.body.classList.toggle("hide-instructions", hideInstructions);
   render();
 })();
 </script>
