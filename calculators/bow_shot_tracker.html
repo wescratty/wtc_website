@@ -155,30 +155,19 @@
   }
   .stat-label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
   .stat-value{ font-size:1.15rem; font-weight:700; margin-top:1px; }
-
-  .guidance-card{
-    background:var(--accent-soft);
-    border:1px solid #c7d1fb;
-    border-radius:10px;
-    padding:12px 16px;
-    margin-bottom:12px;
-    font-size:0.94rem;
-    line-height:1.5;
+  .stat-value.ready{ color:var(--green); }
+  .set-size-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-family:inherit;
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--text);
+    padding:0;
+    margin-top:1px;
   }
-  .guidance-card.dialed{ background:var(--green-soft); border-color:#a9e0c6; }
-  .guidance-card b{ color:var(--text); }
-
-  .reminder-banner{
-    background:var(--amber-soft);
-    border:1px solid #e8cfa1;
-    border-radius:10px;
-    padding:10px 16px;
-    margin-bottom:12px;
-    font-size:0.9rem;
-    color:#6b4a1f;
-    display:none;
-  }
-  .reminder-banner.show{ display:block; }
+  .set-size-input:focus{ outline:none; }
 
   .toolbar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
   .btn{
@@ -339,15 +328,10 @@
       <div class="stat-label">Average</div>
       <div class="stat-value" id="avgValue">&mdash;</div>
     </div>
-  </div>
-
-  <div class="reminder-banner" id="reminderBanner">
-    🎯 <b>20+ shots down</b> &mdash; that's a solid sample. Adjust your sight per the guidance above, then hit
-    <b>Sights Adjusted &mdash; New Group</b> to start a fresh group and confirm the fix.
-  </div>
-
-  <div class="guidance-card" id="guidanceCard">
-    Click the plane below to log your first shot.
+    <div class="stat-tile">
+      <div class="stat-label">Set size</div>
+      <input type="number" id="setSizeInput" class="set-size-input" min="1" max="999" value="20" inputmode="numeric">
+    </div>
   </div>
 
   <div class="toolbar">
@@ -410,8 +394,7 @@
   const UNIT_RANGE = 10;   // gridlines/labels from -10..10
   const PAD_UNITS = 1;     // extra room beyond the labeled range
   const SCALE = VB / (2 * (UNIT_RANGE + PAD_UNITS));
-  const DEAD_CENTER_TOL = 0.3;
-  const ADJUST_THRESHOLD = 20;
+  const DEFAULT_SET_SIZE = 20;
 
   let targets = [];        // {id, name, shots:[{id,x,y}], history:[{shots,avg,count,endedAt}], shotIdCounter}
   let activeTargetId = null;
@@ -419,6 +402,7 @@
   let nextTargetNum = 1;
   let renamingId = null;
   let hideInstructions = false;
+  let setSize = DEFAULT_SET_SIZE;
 
   const svg = document.getElementById("plane");
   const gridLayer = document.getElementById("gridLayer");
@@ -426,8 +410,7 @@
   const avgLayer = document.getElementById("avgLayer");
   const shotCountEl = document.getElementById("shotCount");
   const avgValueEl = document.getElementById("avgValue");
-  const guidanceCard = document.getElementById("guidanceCard");
-  const reminderBanner = document.getElementById("reminderBanner");
+  const setSizeInput = document.getElementById("setSizeInput");
   const undoBtn = document.getElementById("undoBtn");
   const clearBtn = document.getElementById("clearBtn");
   const adjustedBtn = document.getElementById("adjustedBtn");
@@ -579,29 +562,6 @@
     return { x: sx / shots.length, y: sy / shots.length };
   }
 
-  function buildGuidance(avg){
-    if(!avg){
-      return { text: "Click the plane below to log your first shot.", dialed: false };
-    }
-    const vertical = avg.y > DEAD_CENTER_TOL ? "up" : (avg.y < -DEAD_CENTER_TOL ? "down" : null);
-    const horizontal = avg.x < -DEAD_CENTER_TOL ? "left" : (avg.x > DEAD_CENTER_TOL ? "right" : null);
-
-    if(!vertical && !horizontal){
-      return { text: "Dialed in &mdash; your average is dead center. No sight adjustment needed.", dialed: true };
-    }
-
-    const dirWords = [vertical, horizontal].filter(Boolean).join(" and ");
-    const highLow = vertical === "up" ? "high" : (vertical === "down" ? "low" : "");
-    const leftRight = horizontal === "left" ? "left" : (horizontal === "right" ? "right" : "");
-    const missDesc = [highLow, leftRight].filter(Boolean).join(" and ");
-
-    return {
-      text: "You're shooting <b>" + missDesc + "</b> of center. Chase your arrow &mdash; move your sight pin <b>" +
-        dirWords + "</b> to bring your next group to center.",
-      dialed: false
-    };
-  }
-
   function renderTabs(){
     tabsList.innerHTML = "";
     targets.forEach(t => {
@@ -733,13 +693,8 @@
     }
 
     shotCountEl.textContent = t.shots.length;
-    avgValueEl.textContent = avg ? ("(" + avg.x.toFixed(1) + ", " + avg.y.toFixed(1) + ")") : "—";
-
-    const guidance = buildGuidance(avg);
-    guidanceCard.innerHTML = guidance.text;
-    guidanceCard.classList.toggle("dialed", guidance.dialed);
-
-    reminderBanner.classList.toggle("show", t.shots.length >= ADJUST_THRESHOLD);
+    shotCountEl.classList.toggle("ready", setSize > 0 && t.shots.length >= setSize);
+    avgValueEl.textContent = avg ? (avg.x.toFixed(1) + ", " + avg.y.toFixed(1)) : "—";
 
     undoBtn.disabled = t.shots.length === 0;
     clearBtn.disabled = t.shots.length === 0;
@@ -789,7 +744,8 @@
         activeTargetId: activeTargetId,
         targetIdSeq: targetIdSeq,
         nextTargetNum: nextTargetNum,
-        hideInstructions: hideInstructions
+        hideInstructions: hideInstructions,
+        setSize: setSize
       }));
     }catch(e){ /* storage unavailable — tracker still works for this page load */ }
   }
@@ -823,6 +779,7 @@
       }
 
       hideInstructions = !!data.hideInstructions;
+      setSize = (typeof data.setSize === "number" && data.setSize > 0) ? data.setSize : DEFAULT_SET_SIZE;
     }catch(e){ /* ignore corrupt storage */ }
   }
 
@@ -840,6 +797,13 @@
     hideInstructions = hideInstrCheck.checked;
     document.body.classList.toggle("hide-instructions", hideInstructions);
     save();
+  });
+
+  setSizeInput.addEventListener("input", () => {
+    const v = parseInt(setSizeInput.value, 10);
+    setSize = (Number.isFinite(v) && v > 0) ? v : DEFAULT_SET_SIZE;
+    save();
+    render();
   });
 
   resetAllBtn.addEventListener("click", () => {
@@ -864,6 +828,7 @@
   }
   hideInstrCheck.checked = hideInstructions;
   document.body.classList.toggle("hide-instructions", hideInstructions);
+  setSizeInput.value = setSize;
   render();
 })();
 </script>
